@@ -1,11 +1,11 @@
 {
   "name": "Locry",
   "short_name": "Locry",
-  "description": "Şifreli notlar ve görevler, yalnızca bu cihazda. / Encrypted notes and tasks, on this device only.",
+  "description": "Uçtan uca şifreli notlar ve görevler. / End-to-end encrypted notes and tasks.",
   "lang": "tr",
   "display": "standalone",
   "scope": "./",
-  "start_url": "./",
+  "start_url": "./app",
   "theme_color": "#18181b",
   "background_color": "#fafafa",
   "categories": ["productivity", "utilities"],

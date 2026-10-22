@@ -19,6 +19,14 @@ const ABSOLUTE_FLOOR = 0.84;
 const SIMILAR_MIN_Z = 1.5;
 const SIMILAR_MIN_SIMILARITY = 0.9;
 const INACTIVE_PENALTY = 0.85;
+/**
+ * Hubness correction: short, generic texts (a task called "Gym") sit close to the centre of
+ * all vectors and look similar to every query. Subtracting each chunk's similarity to the
+ * centroid removes that bias. Measured on TR/EN sample vaults (notes + short tasks), it took
+ * the right note to the top in 9/12 TR and 10/11 EN queries (was 7/12 and 7/11) and halved
+ * unrelated matches.
+ */
+const HUB_WEIGHT = 1;
 
 export type SearchKind = 'all' | 'note' | 'task';
 
@@ -39,6 +47,17 @@ export class SearchService {
   /** Changes whenever results could differ: documents, vectors or model readiness. */
   readonly revision = computed(() => [this.index.docs(), this.index.vectors(), this.index.ready()]);
 
+  /** Per document, each chunk's similarity to the centroid of all chunks (see HUB_WEIGHT). */
+  private readonly hubness = computed(() => {
+    const vectors = this.index.vectors();
+    const all = [...vectors.values()].flat();
+    const hubness = new Map<string, number[]>();
+    if (vectors.size < MIN_DOCS_FOR_STATS) return hubness;
+    const centroid = mean(all);
+    for (const [key, chunks] of vectors) hubness.set(key, chunks.map((c) => similarity(c, centroid)));
+    return hubness;
+  });
+
   async search(query: string, options: { kind?: SearchKind; limit?: number } = {}): Promise<SearchResult[]> {
     const terms = foldForSearch(query).split(/\s+/).filter(Boolean);
     if (!terms.length) return [];
@@ -54,12 +73,14 @@ export class SearchService {
       }
     }
     const vectors = this.index.vectors();
+    const hubness = this.hubness();
     // Score every indexed document (not just the filtered kind) so the statistics are stable.
     const similarities = new Map<string, number>();
     if (queryVector) {
       for (const doc of this.index.docs()) {
-        const chunks = vectors.get(docKey(doc));
-        if (chunks?.length) similarities.set(docKey(doc), bestSimilarity(queryVector, chunks));
+        const key = docKey(doc);
+        const chunks = vectors.get(key);
+        if (chunks?.length) similarities.set(key, bestSimilarity(queryVector, chunks, hubness.get(key)));
       }
     }
     const relevance = relevanceScale([...similarities.values()], MIN_Z, ABSOLUTE_FLOOR);
@@ -134,8 +155,9 @@ function containsTerm(text: string, term: string): boolean {
   return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}`, 'u').test(text);
 }
 
-export function bestSimilarity(query: Float32Array, chunks: Float32Array[]): number {
-  return Math.max(...chunks.map((c) => similarity(query, c)));
+/** Best chunk similarity, optionally corrected by each chunk's hubness. */
+export function bestSimilarity(query: Float32Array, chunks: Float32Array[], hubness?: number[]): number {
+  return Math.max(...chunks.map((c, i) => similarity(query, c) - (hubness ? HUB_WEIGHT * hubness[i] : 0)));
 }
 
 /**

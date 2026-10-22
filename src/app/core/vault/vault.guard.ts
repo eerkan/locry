@@ -8,7 +8,8 @@ const HOME: Record<Exclude<VaultStatus, 'loading'>, string> = {
   unlocked: '/notes',
 };
 
-const AUTH_PATHS = ['/setup', '/unlock', '/recover', '/restore'];
+/** Auth screens and public pages: never a destination after unlocking. */
+const AUTH_PATHS = ['/setup', '/unlock', '/recover', '/restore', '/app', '/en'];
 
 /**
  * Matches the route only in the given vault states; otherwise redirects to the state's home.
@@ -21,7 +22,7 @@ export function vaultStatusGuard(...allowed: VaultStatus[]): CanMatchFn {
     await vault.init();
     const status = vault.status();
     if (allowed.includes(status)) return true;
-    if (status === 'loading') return router.parseUrl('/');
+    if (status === 'loading') return router.parseUrl('/app');
     const home = router.parseUrl(HOME[status]);
     const requested = '/' + segments.map((s) => s.path).join('/');
     if (status === 'locked' && safeNext(requested)) home.queryParams = { next: requested };

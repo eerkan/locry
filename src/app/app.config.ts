@@ -1,10 +1,13 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   type ApplicationConfig,
+  PLATFORM_ID,
   inject,
   isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+import { provideClientHydration, withNoIncrementalHydration } from '@angular/platform-browser';
 import { TitleStrategy, provideRouter, withComponentInputBinding } from '@angular/router';
 import { TranslocoService, provideTransloco } from '@jsverse/transloco';
 import { provideSpartanHlm } from '@spartan-ng/helm/utils';
@@ -21,6 +24,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
+    // The landing pages are prerendered; the browser takes over their HTML instead of redrawing it.
+    // Plain hydration: incremental hydration and event replay need inline scripts, which the
+    // Content Security Policy forbids; the landing page's links and FAQ work without JS anyway.
+    provideClientHydration(withNoIncrementalHydration()),
     { provide: TitleStrategy, useClass: LocryTitleStrategy },
     provideSpartanHlm(),
     provideTransloco({
@@ -38,6 +45,8 @@ export const appConfig: ApplicationConfig = {
       const transloco = inject(TranslocoService);
       const lang = inject(PreferencesService).lang();
       transloco.setActiveLang(lang);
+      // Prerendering (build time) only renders public pages: no vault, storage or config there.
+      if (!isPlatformBrowser(inject(PLATFORM_ID))) return firstValueFrom(transloco.load(lang)).then(() => undefined);
       return Promise.all([
         firstValueFrom(transloco.load(lang)),
         inject(VaultService).init(),

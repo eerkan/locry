@@ -1,8 +1,10 @@
-// Serves the production build (with its service worker) on http://localhost:4200.
+// Serves the production build (prerendered landing pages, app shell, service worker) on
+// http://localhost:4200.
 // Same origin as `ng serve`, so passkeys and the encrypted IndexedDB data are shared.
-import { createReadStream, statSync } from 'node:fs';
+import { createReadStream, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
+import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { runtimeConfig } from './runtime-config.mjs';
 
 const root = resolve(import.meta.dirname, '../dist/locry/browser');
@@ -21,9 +23,53 @@ const types = {
   '.wasm': 'application/wasm',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.xml': 'application/xml; charset=utf-8',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8',
 };
+
+// Prerendered pages and site files mention this placeholder origin; it is replaced with the
+// real address when served, so one build works on any domain (see src/app/core/site.ts).
+const SITE_PLACEHOLDER = 'https://locry.invalid';
+const WITH_SITE_URL = new Set(['.html', '.txt', '.xml']);
+/** Prerendered public pages; every other extensionless path is an app route. */
+const PAGES = { '/': 'index.html', '/en': 'en/index.html', '/en/': 'en/index.html' };
+/** Text worth compressing (images, fonts and wasm are already compressed or not worth it). */
+const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.webmanifest', '.svg', '.txt', '.xml', '.wasm']);
+const compressed = new Map();
+
+/** Brotli or gzip, if the client accepts it; results are cached per file and site origin. */
+function encodeBody(req, file, body) {
+  const accept = String(req.headers['accept-encoding'] ?? '');
+  const encoding = /\bbr\b/.test(accept) ? 'br' : /\bgzip\b/.test(accept) ? 'gzip' : null;
+  if (!encoding || body.length < 1024) return { body, encoding: null };
+  const key = `${encoding}:${file}:${body.length}:${req.headers.host}`;
+  if (!compressed.has(key)) {
+    compressed.set(
+      key,
+      encoding === 'br'
+        ? brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 9 } })
+        : gzipSync(body, { level: 9 }),
+    );
+  }
+  return { body: compressed.get(key), encoding };
+}
+
+/** Build output with a content hash in the name never changes and can be cached for good. */
+const HASHED = /-[A-Za-z0-9_-]{8,}\.(js|mjs|css)$/;
+
+/** Public origin for canonical URLs: configured, else the domain, else the request's own. */
+function siteOrigin(req) {
+  const configured = (process.env.LOCRY_SITE_URL ?? '').trim().replace(/\/+$/, '');
+  if (/^https?:\/\/[\w.-]+(:\d+)?$/.test(configured)) return configured;
+  const domain = (process.env.LOCRY_DOMAIN ?? '').trim();
+  if (/^[\w.-]+$/.test(domain)) return `https://${domain}`;
+  const host = req.headers.host ?? '';
+  const proto = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+  return /^[\w.-]+(:\d+)?$/.test(host) ? `${proto}://${host}` : 'http://localhost';
+}
 
 function fileFor(urlPath) {
   const path = resolve(join(root, normalize(decodeURIComponent(urlPath))));
@@ -76,20 +122,32 @@ createServer((req, res) => {
     res.end(JSON.stringify(runtimeConfig()));
     return;
   }
-  // Client-side routes (no file extension) get the app shell.
-  const file = fileFor(urlPath) ?? (extname(urlPath) ? null : join(root, 'index.html'));
+  // Public pages are prerendered; other routes without a file extension get the app shell.
+  const page = PAGES[urlPath];
+  const file = page ? join(root, page) : (fileFor(urlPath) ?? (extname(urlPath) ? null : join(root, 'index.csr.html')));
   if (!file) {
     res.writeHead(404).end('Not found');
     return;
   }
-  const isShell = file.endsWith('index.html') || file.endsWith('ngsw.json') || file.endsWith('ngsw-worker.js');
-  res.writeHead(200, {
-    'Content-Type': types[extname(file)] ?? 'application/octet-stream',
-    'Cache-Control': isShell ? 'no-cache' : 'public, max-age=31536000, immutable',
+  const ext = extname(file);
+  const headers = {
+    'Content-Type': types[ext] ?? 'application/octet-stream',
+    'Cache-Control': HASHED.test(file) ? 'public, max-age=31536000, immutable' : 'no-cache',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
-  });
-  createReadStream(file).pipe(res);
+    Vary: 'Accept-Encoding',
+  };
+  if (!COMPRESSIBLE.has(ext)) {
+    res.writeHead(200, headers);
+    createReadStream(file).pipe(res);
+    return;
+  }
+  let body = readFileSync(file);
+  if (WITH_SITE_URL.has(ext)) body = Buffer.from(body.toString('utf8').replaceAll(SITE_PLACEHOLDER, siteOrigin(req)));
+  const encoded = encodeBody(req, file, body);
+  if (encoded.encoding) headers['Content-Encoding'] = encoded.encoding;
+  res.writeHead(200, headers);
+  res.end(encoded.body);
 }).listen(port, host, () => {
   console.log(`Locry: http://localhost:${port} (listening on ${host})`);
 });

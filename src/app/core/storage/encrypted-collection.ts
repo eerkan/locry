@@ -25,6 +25,7 @@ export function injectEncryptedCollection<T extends { id: string }>(type: string
   const loaded = signal(false);
   const index = computed(() => new Map(items().map((item) => [item.id, item])));
   let generation = 0;
+  let localWrites = 0;
   let writes: Promise<unknown> = Promise.resolve();
 
   const enqueue = (write: () => Promise<unknown>): Promise<void> => {
@@ -34,10 +35,14 @@ export function injectEncryptedCollection<T extends { id: string }>(type: string
     return next;
   };
 
-  const load = async () => {
+  const load = async (): Promise<void> => {
     const current = ++generation;
+    const writesAtStart = localWrites;
     const decrypted = await store.list<T>(type);
     if (current !== generation) return;
+    // A put or remove landed while reading: the result may predate it, so read again once
+    // the pending writes are stored instead of overwriting the newer in-memory state.
+    if (localWrites !== writesAtStart) return void writes.then(() => (current === generation ? load() : undefined));
     items.set(decrypted);
     loaded.set(true);
   };
@@ -60,6 +65,7 @@ export function injectEncryptedCollection<T extends { id: string }>(type: string
     loaded: loaded.asReadonly(),
     byId: (id) => index().get(id),
     put(...next) {
+      localWrites++;
       const byId = new Map(next.map((item) => [item.id, item]));
       items.update((current) => {
         const merged = current.map((item) => byId.get(item.id) ?? item);
@@ -69,6 +75,7 @@ export function injectEncryptedCollection<T extends { id: string }>(type: string
       return enqueue(() => Promise.all(next.map((item) => store.put(type, item.id, item))));
     },
     remove(...ids) {
+      localWrites++;
       const removed = new Set(ids);
       items.update((current) => current.filter((item) => !removed.has(item.id)));
       return enqueue(() => Promise.all(ids.map((id) => store.remove(type, id))));

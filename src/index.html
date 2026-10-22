@@ -5,7 +5,9 @@
     <title>Locry</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="Şifreli notlar ve görevler, yalnızca bu cihazda." />
+    <meta name="description" content="Locry: uçtan uca şifreli notlar ve görevler, passkey ile. / End-to-end encrypted notes and tasks, unlocked with a passkey." />
+    <!-- App pages have nothing to index; the prerendered landing pages switch this to index. -->
+    <meta name="robots" content="noindex" />
     <!--
       Defense in depth on top of DOMPurify: scripts only from this app (and Google sign-in),
       network only to the services the user opts into (Google Drive, Hugging Face models).
@@ -25,6 +27,7 @@
         base-uri 'self';
         form-action 'self'"
     />
+    <script src="theme-init.js"></script>
     <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />

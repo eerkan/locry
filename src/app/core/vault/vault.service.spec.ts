@@ -212,7 +212,7 @@ describe('VaultService', () => {
       expect(vault.vaults().map((v) => v.name)).toEqual(['Kalacak']);
       expect(vault.activeVault()?.name).toBe('Kalacak');
       expect(vault.status()).toBe('locked');
-      expect(vault.consumeLockDestination()).toBe('/');
+      expect(vault.consumeLockDestination()).toBe('/app');
       const names = (await indexedDB.databases()).map((d) => d.name);
       expect(names).not.toContain(`locry-vault-${doomed.header.vaultId}`);
 

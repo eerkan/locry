@@ -22,7 +22,8 @@ export class PasskeyError extends Error {
 
 /** WebAuthn relying-party ID of this page: its host name, e.g. "localhost". */
 export function currentRpId(): string {
-  return location.hostname;
+  // No location while prerendering the public pages at build time; passkeys are never used there.
+  return typeof location === 'undefined' ? 'localhost' : location.hostname;
 }
 
 export interface PasskeyRegistration {

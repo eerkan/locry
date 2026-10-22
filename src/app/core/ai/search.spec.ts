@@ -13,7 +13,7 @@ import { PasskeyClient } from '../vault/passkey';
 import { VaultService } from '../vault/vault.service';
 import { EMBEDDING_RECORD_TYPE, chunkDoc, decodeVector, encodeVector, markdownToText } from './documents';
 import { EMBEDDER, type Embedder } from './embedding.service';
-import { SearchService, keywordScore, relevanceScale, snippet } from './search.service';
+import { SearchService, bestSimilarity, keywordScore, relevanceScale, snippet } from './search.service';
 import { SemanticIndexService } from './semantic-index.service';
 
 /**
@@ -45,6 +45,7 @@ class FakeEmbedder implements Embedder {
 
 describe('documents', () => {
   it('strips Markdown to plain text', () => {
+    expect(markdownToText('| Gün | Konu |\n|---|:---:|\n| Salı | Plan |')).toBe('Gün Konu \n\n Salı Plan');
     expect(markdownToText('# Başlık\n\n- [x] **görev** ve [bağlantı](https://x.y)\n\n```js\nconst a = 1;\n```')).toBe(
       'Başlık\n\ngörev ve bağlantı\n\nconst a = 1;',
     );
@@ -66,6 +67,16 @@ describe('documents', () => {
 });
 
 describe('scoring', () => {
+  it('discounts generic chunks that resemble everything (hubness)', () => {
+    const query = new Float32Array([1, 0]);
+    const generic = [new Float32Array([0.8, 0.6])];
+    const specific = [new Float32Array([0.6, 0.8])];
+    // Raw similarity prefers the generic chunk...
+    expect(bestSimilarity(query, generic)).toBeGreaterThan(bestSimilarity(query, specific));
+    // ...but it is also close to the centre of all documents, so it loses once corrected.
+    expect(bestSimilarity(query, generic, [0.9])).toBeLessThan(bestSimilarity(query, specific, [0.2]));
+  });
+
   it('weighs title matches above body matches', () => {
     expect(keywordScore({ title: 'Market listesi', body: '' }, ['market'])).toBe(1);
     expect(keywordScore({ title: 'Liste', body: 'market' }, ['market'])).toBe(0.7);

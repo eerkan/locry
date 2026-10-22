@@ -1,4 +1,5 @@
-import { DOCUMENT, Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, Injectable, PLATFORM_ID, computed, effect, inject, signal, untracked } from '@angular/core';
 import { LEGACY_DB_NAME } from './storage/locry-db';
 import { VaultService } from './vault/vault.service';
 
@@ -54,6 +55,7 @@ const VAULT_DEFAULTS: VaultPreferences = {
 @Injectable({ providedIn: 'root' })
 export class PreferencesService {
   private readonly document = inject(DOCUMENT);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly vault = inject(VaultService);
   private readonly prefs = signal<Stored>(this.load());
 
@@ -83,13 +85,17 @@ export class PreferencesService {
 
     effect(() => {
       const theme = this.prefs().theme;
+      // Prerendered pages get their theme from theme-init.js before the first paint.
+      if (!this.browser) return;
       const dark = theme === 'dark' || (theme === 'system' && systemDark());
       this.document.documentElement.classList.toggle('dark', dark);
       this.document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     });
     effect(() => {
-      this.document.documentElement.lang = this.prefs().lang;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.prefs()));
+      const prefs = this.prefs();
+      if (!this.browser) return;
+      this.document.documentElement.lang = prefs.lang;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
     });
     // Drop the settings of vaults that were deleted.
     effect(() => {
@@ -147,13 +153,14 @@ export class PreferencesService {
 
   private load(): Stored {
     const defaults: Stored = {
-      lang: navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en',
+      lang: !this.browser || navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en',
       theme: 'system',
       autoLockMinutes: 10,
       driveClientId: '',
       vaults: {},
       legacy: null,
     };
+    if (!this.browser) return defaults;
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<Stored> & Partial<VaultPreferences>;
       const vaults: Record<string, VaultPreferences> = {};

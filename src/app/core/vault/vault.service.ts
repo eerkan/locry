@@ -163,7 +163,7 @@ export class VaultService {
     this._vaults.set(remaining);
     if (remaining.length) await this.load(remaining[0]);
     else this.setEmpty();
-    this.lockDestination = '/';
+    this.lockDestination = '/app';
     this._lockCount.update((n) => n + 1);
   }
 

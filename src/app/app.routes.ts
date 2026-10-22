@@ -2,12 +2,24 @@ import type { Routes } from '@angular/router';
 import { vaultStatusGuard } from './core/vault/vault.guard';
 
 export const routes: Routes = [
+  // Public, prerendered landing pages (Turkish at /, English at /en).
+  {
+    path: '',
+    pathMatch: 'full',
+    data: { lang: 'tr', ownTitle: true },
+    loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
+  },
+  {
+    path: 'en',
+    data: { lang: 'en', ownTitle: true },
+    loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
+  },
   {
     path: '',
     loadComponent: () => import('./layout/auth-layout').then((m) => m.AuthLayout),
     children: [
-      // '' always redirects to the current vault state's home (setup, unlock or notes).
-      { path: '', pathMatch: 'full', canMatch: [vaultStatusGuard()], children: [] },
+      // /app always redirects to the current vault state's home (setup, unlock or notes).
+      { path: 'app', pathMatch: 'full', canMatch: [vaultStatusGuard()], children: [] },
       {
         path: 'setup',
         title: 'setup.title',

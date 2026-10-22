@@ -27,6 +27,9 @@ export function markdownToText(markdown: string): string {
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
     // [ \t] rather than \s: \s would also eat the blank lines between paragraphs.
     .replace(/^[ \t]{0,3}(#{1,6}|>|[-*+]|\d+[.)])[ \t]+(\[[ xX]\][ \t]+)?/gm, '')
+    // Tables: drop the |---|---| separator rows and the cell pipes.
+    .replace(/^[ \t]*\|?[ \t]*:?-{2,}:?[ \t]*(\|[ \t]*:?-{2,}:?[ \t]*)*\|?[ \t]*$/gm, '')
+    .replace(/\|/g, ' ')
     .replace(/[*_~`]/g, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/[ \t]+/g, ' ')

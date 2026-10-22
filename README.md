@@ -35,6 +35,7 @@ yarn serve:prod
 ```
 
 İkisi de `http://localhost:4200` adresini kullanır; aynı adres olduğu için veriler ve passkey'ler ortaktır.
+Kök adres tanıtım sayfasıdır (`/`, İngilizcesi `/en`); uygulama `/app` adresinden açılır (kurulu PWA doğrudan oraya gider).
 Tarayıcı adres çubuğundaki "Yükle" simgesiyle Locry'yi masaüstü uygulaması olarak kurabilirsin.
 
 > Adres önemli: passkey'ler `localhost` alan adına, veriler ise `http://localhost:4200` kaynağına bağlıdır.
@@ -64,6 +65,7 @@ cp .env.example .env
 | `LOCRY_GOOGLE_CLIENT_ID` | boş | Gömülü Google Client ID; kullanıcılar sadece "Google ile bağlan"a basar |
 | `COMPOSE_PROFILES` | boş | `https` yazınca Caddy (otomatik HTTPS) da başlar |
 | `LOCRY_DOMAIN` | boş | Caddy'nin yayınlayacağı alan adı, ör. `locry.ornek.com` |
+| `LOCRY_SITE_URL` | boş | Tanıtım sayfasının canonical adresi; boşsa `https://<LOCRY_DOMAIN>`, o da yoksa açılan adres |
 
 - İmaj çok aşamalıdır: derleme Node 24 ile yapılır, son imajda yalnızca derlenmiş uygulama ve bağımlılıksız
   küçük bir sunucu bulunur. Konteyner root olmayan kullanıcıyla, salt okunur dosya sistemiyle ve yetkileri
@@ -112,6 +114,31 @@ passkey'i, kurtarma anahtarı, veritabanı, yedekleri ve ayarları vardır; ayn�
 Kasa değiştirmek açık kasayı kilitler. Kasa adları kilit ekranında görünebilmesi için şifrelenmez, bu yüzden
 içerik hakkında bilgi vermeyen adlar seç. Yedekten geri yüklerken kasa bu cihazda varsa yedek ona birleştirilir,
 yoksa ayrı bir kasa olarak eklenir. Kasa silme yalnızca bu cihazdaki veriyi siler; yedeklere dokunmaz.
+
+## Tanıtım sayfası ve SEO
+
+`/` (Türkçe) ve `/en` (İngilizce) derleme sırasında statik HTML olarak üretilir (Angular prerender + hydration).
+Arama motorları ve yapay zekâ tarayıcıları içeriğin tamamını JavaScript çalıştırmadan okur; uygulamanın geri kalanı
+yalnızca tarayıcıda çalışır, sunucuda hiçbir kasa verisi bulunmaz.
+
+- Başlık, açıklama, canonical, `hreflang` (tr / en / x-default), Open Graph ve Twitter kartları (`/landing/og-*.jpg`)
+- JSON-LD: `SoftwareApplication`, `SoftwareSourceCode`, `WebSite`, `WebPage`, `FAQPage`, `HowTo`
+- `robots.txt` (yapay zekâ tarayıcılarına da açık), `sitemap.xml`, `llms.txt`; uygulama sayfaları `noindex`
+- Adresler derlemede yer tutucudur; sunucu `LOCRY_SITE_URL` / `LOCRY_DOMAIN` ile doldurur, alan adı değişince yeniden
+  derlemek gerekmez. Sunucu metinleri brotli/gzip ile sıkıştırır.
+- Lighthouse (yerel üretim sunucusu): masaüstünde 100/100/100/100, mobilde performans 92–94, diğerleri 100.
+
+Ekran görüntüleri gerçek uygulamadan, örnek verilerle ve sanal passkey ile alınır (Google Chrome, ImageMagick,
+`cwebp`, `avifenc` gerekir):
+
+```bash
+npx ng serve --port 4320 &
+node scripts/screenshots.mjs   # public/landing/<dil>/*.avif|webp, açık ve koyu
+node scripts/og-images.mjs     # public/landing/og-<dil>.jpg
+```
+
+Metinler `src/app/features/landing/landing-content.ts` içinde (iki dil aynı yapıda olmalı, test kontrol eder);
+GitHub adresi `src/app/core/site.ts` içinde.
 
 ## Güvenlik modeli
 

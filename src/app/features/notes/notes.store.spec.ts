@@ -51,6 +51,18 @@ describe('NotesStore', () => {
     expect(notes.allTags()).toEqual(['a', 'b', 'şey']);
   });
 
+  it('keeps notes created while the collection is still loading', async () => {
+    await notes.create({ title: 'Önceden' });
+    vault.lock();
+    TestBed.tick();
+    await vault.unlockWithPasskey();
+    TestBed.tick(); // starts loading from the database
+    await notes.create({ title: 'Yüklenirken' });
+    await until(() => notes.loaded());
+    await new Promise((r) => setTimeout(r, 50));
+    expect(notes.notes().map((n) => n.title).sort()).toEqual(['Yüklenirken', 'Önceden']);
+  });
+
   it('wipes decrypted notes on lock and reloads them on unlock', async () => {
     const note = await notes.create({ title: 'Gizli', content: 'içerik' });
     vault.lock();

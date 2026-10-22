@@ -1,0 +1,33 @@
+# Locry
+
+> Locry is a free, open-source, end-to-end encrypted notes and to-do app that runs entirely in the web browser. There is no server, no account and no password: a vault is unlocked with a passkey (WebAuthn PRF), and every note and task is encrypted on the device with AES-256-GCM. Optional backups and sync between phone and computer go through the user's own Google Drive, still encrypted. Available in English and Turkish.
+
+Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uca şifreli not ve görev uygulaması. Sunucu, hesap ve parola yok; kasa passkey ile açılır.
+
+## Pages
+
+- [Locry — English](https://locry.invalid/en): features, security model, sync, self-hosting, FAQ
+- [Locry — Türkçe](https://locry.invalid/): özellikler, güvenlik modeli, eşitleme, kendi sunucunda çalıştırma, SSS
+- [Source code on GitHub](https://github.com/emreerkangames/locry): README with setup, Docker and security details
+
+## Key facts
+
+- Type: notes (Markdown) and tasks (lists, subtasks, priorities, due dates) in one app
+- Price: free; open source
+- Account: none; sign-in with a passkey (fingerprint, face or device PIN); a 256-bit recovery key as backup
+- Encryption: random 256-bit vault key, wrapped by a key derived with HKDF-SHA-256 from the passkey's WebAuthn PRF output; each record encrypted separately with AES-256-GCM and bound to its type and id
+- Storage: in the browser's IndexedDB, encrypted; nothing is stored on a Locry server
+- Multiple vaults: independent vaults (e.g. Personal and Work), each with its own keys, backups and settings
+- Backups: single-file, gzip-compressed and encrypted `.locry` files, to a file or Google Drive (app-data folder only)
+- Sync: optional, through Google Drive; each device writes its own encrypted snapshot and merges the others; deletions sync; when a note was edited on two devices the older version is kept as a "(conflict)" copy
+- Smart search: semantic + keyword search with the multilingual-e5-small model running in the browser (Web Worker); notes are never sent to an AI service
+- Platforms: modern browsers (Chrome/Edge 118+, Safari 18+); installable PWA on macOS, Windows, Linux, iOS and Android; works offline
+- Self-hosting: static files plus a tiny Node server in Docker (`docker compose up -d --build`); optional Caddy for automatic HTTPS on a domain
+
+## FAQ
+
+- Where is my data? On your device, encrypted. Locry has no server that stores it.
+- Can Google read my notes? No. Drive only receives files encrypted on your device; Locry can only access its own hidden app folder.
+- What if I lose my passkey? Open the vault with the recovery key and add a new passkey. Without both, nobody can recover the data — by design.
+- Does the AI search send notes anywhere? No. The model runs in the browser.
+- Does it work offline? Yes, after the first visit.

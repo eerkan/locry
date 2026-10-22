@@ -157,6 +157,27 @@ Kararlar: kendi alan adında HTTPS (Caddy profili), Drive üzerinden otomatik e�
 - ✅ Testler: birleştirme kuralları, başlık birleştirme, iki sahte cihazla uçtan uca eşitleme (düzenleme, silme,
   çakışma, passkey ve kasa adı), belirteç yokken bekleme, eşitleme kopyalarının yedeklerden ayrı tutulması.
 
+### Faz 9 — Tanıtım sayfası, SEO ve yapay zekâ aramaları ✅ tamamlandı
+Kararlar: `/` Türkçe, `/en` İngilizce landing; uygulama adresleri aynen (giriş `/app`); açık kaynak (GitHub);
+gerçek ekran görüntüleri.
+- ✅ Angular statik ön-üretim (`outputMode: static`) + hydration yalnızca `/` ve `/en` için; diğer rotalar
+  `index.csr.html` ile istemcide. Kasa, IndexedDB, `localStorage` ve `location` kullanan kod sunucu tarafında çalışmaz.
+  Artımlı hydration ve olay tekrarı kapalı (satır içi betik ister, CSP yasaklar).
+- ✅ İçerik: başlık, kısaca Locry (alıntılanabilir tanım + olgular), özellikler, görevler, şifreleme şeması ve
+  güvenlik modeli, çoklu kasa, eşitleme, akıllı arama, karşılaştırma, kendi sunucunda çalıştırma, SSS, CTA.
+  Bu cihazda kasa varsa düğmeler "Kasanı aç" olur (hydration sonrası).
+- ✅ SEO: meta, canonical, hreflang, OG/Twitter kartları, JSON-LD (SoftwareApplication, SoftwareSourceCode,
+  WebSite, WebPage, FAQPage, HowTo), robots.txt, sitemap.xml, llms.txt, uygulama sayfalarında noindex.
+  Adresler sunucuda `LOCRY_SITE_URL` / `LOCRY_DOMAIN` ile doldurulur.
+- ✅ Görseller: `scripts/screenshots.mjs` (Chrome + sanal passkey + örnek veri, TR/EN, açık/koyu, AVIF/WebP,
+  1080/2160 srcset), `scripts/og-images.mjs`. Tema betiği ilk boyamadan önce çalışır (titreme yok).
+- ✅ Sunucu: ön-üretilmiş sayfalar, brotli/gzip, yalnızca hash'li dosyalar kalıcı önbellekte; service worker
+  landing'i ağdan alır.
+- ✅ Yol üstünde düzeltilenler: şifreli koleksiyonlarda yükleme ile yazma arasındaki yarış (yeni test), anlamsal
+  aramada "her şeye benzeyen" kısa belgeler için merkez düzeltmesi (TR doğru ilk sonuç 7/12 → 9/12, EN 7/11 → 10/11,
+  ilgisiz eşleşmeler yarıya indi), arama alıntılarında Markdown tablo çizgileri.
+- ✅ Lighthouse: masaüstü 100/100/100/100; mobil performans 92–94, erişilebilirlik / en iyi uygulamalar / SEO 100.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`
