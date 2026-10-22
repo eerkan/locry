@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { IDBFactory } from 'fake-indexeddb';
+import { deleteDB } from 'idb';
 import { randomBytes } from '../crypto/bytes';
 import { EncryptedStore } from '../storage/encrypted-store.service';
 import { LocryDb } from '../storage/locry-db';
 import { type PasskeyAssertion, PasskeyClient } from './passkey';
+import { LEGACY_DB_NAME } from '../storage/locry-db';
+import { VaultRegistry } from './vault-registry';
 import { VaultService } from './vault.service';
 
 /** Simulates one authenticator: a fixed credential id and a fixed PRF output. */
@@ -55,7 +58,8 @@ describe('VaultService', () => {
   it('starts empty and does not persist anything before setup completes', async () => {
     expect(vault.status()).toBe('empty');
     await vault.prepareVault('Test');
-    expect(await db.getHeader()).toBeUndefined();
+    expect(vault.vaults()).toEqual([]);
+    expect((await indexedDB.databases()).map((d) => d.name)).not.toContain(expect.stringMatching(/^locry-vault-/));
     expect(vault.status()).toBe('empty');
   });
 
@@ -124,5 +128,98 @@ describe('VaultService', () => {
     vault.lock();
     authenticator.nextAssertion = { credentialId: 'stranger', prfOutput: randomBytes(32) };
     await expect(vault.unlockWithPasskey()).rejects.toMatchObject({ code: 'unknownPasskey' });
+  });
+
+  describe('multiple vaults', () => {
+    async function reload(): Promise<VaultService> {
+      db.close();
+      TestBed.inject(VaultRegistry).close();
+      TestBed.resetTestingModule();
+      configure();
+      const reloaded = TestBed.inject(VaultService);
+      await reloaded.init();
+      return reloaded;
+    }
+
+    it('keeps each vault in its own database and switches through the lock screen', async () => {
+      await vault.completeSetup(await vault.prepareVault('Mac', { name: 'Kişisel' }));
+      await store.put('note', 'personal', { title: 'Kişisel not' });
+      vault.lock();
+
+      await vault.completeSetup(await vault.prepareVault('Mac', { name: 'İş', color: 'green' }));
+      expect(vault.vaults().map((v) => [v.name, v.color])).toEqual([
+        ['Kişisel', 'blue'],
+        ['İş', 'green'],
+      ]);
+      expect(vault.activeVault()?.name).toBe('İş');
+      expect(await store.list('note')).toEqual([]);
+      await store.put('note', 'work', { title: 'İş notu' });
+
+      const personal = vault.vaults()[0];
+      await vault.select(personal.id);
+      expect(vault.status()).toBe('locked');
+      expect(vault.consumeLockDestination()).toBe('/unlock');
+      expect(vault.header()?.vaultId).toBe(personal.id);
+      await vault.unlockWithPasskey();
+      expect((await store.list<{ title: string }>('note')).map((n) => n.title)).toEqual(['Kişisel not']);
+    });
+
+    it('remembers the last selected vault after a reload', async () => {
+      await vault.completeSetup(await vault.prepareVault('Mac', { name: 'A' }));
+      vault.lock();
+      await vault.completeSetup(await vault.prepareVault('Mac', { name: 'B' }));
+      await vault.select(vault.vaults()[0].id);
+
+      const reloaded = await reload();
+      expect(reloaded.vaults().map((v) => v.name)).toEqual(['A', 'B']);
+      expect(reloaded.activeVault()?.name).toBe('A');
+      expect(reloaded.status()).toBe('locked');
+    });
+
+    it('renames a vault', async () => {
+      await vault.completeSetup(await vault.prepareVault('Mac', { name: 'Eski' }));
+      await vault.updateProfile(vault.activeVault()!.id, { name: '  Yeni  ', color: 'pink' });
+      const reloaded = await reload();
+      expect(reloaded.activeVault()).toMatchObject({ name: 'Yeni', color: 'pink' });
+    });
+
+    it('lists the database of the single-vault version as a vault', async () => {
+      const pending = await vault.prepareVault('Mac');
+      db.use(LEGACY_DB_NAME);
+      await db.putHeader(pending.header);
+      // As on the first start after the update: no vault list yet.
+      TestBed.inject(VaultRegistry).close();
+      await deleteDB('locry-vaults');
+
+      const reloaded = await reload();
+      expect(reloaded.vaults()).toEqual([expect.objectContaining({ id: pending.header.vaultId, dbName: LEGACY_DB_NAME, name: '' })]);
+      expect(reloaded.status()).toBe('locked');
+      await reloaded.unlockWithRecoveryKey(pending.recoveryKey);
+      expect(reloaded.isUnlocked()).toBe(true);
+    });
+
+    it('deletes a vault and its database after re-authentication', async () => {
+      await vault.completeSetup(await vault.prepareVault('Mac', { name: 'Kalacak' }));
+      vault.lock();
+      const doomed = await vault.prepareVault('Mac', { name: 'Silinecek' });
+      await vault.completeSetup(doomed);
+      await store.put('note', 'n1', { title: 'x' });
+
+      await expect(vault.deleteVault({ method: 'recovery', recoveryKey: 'wrong' })).rejects.toMatchObject({
+        code: 'invalidRecoveryKey',
+      });
+      await vault.deleteVault({ method: 'recovery', recoveryKey: doomed.recoveryKey });
+      expect(vault.vaults().map((v) => v.name)).toEqual(['Kalacak']);
+      expect(vault.activeVault()?.name).toBe('Kalacak');
+      expect(vault.status()).toBe('locked');
+      expect(vault.consumeLockDestination()).toBe('/');
+      const names = (await indexedDB.databases()).map((d) => d.name);
+      expect(names).not.toContain(`locry-vault-${doomed.header.vaultId}`);
+
+      await vault.unlockWithPasskey();
+      await vault.deleteVault({ method: 'passkey' });
+      expect(vault.status()).toBe('empty');
+      expect(vault.vaults()).toEqual([]);
+    });
   });
 });

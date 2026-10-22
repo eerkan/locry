@@ -6,6 +6,7 @@ geçiş anahtarına (passkey) bağlı bir anahtarla şifrelenmiş olarak durur.
 - Markdown notlar (bölünmüş önizleme, etiketler, sabitleme, arşiv)
 - Görevler (akıllı görünümler, listeler, alt görevler, öncelik, bitiş tarihi, sürükle-bırak)
 - Passkey ile giriş, kurtarma anahtarı, otomatik kilit
+- Birden fazla bağımsız kasa (ör. Kişisel ve İş), her biri kendi passkey'i ve kurtarma anahtarıyla
 - Sıkıştırılmış ve şifreli `.locry` yedekleri; Google Drive'a yedekleme
 - Tarayıcı içi yapay zekâ ile anlamsal arama (isteğe bağlı), ⌘K komut paleti
 - Kurulabilir PWA, çevrimdışı çalışma, TR/EN arayüz, açık/koyu tema
@@ -101,6 +102,14 @@ verileri de adrese bağlıdır. Verileri taşımak için:
 
 Ayarlar'daki passkey listesi her passkey'in hangi adrese ait olduğunu gösterir. Google Drive kullanıyorsan alan
 adını da OAuth istemcisinin *Authorized JavaScript origins* listesine ekle.
+
+## Kasalar
+
+Birden fazla kasa kullanabilirsin: kenar çubuğundaki kasa adına tıkla → **Yeni kasa**. Her kasanın kendi
+passkey'i, kurtarma anahtarı, veritabanı, yedekleri ve ayarları vardır; aynı anda yalnızca biri açıktır.
+Kasa değiştirmek açık kasayı kilitler. Kasa adları kilit ekranında görünebilmesi için şifrelenmez, bu yüzden
+içerik hakkında bilgi vermeyen adlar seç. Yedekten geri yüklerken kasa bu cihazda varsa yedek ona birleştirilir,
+yoksa ayrı bir kasa olarak eklenir. Kasa silme yalnızca bu cihazdaki veriyi siler; yedeklere dokunmaz.
 
 ## Güvenlik modeli
 

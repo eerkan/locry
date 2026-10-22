@@ -128,6 +128,15 @@ export async function unwrapVaultKeyRaw(
   }
 }
 
+/** Whether `key` is this header's vault key (it opens the check value). */
+export async function verifyVaultKey(header: VaultHeader, key: CryptoKey): Promise<boolean> {
+  try {
+    return utf8Decode(await open(key, header.check, checkAad(header.vaultId))) === CHECK_PLAINTEXT;
+  } catch {
+    return false;
+  }
+}
+
 /** Site a passkey slot belongs to; older slots without the field were created on localhost. */
 export function slotRpId(slot: KeySlot): string {
   return slot.rpId ?? 'localhost';

@@ -132,7 +132,6 @@ describe('semantic index and search', () => {
         },
       ],
     });
-    TestBed.inject(PreferencesService).setSemanticSearch(true);
     const vault = TestBed.inject(VaultService);
     notes = TestBed.inject(NotesStore);
     tasks = TestBed.inject(TasksStore);
@@ -141,6 +140,7 @@ describe('semantic index and search', () => {
     store = TestBed.inject(EncryptedStore);
     await vault.init();
     await vault.completeSetup(await vault.prepareVault('Mac'));
+    TestBed.inject(PreferencesService).setSemanticSearch(true);
     await settle();
   });
 
@@ -207,6 +207,6 @@ describe('semantic index and search', () => {
     const backups = TestBed.inject(BackupService);
     const file = await backups.export();
     const records = await openBackup(readBackup(file), TestBed.inject(VaultService).requireKey());
-    expect(records.map((r) => r.type)).toEqual(['note']);
+    expect(records.map((r) => r.type).filter((t) => t !== 'vault-profile')).toEqual(['note']);
   });
 });

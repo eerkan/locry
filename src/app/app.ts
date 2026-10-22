@@ -38,6 +38,8 @@ export class App {
       if (locks === seenLocks) return;
       seenLocks = locks;
       untracked(() => {
+        const destination = this.vault.consumeLockDestination();
+        if (destination) return void this.router.navigateByUrl(destination, { replaceUrl: true });
         const next = safeNext(this.router.url);
         void this.router.navigate([homeForStatus('locked')], { queryParams: next ? { next } : {}, replaceUrl: true });
       });

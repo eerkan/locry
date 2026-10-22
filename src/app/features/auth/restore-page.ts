@@ -21,7 +21,7 @@ import { DriveBackupList } from '../../shared/drive-backup-list';
 import { DriveSetup } from '../../shared/drive-setup';
 import { ReAuthPrompt } from '../../shared/reauth';
 
-/** First-run restore: brings a vault from a `.locry` backup onto an empty device. */
+/** Restore from the lock screen: adds the vault of a `.locry` backup, or merges into it if it is already here. */
 @Component({
   selector: 'app-restore-page',
   imports: [
@@ -105,7 +105,7 @@ import { ReAuthPrompt } from '../../shared/reauth';
         }
       </div>
       <div hlmCardFooter>
-        <a hlmBtn variant="ghost" routerLink="/setup">
+        <a hlmBtn variant="ghost" [routerLink]="vault.vaults().length ? '/unlock' : '/setup'">
           <ng-icon name="lucideArrowLeft" />
           {{ 'common.back' | transloco }}
         </a>
@@ -120,7 +120,7 @@ export class RestorePage {
   private readonly transloco = inject(TranslocoService);
   private readonly prefs = inject(PreferencesService);
 
-  private readonly vault = inject(VaultService);
+  protected readonly vault = inject(VaultService);
   protected readonly rpId = currentRpId();
   protected readonly drive = inject(DriveService);
   /** Set after a recovery-key restore with no passkey for this site: offer to create one. */
@@ -193,8 +193,13 @@ export class RestorePage {
     this.busy.set(true);
     this.unlockError.set(null);
     try {
-      const summary = await this.backups.restoreAsNewVault(await this.backups.open(backup, auth));
-      toast.success(this.transloco.translate('restore.done', { count: summary.restored }));
+      const summary = await this.backups.restoreAsVault(await this.backups.open(backup, auth));
+      const name = this.vault.activeVault()?.name || this.transloco.translate('vaults.unnamed');
+      toast.success(
+        summary.merged
+          ? this.transloco.translate('vaults.mergedInto', { name, count: summary.restored })
+          : this.transloco.translate('restore.done', { count: summary.restored }),
+      );
       if (auth.method === 'recovery' && !this.vault.localPasskeySlots().length) {
         this.sitePasskeyFor.set(auth.recoveryKey);
         return;

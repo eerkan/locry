@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideFingerprint, lucideInfo, lucideLock, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideFileUp, lucideFingerprint, lucideInfo, lucideLock, lucidePlus, lucideTriangleAlert } from '@ng-icons/lucide';
 import { HlmAlertImports } from '@spartan-ng/helm/alert';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
@@ -11,11 +11,12 @@ import { errorKey } from '../../core/i18n';
 import { safeNext } from '../../core/vault/vault.guard';
 import { passkeySites } from '../../core/vault/vault-header';
 import { VaultService } from '../../core/vault/vault.service';
+import { VaultLabel } from '../../shared/vault-ui';
 
 @Component({
   selector: 'app-unlock-page',
-  imports: [HlmAlertImports, HlmButton, HlmCardImports, HlmSpinner, NgIcon, RouterLink, TranslocoPipe],
-  providers: [provideIcons({ lucideLock, lucideFingerprint, lucideInfo, lucideTriangleAlert })],
+  imports: [HlmAlertImports, HlmButton, HlmCardImports, HlmSpinner, NgIcon, RouterLink, TranslocoPipe, VaultLabel],
+  providers: [provideIcons({ lucideLock, lucideFingerprint, lucideInfo, lucideTriangleAlert, lucidePlus, lucideFileUp })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section hlmCard>
@@ -26,6 +27,32 @@ import { VaultService } from '../../core/vault/vault.service';
         <h1 hlmCardTitle class="text-xl">{{ 'unlock.title' | transloco }}</h1>
         <p hlmCardDescription>{{ 'unlock.description' | transloco }}</p>
       </div>
+      @if (vault.vaults().length > 1) {
+        <div hlmCardContent>
+          <div role="radiogroup" class="flex flex-col gap-1.5" [attr.aria-label]="'vaults.choose' | transloco">
+            @for (v of vault.vaults(); track v.id) {
+              <button
+                type="button"
+                role="radio"
+                class="hover:bg-accent flex h-10 items-center rounded-md border px-3 text-start text-sm transition-colors"
+                [class.border-primary]="v.id === vault.activeVault()?.id"
+                [class.bg-accent]="v.id === vault.activeVault()?.id"
+                [attr.aria-checked]="v.id === vault.activeVault()?.id"
+                [disabled]="busy()"
+                (click)="choose(v.id)"
+              >
+                <app-vault-label [vault]="v" />
+              </button>
+            }
+          </div>
+        </div>
+      } @else if (vault.activeVault(); as only) {
+        @if (only.name) {
+          <div hlmCardContent class="flex justify-center text-sm font-medium">
+            <app-vault-label [vault]="only" />
+          </div>
+        }
+      }
       @if (error()) {
         <div hlmCardContent>
           <div hlmAlert variant="destructive">
@@ -57,6 +84,16 @@ import { VaultService } from '../../core/vault/vault.service';
         </button>
         <a hlmBtn variant="link" size="sm" routerLink="/recover" [queryParams]="{ next: next() }">{{ 'unlock.useRecovery' | transloco }}</a>
         }
+        <div class="text-muted-foreground mt-2 flex w-full flex-wrap justify-center gap-1 border-t pt-3">
+          <a hlmBtn variant="ghost" size="sm" routerLink="/setup">
+            <ng-icon name="lucidePlus" />
+            {{ 'vaults.newVault' | transloco }}
+          </a>
+          <a hlmBtn variant="ghost" size="sm" routerLink="/restore">
+            <ng-icon name="lucideFileUp" />
+            {{ 'vaults.addFromBackup' | transloco }}
+          </a>
+        </div>
       </div>
     </section>
   `,
@@ -74,6 +111,16 @@ export class UnlockPage {
 
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  protected async choose(vaultId: string): Promise<void> {
+    this.error.set(null);
+    try {
+      await this.vault.select(vaultId);
+    } catch (error) {
+      console.error(error);
+      this.error.set(errorKey(error));
+    }
+  }
 
   protected async unlock(): Promise<void> {
     this.busy.set(true);

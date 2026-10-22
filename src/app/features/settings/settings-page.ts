@@ -14,6 +14,7 @@ import { BackupCard } from './backup-card';
 import { DriveCard } from './drive-card';
 import { PasskeysCard } from './passkeys-card';
 import { RecoveryCard } from './recovery-card';
+import { VaultCard } from './vault-card';
 
 @Component({
   selector: 'app-settings-page',
@@ -29,11 +30,13 @@ import { RecoveryCard } from './recovery-card';
     PasskeysCard,
     RecoveryCard,
     TranslocoPipe,
+    VaultCard,
   ],
   providers: [provideIcons({ lucideLock })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mx-auto flex max-w-2xl flex-col gap-6">
+      <app-vault-card />
       <section hlmCard>
         <div hlmCardHeader>
           <h2 hlmCardTitle>{{ 'pages.settings.appearance' | transloco }}</h2>

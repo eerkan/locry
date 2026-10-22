@@ -50,6 +50,7 @@ export function injectEncryptedCollection<T extends { id: string }>(type: string
 
   effect(() => {
     const unlocked = vault.isUnlocked();
+    vault.activeVault()?.id;
     store.revision();
     untracked(() => (unlocked ? void load() : clear()));
   });

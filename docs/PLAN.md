@@ -114,6 +114,48 @@ Kasa Anahtarı (VK)  — rastgele 256 bit, tüm veriyi şifreler, asla düz hald
   çevrilmiş sayfa başlıkları
 - ✅ Lighthouse: erişilebilirlik / en iyi uygulamalar / SEO 100
 
+### Faz 7 — Çoklu kasa ✅ tamamlandı
+Kararlar: kasalar tamamen bağımsız (ayrı anahtar, passkey, kurtarma anahtarı, yedek ve ayarlar);
+aynı anda yalnızca biri açık.
+- ✅ Kasa kaydı ayrı bir IndexedDB'de (`locry-vaults`): kimlik, ad, renk, sıra. Kilit ekranında gösterilebilmesi
+  için ad ve renk şifresiz; içerik ve anahtarlar her zamanki gibi şifreli.
+- ✅ Her kasanın ayrı IndexedDB'si (`locry-vault-<vaultId>`); tek kasalı sürümün `locry` veritabanı ilk açılışta
+  kasa olarak kayda alınır, veri taşınmaz.
+- ✅ Kilit ekranında kasa seçici (son kullanılan hatırlanır), "Yeni kasa", "Yedekten kasa ekle"; kenar çubuğunda
+  kasa değiştirici (açık kasayı kilitleyip seçilenin kilit ekranına gider); Ayarlar'da ad / renk / silme
+  (passkey ya da kurtarma anahtarıyla yeniden doğrulama; dosya ve Drive yedeklerine dokunulmaz).
+- ✅ Passkey'ler parola yöneticisinde "Locry · <kasa adı>" olarak görünür. Planlanan "kasayı passkey'den bulma"
+  yapılmadı: her kasanın PRF tuzu farklı ve passkey seçilmeden doğru tuzu vermek `evalByCredential` ister
+  (Safari desteği belirsiz); aynı `user.id` bazı parola yöneticilerinde eski passkey'in üzerine yazabilir.
+- ✅ Kasa başına tercihler (son yedek, Drive otomatik yedek / saklama, akıllı arama); dil, tema, otomatik kilit
+  ve Client ID uygulama genelinde. Vektör dizini kasanın kendi veritabanında.
+- ✅ Kasa adı ve rengi yedeğin şifreli içeriğinde taşınır. Kilit ekranından geri yükleme: aynı kimlikli kasa
+  varsa onu açıp birleştirir, yoksa yeni kasa olarak ekler.
+- ✅ Testler: kasa ayrımı ve geçiş, yeniden yüklemede son kasa, yeniden adlandırma, eski veritabanının kayda
+  alınması, silme, yedekten ayrı kasa ekleme ve aynı kasaya birleştirme.
+
+### Faz 8 — Cihazlar arası eşitleme (telefon + bilgisayar) ⏳ planlandı
+Kararlar: kendi alan adında HTTPS (Caddy profili), Drive üzerinden otomatik eşitleme, çakışmada kopya.
+- **Silme kayıtları (tombstone):** silinen kayıt yerine şifreli bir silme işareti kalır, böylece silmeler
+  diğer cihazlara geçer; 90 günden eski işaretler temizlenir. Yedeklerdeki birleştirme de bunu kullanır.
+- **Eşitleme dosyaları:** Drive `appDataFolder` içinde her cihaz yalnızca kendi dosyasına yazar
+  (`sync-<vaultId>-<deviceId>.locry`, mevcut yedek biçimi: gzip + AES-256-GCM). Diğer cihazların
+  dosyaları okunup birleştirilir; aynı dosyaya iki cihaz yazmadığı için yazma çakışması olmaz.
+  Google yalnızca dosya adı, boyut ve zamanı görür.
+- **Kasa başlığı eşitlenir:** anahtar yuvaları birleşir (silinen yuvalar da işaretlenir), telefonda eklenen
+  passkey bilgisayarda da görünür. iCloud Anahtar Zinciri / Google Parola Yöneticisi ile eşitlenen passkey
+  her cihazda aynı PRF anahtarını verir; farklı ekosistemde cihaz başına passkey eklenir.
+- **Çakışma:** her kaydın son eşitlenen sürümü yerelde tutulur. Kayıt iki tarafta da değiştiyse yeni olan
+  kalır; notlarda diğeri "(çakışma)" kopyası olarak saklanır, görevlerde son değişen kazanır.
+- **Zamanlama:** kilit açılınca, sekmeye dönünce, değişiklikten ~30 sn sonra ve 5 dakikada bir; yalnızca
+  uygulama açıkken. Google belirteci (~1 saat) sessizce yenilenmeye çalışılır, olmazsa kenar çubuğundaki
+  durum göstergesi "Eşitlemek için bağlan" der. Vektörler eşitlenmez, her cihaz kendisi dizinler.
+- **Yeni cihaz:** kurulum ekranında "Drive'daki kasaya bağlan" → Google → kasa seç → passkey ya da kurtarma
+  anahtarı → bu adres için passkey önerisi.
+- **Mobil:** küçük ekranda kenar çubuğu, not düzenleyici ve görev ayrıntısı; güvenli alanlar; iOS/Android'de
+  ana ekrana ekleme. Belgeler: alan adı + Caddy, OAuth istemcisine alan adının eklenmesi.
+- Testler: tombstone birleştirme, çakışma kopyası, başlık birleştirme, iki sahte cihazla uçtan uca eşitleme.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`

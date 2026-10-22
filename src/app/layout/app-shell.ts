@@ -3,7 +3,17 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideListTodo, lucideLock, lucideNotebookPen, lucideSearch, lucideSettings } from '@ng-icons/lucide';
+import {
+  lucideChevronsUpDown,
+  lucideFileUp,
+  lucideListTodo,
+  lucideLock,
+  lucideNotebookPen,
+  lucidePlus,
+  lucideSearch,
+  lucideSettings,
+} from '@ng-icons/lucide';
+import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { HlmKbdImports } from '@spartan-ng/helm/kbd';
 import { HlmSeparator } from '@spartan-ng/helm/separator';
 import { HlmSidebarImports, HlmSidebarService, provideHlmSidebarConfig } from '@spartan-ng/helm/sidebar';
@@ -18,6 +28,7 @@ import { CommandPalette } from './command-palette';
 import { ShellUi } from './shell-ui.service';
 import { ShortcutsDialog } from './shortcuts';
 import { PreferencesMenu } from '../shared/preferences-menu';
+import { VaultLabel } from '../shared/vault-ui';
 
 interface NavItem {
   path: string;
@@ -41,9 +52,20 @@ interface NavItem {
     HlmKbdImports,
     Logo,
     PreferencesMenu,
+    HlmDropdownMenuImports,
+    VaultLabel,
   ],
   providers: [
-    provideIcons({ lucideNotebookPen, lucideListTodo, lucideSearch, lucideSettings, lucideLock }),
+    provideIcons({
+      lucideNotebookPen,
+      lucideListTodo,
+      lucideSearch,
+      lucideSettings,
+      lucideLock,
+      lucideChevronsUpDown,
+      lucidePlus,
+      lucideFileUp,
+    }),
     // A shell-level sidebar service so it sees this config (and stays out of the initial
     // bundle). ⌘B means bold in the editor, so the sidebar toggles with ⌘\\ (as in Notion).
     HlmSidebarService,
@@ -56,7 +78,57 @@ interface NavItem {
       <hlm-sidebar collapsible="icon">
         <hlm-sidebar-header class="px-3 py-3">
           <app-logo class="group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
+          @if (vault.activeVault(); as active) {
+            <ul hlmSidebarMenu class="mt-2">
+              <li hlmSidebarMenuItem>
+                <button
+                  hlmSidebarMenuButton
+                  class="border"
+                  [hlmDropdownMenuTrigger]="vaultMenu"
+                  align="start"
+                  [tooltip]="'vaults.switch' | transloco"
+                  [attr.aria-label]="'vaults.switch' | transloco"
+                >
+                  <app-vault-label [vault]="active" class="flex-1 group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
+                  <ng-icon name="lucideChevronsUpDown" class="text-muted-foreground" />
+                </button>
+              </li>
+            </ul>
+          }
         </hlm-sidebar-header>
+
+        <ng-template #vaultMenu>
+          <hlm-dropdown-menu class="w-56">
+            <hlm-dropdown-menu-label>{{ 'vaults.title' | transloco }}</hlm-dropdown-menu-label>
+            <hlm-dropdown-menu-group>
+              @for (v of vault.vaults(); track v.id) {
+                <button
+                  hlmDropdownMenuRadio
+                  [checked]="v.id === vault.activeVault()?.id"
+                  (triggered)="switchVault(v.id)"
+                >
+                  <hlm-dropdown-menu-radio-indicator />
+                  <app-vault-label [vault]="v" />
+                </button>
+              }
+            </hlm-dropdown-menu-group>
+            <hlm-dropdown-menu-separator />
+            <hlm-dropdown-menu-group>
+              <button hlmDropdownMenuItem (triggered)="vault.lock('/setup')">
+                <ng-icon name="lucidePlus" />
+                {{ 'vaults.newVault' | transloco }}
+              </button>
+              <button hlmDropdownMenuItem (triggered)="vault.lock('/restore')">
+                <ng-icon name="lucideFileUp" />
+                {{ 'vaults.addFromBackup' | transloco }}
+              </button>
+              <a hlmDropdownMenuItem routerLink="/settings" fragment="vault">
+                <ng-icon name="lucideSettings" />
+                {{ 'vaults.manage' | transloco }}
+              </a>
+            </hlm-dropdown-menu-group>
+          </hlm-dropdown-menu>
+        </ng-template>
 
         <hlm-sidebar-content>
           <hlm-sidebar-group>
@@ -170,6 +242,12 @@ export class AppShell {
     // Unlocked-only background services, kept out of the initial bundle.
     inject(AutoDriveBackupService);
     inject(StorageHealthService);
+  }
+
+  /** Locks the open vault and shows the lock screen of the chosen one. */
+  protected switchVault(vaultId: string): void {
+    if (vaultId === this.vault.activeVault()?.id) return;
+    void this.vault.select(vaultId).catch((error) => console.error(error));
   }
 
   /**

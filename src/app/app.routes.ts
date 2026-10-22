@@ -11,13 +11,13 @@ export const routes: Routes = [
       {
         path: 'setup',
         title: 'setup.title',
-        canMatch: [vaultStatusGuard('empty')],
+        canMatch: [vaultStatusGuard('empty', 'locked')],
         loadComponent: () => import('./features/auth/setup-page').then((m) => m.SetupPage),
       },
       {
         path: 'restore',
         title: 'restore.title',
-        canMatch: [vaultStatusGuard('empty')],
+        canMatch: [vaultStatusGuard('empty', 'locked')],
         loadComponent: () => import('./features/auth/restore-page').then((m) => m.RestorePage),
       },
       {

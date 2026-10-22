@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { EMBEDDING_RECORD_TYPE } from '../ai/documents';
 import { EncryptedStore } from '../storage/encrypted-store.service';
+import { type VaultColor, isVaultColor } from '../vault/vault-registry';
 import { type ReAuth, VaultService } from '../vault/vault.service';
 import { type BackupRecord, type SealedBackup, createBackup, openBackup, readBackup } from './backup-format';
 
@@ -24,6 +25,17 @@ export interface OpenedBackup {
 
 export type BackupUnlock = { method: 'current' } | ReAuth;
 
+/**
+ * The vault's name and color travel inside the encrypted backup as this pseudo-record, so a
+ * restore on another device can show the same name. It is never written to the store.
+ */
+const PROFILE_RECORD = 'vault-profile';
+
+interface ProfileValue {
+  name: string;
+  color: VaultColor;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BackupService {
   private readonly vault = inject(VaultService);
@@ -35,6 +47,11 @@ export class BackupService {
     if (!header) throw new Error('No vault');
     // Vectors are derived data: leave them out and rebuild after a restore.
     const records = (await this.store.exportAll()).filter((r) => r.type !== EMBEDDING_RECORD_TYPE);
+    const profile = this.vault.activeVault();
+    if (profile) {
+      const value: ProfileValue = { name: profile.name, color: profile.color };
+      records.push({ type: PROFILE_RECORD, id: PROFILE_RECORD, value });
+    }
     return createBackup(header, this.vault.requireKey(), records);
   }
 
@@ -65,7 +82,7 @@ export class BackupService {
 
   /** Applies an opened backup to the unlocked vault. */
   async restore(opened: OpenedBackup, mode: RestoreMode): Promise<RestoreSummary> {
-    const incoming = opened.records;
+    const incoming = contentRecords(opened.records);
     let toWrite = incoming;
     let keptLocal = 0;
 
@@ -85,13 +102,20 @@ export class BackupService {
   }
 
   /**
-   * First-run restore on an empty device: adopts the backup's vault (same key slots, so the
-   * same passkeys and recovery key keep working) and writes its records.
+   * Restore from the lock screen. A vault that is not on this device yet is added (same key
+   * slots, so the same passkeys and recovery key keep working); if it already is, it is
+   * opened and the backup is merged into it.
    */
-  async restoreAsNewVault(opened: OpenedBackup): Promise<RestoreSummary> {
-    await this.vault.adoptVault(opened.backup.header.vault, opened.key);
-    await this.store.importAll(opened.records, true);
-    return { restored: opened.records.length, keptLocal: 0, byType: countByType(opened.records) };
+  async restoreAsVault(opened: OpenedBackup): Promise<RestoreSummary & { merged: boolean }> {
+    const header = opened.backup.header.vault;
+    if (this.vault.hasVault(header.vaultId)) {
+      await this.vault.unlockWithKey(header.vaultId, opened.key);
+      return { ...(await this.restore(opened, 'merge')), merged: true };
+    }
+    const records = contentRecords(opened.records);
+    await this.vault.adoptVault(header, opened.key, backupProfile(opened.records));
+    await this.store.importAll(records, true);
+    return { restored: records.length, keptLocal: 0, byType: countByType(records), merged: false };
   }
 }
 
@@ -100,6 +124,19 @@ function isNewer(incoming: unknown, existing: unknown): boolean {
   const a = (incoming as { updatedAt?: unknown })?.updatedAt;
   const b = (existing as { updatedAt?: unknown })?.updatedAt;
   return typeof a === 'string' && typeof b === 'string' && a > b;
+}
+
+function contentRecords(records: BackupRecord[]): BackupRecord[] {
+  return records.filter((r) => r.type !== PROFILE_RECORD);
+}
+
+/** Name and color stored in a backup; backups made before multiple vaults have none. */
+function backupProfile(records: BackupRecord[]): ProfileValue {
+  const value = records.find((r) => r.type === PROFILE_RECORD)?.value as Partial<ProfileValue> | undefined;
+  return {
+    name: typeof value?.name === 'string' ? value.name.slice(0, 60) : '',
+    color: isVaultColor(value?.color) ? value.color : 'blue',
+  };
 }
 
 function countByType(records: BackupRecord[]): Record<string, number> {

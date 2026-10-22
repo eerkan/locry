@@ -224,7 +224,7 @@ describe('vault management and restore', () => {
       code: 'invalidRecoveryKey',
     });
     const opened = await second.backups.open(backup, { method: 'passkey' });
-    await second.backups.restoreAsNewVault(opened);
+    await second.backups.restoreAsVault(opened);
     expect(second.vault.status()).toBe('unlocked');
     expect(await second.store.get('task', 't1')).toEqual({ title: 'Taşınacak görev' });
 
@@ -232,6 +232,46 @@ describe('vault management and restore', () => {
     second.vault.lock();
     await second.vault.unlockWithRecoveryKey(setup.recoveryKey);
     expect(second.vault.header()?.vaultId).toBe(first.vault.header()?.vaultId);
+  });
+
+  it('restores a backup as a separate vault with its name, next to an existing vault', async () => {
+    const first = await boot();
+    await first.vault.completeSetup(await first.vault.prepareVault('Mac', { name: 'İş', color: 'violet' }));
+    await first.store.put('note', 'w1', { title: 'İş notu' });
+    const file = await first.backups.export();
+    TestBed.inject(LocryDb).close();
+
+    globalThis.indexedDB = new IDBFactory();
+    const second = await boot();
+    const personal = await second.vault.prepareVault('Mac', { name: 'Kişisel' });
+    await second.vault.completeSetup(personal);
+    await second.store.put('note', 'p1', { title: 'Kişisel not' });
+    second.vault.lock();
+
+    authenticators.use = 'cred-1';
+    const summary = await second.backups.restoreAsVault(await second.backups.open(second.backups.read(file), { method: 'passkey' }));
+    expect(summary).toMatchObject({ merged: false, restored: 1 });
+    expect(second.vault.vaults().map((v) => [v.name, v.color])).toEqual([
+      ['Kişisel', 'blue'],
+      ['İş', 'violet'],
+    ]);
+    expect((await second.store.list<{ title: string }>('note')).map((n) => n.title)).toEqual(['İş notu']);
+    expect(await second.store.list('vault-profile')).toEqual([]);
+  });
+
+  it('merges a backup into the same vault when it is already on this device', async () => {
+    const { vault, store, backups } = await boot();
+    await vault.completeSetup(await vault.prepareVault('Mac', { name: 'Tek' }));
+    await store.put('note', 'a', { title: 'yedekte', updatedAt: '2026-01-01' });
+    const file = await backups.export();
+    await store.put('note', 'b', { title: 'sonradan', updatedAt: '2026-01-02' });
+    vault.lock();
+
+    const summary = await backups.restoreAsVault(await backups.open(backups.read(file), { method: 'passkey' }));
+    expect(summary.merged).toBe(true);
+    expect(vault.vaults()).toHaveLength(1);
+    expect(vault.isUnlocked()).toBe(true);
+    expect((await store.list<{ title: string }>('note')).map((n) => n.title).sort()).toEqual(['sonradan', 'yedekte']);
   });
 
   it('records the site of each passkey and only uses passkeys of the current site', async () => {
@@ -257,7 +297,7 @@ describe('vault management and restore', () => {
     const second = await boot();
     const backup = second.backups.read(file);
     await expect(second.backups.open(backup, { method: 'passkey' })).rejects.toMatchObject({ code: 'noPasskeyForSite' });
-    await second.backups.restoreAsNewVault(await second.backups.open(backup, { method: 'recovery', recoveryKey: setup.recoveryKey }));
+    await second.backups.restoreAsVault(await second.backups.open(backup, { method: 'recovery', recoveryKey: setup.recoveryKey }));
     expect(await second.store.get('note', 'n1')).toEqual({ title: 'Domainden gelen not' });
     expect(second.vault.localPasskeySlots()).toEqual([]);
 
