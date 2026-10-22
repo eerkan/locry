@@ -13,6 +13,7 @@ import { routes } from './app.routes';
 import { InlineTranslocoLoader } from './core/i18n';
 import { LocryTitleStrategy } from './core/title-strategy';
 import { PreferencesService } from './core/preferences.service';
+import { RuntimeConfigService } from './core/runtime-config.service';
 import { VaultService } from './core/vault/vault.service';
 import { provideServiceWorker } from '@angular/service-worker';
 
@@ -37,7 +38,11 @@ export const appConfig: ApplicationConfig = {
       const transloco = inject(TranslocoService);
       const lang = inject(PreferencesService).lang();
       transloco.setActiveLang(lang);
-      return Promise.all([firstValueFrom(transloco.load(lang)), inject(VaultService).init()]).then(
+      return Promise.all([
+        firstValueFrom(transloco.load(lang)),
+        inject(VaultService).init(),
+        inject(RuntimeConfigService).load(),
+      ]).then(
         () => undefined,
       );
     }),

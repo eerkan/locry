@@ -3,6 +3,7 @@
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
+import { runtimeConfig } from './runtime-config.mjs';
 
 const root = resolve(import.meta.dirname, '../dist/locry/browser');
 const port = Number(process.env.PORT ?? 4200);
@@ -68,6 +69,13 @@ createServer((req, res) => {
   }
 
   const urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
+
+  // Built from the environment on every request, so changing .env only needs a restart.
+  if (urlPath === '/config.json') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(runtimeConfig()));
+    return;
+  }
   // Client-side routes (no file extension) get the app shell.
   const file = fileFor(urlPath) ?? (extname(urlPath) ? null : join(root, 'index.html'));
   if (!file) {

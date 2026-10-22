@@ -3,9 +3,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInput } from '@spartan-ng/helm/input';
+import { isGoogleClientId } from '../core/drive/google-auth';
 import { PreferencesService } from '../core/preferences.service';
-
-const CLIENT_ID_PATTERN = /^[\w-]+\.apps\.googleusercontent\.com$/;
 
 /** Explains the one-time Google Cloud setup and stores the user's OAuth Client ID. */
 @Component({
@@ -61,7 +60,7 @@ export class DriveSetup {
 
   protected save(): void {
     const clientId = this.draft().trim();
-    if (!CLIENT_ID_PATTERN.test(clientId)) {
+    if (!isGoogleClientId(clientId)) {
       this.invalid.set(true);
       return;
     }

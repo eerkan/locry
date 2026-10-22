@@ -1,6 +1,13 @@
 import { DOCUMENT, Injectable, inject } from '@angular/core';
 
 export const DRIVE_APPDATA_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+
+const CLIENT_ID_PATTERN = /^[\w-]+\.apps\.googleusercontent\.com$/;
+
+/** Shape check for an OAuth Client ID (it is public; this only catches paste mistakes). */
+export function isGoogleClientId(value: string): boolean {
+  return CLIENT_ID_PATTERN.test(value.trim());
+}
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 /** Refresh a little early so a request never starts with a token about to expire. */
 const EXPIRY_MARGIN_MS = 60_000;

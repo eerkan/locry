@@ -2,6 +2,7 @@ import { Injectable, InjectionToken, computed, effect, inject, signal, untracked
 import { BACKUP_FORMAT_VERSION, type SealedBackup, backupFileName } from '../backup/backup-format';
 import { BackupService } from '../backup/backup.service';
 import { PreferencesService } from '../preferences.service';
+import { RuntimeConfigService } from '../runtime-config.service';
 import { VaultService } from '../vault/vault.service';
 import { type DriveFile, DriveApi, type Fetch } from './drive-api';
 import { type AccessToken, DriveError, GoogleAuth } from './google-auth';
@@ -31,13 +32,19 @@ export class DriveService {
   private readonly prefs = inject(PreferencesService);
   private readonly backups = inject(BackupService);
   private readonly vault = inject(VaultService);
+  private readonly runtime = inject(RuntimeConfigService);
   private readonly api = new DriveApi(() => this.requireToken(), inject(DRIVE_FETCH));
 
   private readonly token = signal<AccessToken | null>(null);
   private readonly _files = signal<DriveFile[] | null>(null);
   private readonly _busy = signal(false);
 
-  readonly configured = computed(() => !!this.prefs.driveClientId().trim());
+  /** The user's own Client ID (advanced setting), if they entered one. */
+  readonly customClientId = computed(() => this.prefs.driveClientId().trim() || null);
+  /** The user's own Client ID wins over the one built into this installation. */
+  readonly clientId = computed(() => this.customClientId() ?? this.runtime.googleClientId());
+  readonly hasBuiltInClientId = computed(() => !!this.runtime.googleClientId());
+  readonly configured = computed(() => !!this.clientId());
   readonly connected = computed(() => !!this.token());
   readonly busy = this._busy.asReadonly();
   /** Backups in Drive, newest first; null until listed. */
@@ -61,7 +68,7 @@ export class DriveService {
   /** Asks Google for access (popup on first use) and lists the backups. Call from a click. */
   async connect(): Promise<void> {
     await this.run(async () => {
-      this.token.set(await this.auth.requestToken(this.prefs.driveClientId()));
+      this.token.set(await this.auth.requestToken(this.clientId() ?? ''));
       await this.loadFiles();
     });
   }
@@ -146,7 +153,7 @@ export class DriveService {
   private async withToken<T>(interactive: boolean, task: () => Promise<T>): Promise<T> {
     if (!this.hasValidToken()) {
       if (!interactive) throw new DriveError('unauthorized');
-      this.token.set(await this.auth.requestToken(this.prefs.driveClientId()));
+      this.token.set(await this.auth.requestToken(this.clientId() ?? ''));
     }
     try {
       return await task();

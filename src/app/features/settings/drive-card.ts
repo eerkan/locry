@@ -51,6 +51,12 @@ import { RestoreDialog } from '../../shared/restore-dialog';
         @if (!drive.configured() || editing()) {
           <app-drive-setup [cancellable]="editing()" (saved)="clientIdSaved()" (cancelled)="editing.set(false)" />
         } @else {
+          @if (!drive.connected() && !drive.files()) {
+            <div class="bg-muted/50 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center">
+              <p class="flex-1 text-sm">{{ 'drive.connectHint' | transloco }}</p>
+              <button hlmBtn [disabled]="drive.busy()" (click)="connect()">{{ 'drive.connect' | transloco }}</button>
+            </div>
+          }
           <p class="text-muted-foreground flex items-center gap-2 text-xs">
             <ng-icon name="lucideShieldCheck" />
             {{ 'drive.privacyNote' | transloco }}
@@ -99,7 +105,19 @@ import { RestoreDialog } from '../../shared/restore-dialog';
 
       @if (drive.configured() && !editing()) {
         <div hlmCardFooter class="flex-wrap justify-between gap-2">
-          <button hlmBtn variant="link" size="sm" class="px-0" (click)="editing.set(true)">{{ 'drive.changeClientId' | transloco }}</button>
+          <div class="text-muted-foreground flex flex-wrap items-center gap-x-3 text-xs">
+            @if (drive.customClientId()) {
+              <span>{{ 'drive.usingOwnClientId' | transloco }}</span>
+              <button hlmBtn variant="link" size="sm" class="h-auto px-0 text-xs" (click)="editing.set(true)">{{ 'drive.changeClientId' | transloco }}</button>
+              @if (drive.hasBuiltInClientId()) {
+                <button hlmBtn variant="link" size="sm" class="h-auto px-0 text-xs" (click)="useBuiltIn()">{{ 'drive.useBuiltIn' | transloco }}</button>
+              }
+            } @else {
+              <button hlmBtn variant="link" size="sm" class="text-muted-foreground h-auto px-0 text-xs" (click)="editing.set(true)">
+                {{ 'drive.useOwnClientId' | transloco }}
+              </button>
+            }
+          </div>
           <div class="flex flex-wrap gap-2">
             @if (drive.connected()) {
               <button hlmBtn variant="ghost" size="sm" [disabled]="drive.busy()" (click)="disconnect()">
@@ -110,8 +128,6 @@ import { RestoreDialog } from '../../shared/restore-dialog';
                 <ng-icon name="lucideRefreshCw" />
                 {{ 'drive.refresh' | transloco }}
               </button>
-            } @else {
-              <button hlmBtn variant="outline" size="sm" [disabled]="drive.busy()" (click)="connect()">{{ 'drive.connect' | transloco }}</button>
             }
             <button hlmBtn size="sm" [disabled]="drive.busy()" (click)="backupNow()">
               @if (drive.busy()) {
@@ -159,8 +175,14 @@ export class DriveCard {
 
   /** A different Client ID means a different Google project: drop the old session. */
   protected clientIdSaved(): void {
-    if (this.editing()) void this.drive.disconnect();
+    void this.drive.disconnect();
     this.editing.set(false);
+  }
+
+  /** Drops the user's own Client ID and goes back to the one built into this installation. */
+  protected useBuiltIn(): void {
+    this.prefs.setDrive({ driveClientId: '' });
+    void this.drive.disconnect();
   }
 
   protected connect(): Promise<void> {

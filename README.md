@@ -58,6 +58,7 @@ cp .env.example .env
 |---|---|---|
 | `LOCRY_PORT` | `4200` | Host tarafındaki port → `http://localhost:<port>` |
 | `LOCRY_BIND_ADDRESS` | `127.0.0.1` | Portun açılacağı arayüz; yalnızca bu makine |
+| `LOCRY_GOOGLE_CLIENT_ID` | boş | Gömülü Google Client ID; kullanıcılar sadece "Google ile bağlan"a basar |
 
 - İmaj çok aşamalıdır: derleme Node 24 ile yapılır, son imajda yalnızca derlenmiş uygulama ve bağımlılıksız
   küçük bir sunucu bulunur. Konteyner root olmayan kullanıcıyla, salt okunur dosya sistemiyle ve yetkileri
@@ -91,16 +92,23 @@ Passkey PRF desteği: Chrome/Edge 118+, Safari 18+; iCloud Anahtar Zinciri, Goog
 
 ## Google Drive yedeği
 
-Locry'nin sunucusu olmadığı için Drive'a kendi Google Cloud projen üzerinden bağlanır (bir kez):
+Kullanıcı için: **Ayarlar → Google Drive → Google ile bağlan**. Yedekler Drive'da yalnızca Locry'nin erişebildiği
+gizli uygulama klasörüne (`appDataFolder`) şifreli olarak yazılır.
 
-1. [console.cloud.google.com](https://console.cloud.google.com) adresinde bir proje oluştur.
-2. **APIs & Services → Library** bölümünden **Google Drive API**'yi etkinleştir.
-3. **OAuth consent screen**: External, yayın durumu Testing, kendi hesabını test kullanıcısı olarak ekle.
-4. **Credentials → Create credentials → OAuth client ID** → *Web application*;
-   **Authorized JavaScript origins**: `http://localhost:4200`.
-5. Client ID'yi Locry'de **Ayarlar → Google Drive** kartına yapıştır. Client secret gerekmez.
+Bunun için kurulumu çalıştıran kişinin **bir kez** bir Google OAuth Client ID alıp `.env`'deki
+`LOCRY_GOOGLE_CLIENT_ID` değişkenine yazması gerekir (gizli değildir, client secret gerekmez):
 
-Yedekler Drive'da yalnızca Locry'nin erişebildiği gizli uygulama klasörüne (`appDataFolder`) yazılır.
+1. [console.cloud.google.com](https://console.cloud.google.com) adresinde bir proje oluştur, **Google Drive API**'yi etkinleştir.
+2. **OAuth consent screen**: External; uygulama adı, destek e-postası ve gizlilik politikası bağlantısı.
+3. **Credentials → Create credentials → OAuth client ID** → *Web application*;
+   **Authorized JavaScript origins**: `http://localhost:4200` (kullanılan diğer portlar da).
+4. Uygulamayı yayınla (*In production*). Locry yalnızca `drive.appdata` iznini ister; Google bunu hassas olmayan
+   (non-sensitive) izin olarak sınıflandırır, güvenlik incelemesi gerekmez. *Testing* durumunda yalnızca eklenen
+   test kullanıcıları bağlanabilir.
+
+Değer çalışma anında `/config.json` olarak okunur: Docker'da `.env`'i değiştirip `docker compose up -d` yeterlidir,
+`yarn start` ve `yarn serve:prod` de `.env`'i okur. `LOCRY_GOOGLE_CLIENT_ID` boşsa her kullanıcı Ayarlar'da kendi
+Client ID'sini girebilir; bu seçenek gömülü bir ID varken de **Gelişmiş** olarak durur.
 
 ## Anlamsal arama
 

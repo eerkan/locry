@@ -21,3 +21,4 @@ Dockerfile
 compose.yaml
 .dockerignore
 .env
+public/config.json

@@ -18,7 +18,7 @@ WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=4200
 
 COPY --from=build --chown=node:node /app/dist/locry/browser ./dist/locry/browser
-COPY --chown=node:node scripts/serve.mjs ./scripts/serve.mjs
+COPY --chown=node:node scripts/serve.mjs scripts/runtime-config.mjs ./scripts/
 
 USER node
 EXPOSE 4200

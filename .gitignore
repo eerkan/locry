@@ -51,3 +51,6 @@ Thumbs.db
 CODEBASE.md
 # Local environment (see .env.example)
 .env
+
+# Generated from .env by scripts/write-config.mjs
+/public/config.json

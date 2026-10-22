@@ -11,6 +11,9 @@ services:
       # Loopback by default: the app is for this machine. Changing the port changes the
       # browser origin, so data stored under another port is not visible here.
       - "${LOCRY_BIND_ADDRESS:-127.0.0.1}:${LOCRY_PORT:-4200}:4200"
+    environment:
+      # Built-in Google Client ID for Drive backups, from .env (see .env.example).
+      LOCRY_GOOGLE_CLIENT_ID: ${LOCRY_GOOGLE_CLIENT_ID:-}
     # The container holds no user data (everything lives encrypted in the browser),
     # so it can run read-only and without privileges.
     read_only: true
