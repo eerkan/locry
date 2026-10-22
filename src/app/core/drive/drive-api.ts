@@ -4,13 +4,14 @@ const API = 'https://www.googleapis.com/drive/v3';
 const UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3';
 /** Multipart uploads are limited to 5 MB; larger files use a resumable session. */
 const MULTIPART_LIMIT = 5 * 1024 * 1024;
-const FILE_FIELDS = 'id,name,size,createdTime,appProperties';
+const FILE_FIELDS = 'id,name,size,createdTime,modifiedTime,appProperties';
 
 export interface DriveFile {
   id: string;
   name: string;
   size: number;
   createdTime: string;
+  modifiedTime: string;
   appProperties: Record<string, string>;
 }
 
@@ -19,6 +20,7 @@ interface RawDriveFile {
   name: string;
   size?: string;
   createdTime: string;
+  modifiedTime?: string;
   appProperties?: Record<string, string>;
 }
 
@@ -52,10 +54,24 @@ export class DriveApi {
 
   async upload(name: string, content: Uint8Array<ArrayBuffer>, appProperties: Record<string, string>): Promise<DriveFile> {
     const metadata = { name, parents: ['appDataFolder'], mimeType: 'application/octet-stream', appProperties };
+    return this.send('POST', `${UPLOAD_API}/files`, metadata, content);
+  }
+
+  /** Replaces the content (and app properties) of an existing file. */
+  async update(id: string, content: Uint8Array<ArrayBuffer>, appProperties: Record<string, string>): Promise<DriveFile> {
+    return this.send('PATCH', `${UPLOAD_API}/files/${encodeURIComponent(id)}`, { appProperties }, content);
+  }
+
+  private async send(
+    method: 'POST' | 'PATCH',
+    url: string,
+    metadata: object,
+    content: Uint8Array<ArrayBuffer>,
+  ): Promise<DriveFile> {
     return toDriveFile(
       (content.length <= MULTIPART_LIMIT
-        ? await this.multipart(metadata, content)
-        : await this.resumable(metadata, content)) as RawDriveFile,
+        ? await this.multipart(method, url, metadata, content)
+        : await this.resumable(method, url, metadata, content)) as RawDriveFile,
     );
   }
 
@@ -68,7 +84,12 @@ export class DriveApi {
     await this.request(`${API}/files/${encodeURIComponent(id)}`, { method: 'DELETE' });
   }
 
-  private async multipart(metadata: object, content: Uint8Array<ArrayBuffer>): Promise<unknown> {
+  private async multipart(
+    method: string,
+    url: string,
+    metadata: object,
+    content: Uint8Array<ArrayBuffer>,
+  ): Promise<unknown> {
     const boundary = `locry-${crypto.randomUUID()}`;
     const body = new Blob([
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
@@ -76,16 +97,21 @@ export class DriveApi {
       content,
       `\r\n--${boundary}--`,
     ]);
-    return this.json(`${UPLOAD_API}/files?uploadType=multipart&fields=${FILE_FIELDS}`, {
-      method: 'POST',
+    return this.json(`${url}?uploadType=multipart&fields=${FILE_FIELDS}`, {
+      method,
       headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
       body,
     });
   }
 
-  private async resumable(metadata: object, content: Uint8Array<ArrayBuffer>): Promise<unknown> {
-    const session = await this.request(`${UPLOAD_API}/files?uploadType=resumable&fields=${FILE_FIELDS}`, {
-      method: 'POST',
+  private async resumable(
+    method: string,
+    url: string,
+    metadata: object,
+    content: Uint8Array<ArrayBuffer>,
+  ): Promise<unknown> {
+    const session = await this.request(`${url}?uploadType=resumable&fields=${FILE_FIELDS}`, {
+      method,
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'X-Upload-Content-Type': 'application/octet-stream',
@@ -136,6 +162,7 @@ function toDriveFile(raw: RawDriveFile): DriveFile {
     name: raw.name,
     size: Number(raw.size ?? 0),
     createdTime: raw.createdTime,
+    modifiedTime: raw.modifiedTime ?? raw.createdTime,
     appProperties: raw.appProperties ?? {},
   };
 }

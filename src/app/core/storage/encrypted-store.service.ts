@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { open, seal } from '../crypto/aead';
 import { utf8Decode, utf8Encode } from '../crypto/bytes';
+import { LOCAL_ONLY_TYPES, TOMBSTONE_TYPE, type TombstoneValue } from '../sync/sync-records';
 import { VaultService } from '../vault/vault.service';
 import { LocryDb } from './locry-db';
 
@@ -13,13 +14,17 @@ export class EncryptedStore {
   private readonly db = inject(LocryDb);
   private readonly vault = inject(VaultService);
   private readonly _revision = signal(0);
+  private readonly _changes = signal(0);
 
-  /** Bumped after bulk changes (restore) so in-memory collections reload. */
+  /** Bumped after bulk changes (restore, sync) so in-memory collections reload. */
   readonly revision = this._revision.asReadonly();
+  /** Bumped after every local change to synced data; the sync engine listens to it. */
+  readonly changes = this._changes.asReadonly();
 
   async put<T>(type: string, id: string, value: T): Promise<void> {
     const box = await seal(this.vault.requireKey(), utf8Encode(JSON.stringify(value)), aad(type, id));
     await this.db.putRecord({ id, type, box });
+    if (!LOCAL_ONLY_TYPES.has(type)) this._changes.update((n) => n + 1);
   }
 
   async get<T>(type: string, id: string): Promise<T | undefined> {
@@ -33,6 +38,17 @@ export class EncryptedStore {
     return Promise.all(records.map((r) => this.decrypt<T>(r.type, r.id, r.box)));
   }
 
+  /**
+   * Deletes a record. Synced types leave a tombstone so other devices delete it too;
+   * local-only types are removed outright.
+   */
+  async remove(type: string, id: string): Promise<void> {
+    if (LOCAL_ONLY_TYPES.has(type)) return this.db.deleteRecord(id);
+    const tombstone: TombstoneValue = { type, deletedAt: new Date().toISOString() };
+    await this.put(TOMBSTONE_TYPE, id, tombstone);
+  }
+
+  /** Removes a record without leaving a tombstone. */
   async delete(id: string): Promise<void> {
     await this.db.deleteRecord(id);
   }
@@ -59,6 +75,21 @@ export class EncryptedStore {
       })),
     );
     await this.db.writeRecords(sealed, replace);
+    this._revision.update((n) => n + 1);
+  }
+
+  /** Writes changes received from another device in one transaction, then notifies collections. */
+  async applySync(writes: { type: string; id: string; value: unknown }[], deletes: string[] = []): Promise<void> {
+    if (!writes.length && !deletes.length) return;
+    const key = this.vault.requireKey();
+    const sealed = await Promise.all(
+      writes.map(async (r) => ({
+        id: r.id,
+        type: r.type,
+        box: await seal(key, utf8Encode(JSON.stringify(r.value)), aad(r.type, r.id)),
+      })),
+    );
+    await this.db.writeRecords(sealed, false, deletes);
     this._revision.update((n) => n + 1);
   }
 

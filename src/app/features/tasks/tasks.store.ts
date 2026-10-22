@@ -122,10 +122,11 @@ export class TasksStore {
 
   /** Persists a new manual order for the given tasks (as shown, top to bottom). */
   async reorder(orderedIds: string[]): Promise<void> {
+    const now = new Date().toISOString();
     const changed = orderedIds
       .map((id, order) => ({ task: this.taskById(id), order }))
       .filter((entry): entry is { task: Task; order: number } => !!entry.task && entry.task.order !== entry.order)
-      .map(({ task, order }) => ({ ...task, order }));
+      .map(({ task, order }) => ({ ...task, order, updatedAt: now }));
     if (changed.length) await this.taskCollection.put(...changed);
   }
 

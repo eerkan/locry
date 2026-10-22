@@ -3,7 +3,7 @@ import type { Translation } from './tr';
 export const en: Translation = {
   app: {
     name: 'Locry',
-    tagline: 'Your encrypted notes and tasks, on this device only.',
+    tagline: 'Your encrypted notes and tasks. Only you hold the key.',
     updateReady: 'A new version of Locry is ready.',
     reload: 'Reload',
   },
@@ -140,6 +140,38 @@ export const en: Translation = {
     deleteConfirm: 'Verify and delete vault',
     deleted: 'Vault deleted',
     mergedInto: 'The backup belonged to “{{name}}”; merged {{count}} records into that vault.',
+  },
+  sync: {
+    title: 'Sync across devices',
+    description:
+      'Keeps this vault in sync with your phone and other computers through Google Drive. Each device writes its own encrypted copy; Google cannot read the content.',
+    howItWorks:
+      'Sync only runs while Locry is open: when you unlock, when you return to the tab, about 30 seconds after a change and every 5 minutes. On the other device, open Locry at the same address (e.g. your domain); if your password manager syncs passkeys, they work there too.',
+    needsDrive: 'Sync uses Google Drive. Set up the connection in the Google Drive card below first.',
+    enable: 'Turn on sync',
+    disable: 'Turn off sync',
+    syncNow: 'Sync now',
+    connect: 'Connect and sync',
+    statusOff: 'Off',
+    statusIdle: 'Synced',
+    statusSyncing: 'Syncing…',
+    statusNeedsAuth: 'Connect to Google to sync',
+    statusError: 'Sync failed',
+    lastSync: 'Last sync: {{time}}',
+    never: 'Not synced yet.',
+    devices: 'Devices syncing this vault',
+    thisDevice: 'this device',
+    done: 'Synced',
+    received: 'Synced: received {{count}} changes from other devices.',
+    conflicts: 'A note was changed on two devices; the older version was kept as a separate “(conflict)” note ({{count}}).',
+    conflictSuffix: 'conflict',
+    enabled: 'Sync turned on',
+    disabled: 'Sync turned off. The sync copies in Drive are kept.',
+    failed: 'Sync failed.',
+    fromDrive: 'Synced vaults',
+    fromDriveHint: 'Vaults with sync turned on on another device. The vault you pick is added to this device with sync turned on.',
+    noSnapshots: 'No synced vaults in Drive. Turn on Settings → Sync across devices on the other device first.',
+    snapshot: '{{device}} · {{time}}',
   },
   pages: {
     notes: {

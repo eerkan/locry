@@ -36,6 +36,11 @@ export interface VaultHeader {
   createdAt: string;
   keySlots: KeySlot[];
   check: SealedBox;
+  /**
+   * Ids of slots removed from this vault (passkeys removed, replaced recovery keys), so a
+   * device that still has them drops them when syncing instead of bringing them back.
+   */
+  removedSlotIds?: string[];
 }
 
 /** Freshly generated vault key material. `raw` must be wiped once all slots are created. */

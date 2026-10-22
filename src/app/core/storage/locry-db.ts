@@ -92,11 +92,18 @@ export class LocryDb {
     return (await this.db()).getAll('records');
   }
 
-  /** Writes records in one transaction; with `replace`, existing records are removed first. */
-  async writeRecords(records: StoredRecord[], replace: boolean): Promise<void> {
+  /**
+   * Writes (and optionally deletes) records in one transaction; with `replace`, existing
+   * records are removed first.
+   */
+  async writeRecords(records: StoredRecord[], replace: boolean, deletes: string[] = []): Promise<void> {
     const tx = (await this.db()).transaction('records', 'readwrite');
     if (replace) await tx.store.clear();
-    await Promise.all([...records.map((record) => tx.store.put(record)), tx.done]);
+    await Promise.all([
+      ...records.map((record) => tx.store.put(record)),
+      ...deletes.map((id) => tx.store.delete(id)),
+      tx.done,
+    ]);
   }
 
   close(): void {

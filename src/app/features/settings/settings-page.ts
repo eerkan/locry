@@ -14,6 +14,7 @@ import { BackupCard } from './backup-card';
 import { DriveCard } from './drive-card';
 import { PasskeysCard } from './passkeys-card';
 import { RecoveryCard } from './recovery-card';
+import { SyncCard } from './sync-card';
 import { VaultCard } from './vault-card';
 
 @Component({
@@ -29,6 +30,7 @@ import { VaultCard } from './vault-card';
     NgIcon,
     PasskeysCard,
     RecoveryCard,
+    SyncCard,
     TranslocoPipe,
     VaultCard,
   ],
@@ -120,6 +122,7 @@ import { VaultCard } from './vault-card';
       <app-passkeys-card />
       <app-recovery-card />
       <app-backup-card />
+      <app-sync-card />
       <app-drive-card />
       <app-ai-card />
     </div>

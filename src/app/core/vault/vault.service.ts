@@ -5,6 +5,7 @@ import { formatRecoveryKey, generateRecoveryKey, parseRecoveryKey } from '../cry
 import { LocryDb } from '../storage/locry-db';
 import { PasskeyClient, currentRpId } from './passkey';
 import { type VaultColor, type VaultProfile, VaultRegistry, vaultDbName } from './vault-registry';
+import { mergeHeaders } from '../sync/merge';
 import {
   VAULT_FORMAT_VERSION,
   type VaultHeader,
@@ -129,10 +130,18 @@ export class VaultService {
   }
 
   /** Renames or recolors a vault (the name is visible on the lock screen). */
-  async updateProfile(vaultId: string, patch: Partial<Pick<VaultProfile, 'name' | 'color'>>): Promise<void> {
+  async updateProfile(
+    vaultId: string,
+    patch: Partial<Pick<VaultProfile, 'name' | 'color' | 'updatedAt'>>,
+  ): Promise<void> {
     const profile = this._vaults().find((v) => v.id === vaultId);
     if (!profile) throw new VaultError('corrupted');
-    const next = { ...profile, ...patch, name: (patch.name ?? profile.name).trim() };
+    const next: VaultProfile = {
+      ...profile,
+      ...patch,
+      name: (patch.name ?? profile.name).trim().slice(0, 60),
+      updatedAt: patch.updatedAt ?? new Date().toISOString(),
+    };
     await this.registry.put(next);
     this._vaults.update((list) => list.map((v) => (v.id === vaultId ? next : v)));
   }
@@ -227,7 +236,11 @@ export class VaultService {
   }
 
   /** Adds a vault from a backup as a new vault on this device and unlocks it. */
-  async adoptVault(header: VaultHeader, key: CryptoKey, profile: { name: string; color: VaultColor }): Promise<void> {
+  async adoptVault(
+    header: VaultHeader,
+    key: CryptoKey,
+    profile: { name: string; color: VaultColor; updatedAt?: string },
+  ): Promise<void> {
     if (this.hasVault(header.vaultId)) throw new VaultError('vaultExists');
     if (!(await verifyVaultKey(header, key))) throw new VaultError('corrupted');
     await this.addVault(header, profile);
@@ -350,7 +363,11 @@ export class VaultService {
   async removePasskey(slotId: string): Promise<void> {
     const header = this.requireUnlockedHeader();
     if (this.passkeySlots().length <= 1) throw new VaultError('lastPasskey');
-    await this.saveHeader({ ...header, keySlots: header.keySlots.filter((s) => s.id !== slotId) });
+    await this.saveHeader({
+      ...header,
+      keySlots: header.keySlots.filter((s) => s.id !== slotId),
+      removedSlotIds: [...(header.removedSlotIds ?? []), slotId],
+    });
   }
 
   /**
@@ -381,7 +398,24 @@ export class VaultService {
     if (current.vaultId !== pending.header.vaultId) throw new VaultError('corrupted');
     // Keep passkey changes made meanwhile; only the recovery slot is replaced.
     const recovery = pending.header.keySlots.find((s) => s.kind === 'recovery')!;
-    await this.saveHeader({ ...current, keySlots: [...current.keySlots.filter((s) => s.kind !== 'recovery'), recovery] });
+    const replaced = current.keySlots.filter((s) => s.kind === 'recovery').map((s) => s.id);
+    await this.saveHeader({
+      ...current,
+      keySlots: [...current.keySlots.filter((s) => s.kind !== 'recovery'), recovery],
+      removedSlotIds: [...(current.removedSlotIds ?? []), ...replaced],
+    });
+  }
+
+  /**
+   * Takes key slot changes from another device's copy of this vault's header (a passkey
+   * added on the phone, a recovery key replaced on the laptop). The remote header comes from
+   * a snapshot that decrypted with this vault's key, so it is authentic.
+   */
+  async mergeHeader(remote: VaultHeader): Promise<boolean> {
+    const merged = mergeHeaders(this.requireUnlockedHeader(), remote);
+    if (!merged) return false;
+    await this.saveHeader(merged);
+    return true;
   }
 
   // ---- Internals -------------------------------------------------------------------------
@@ -454,13 +488,17 @@ export class VaultService {
     await this.registry.markLegacyChecked();
   }
 
-  private async addVault(header: VaultHeader, profile: { name: string; color: VaultColor }): Promise<void> {
+  private async addVault(
+    header: VaultHeader,
+    profile: { name: string; color: VaultColor; updatedAt?: string },
+  ): Promise<void> {
     const entry: VaultProfile = {
       id: header.vaultId,
       name: profile.name.trim(),
       color: profile.color,
       dbName: vaultDbName(header.vaultId),
       createdAt: header.createdAt,
+      updatedAt: profile.updatedAt,
       order: Math.max(0, ...this._vaults().map((v) => v.order)) + 1,
     };
     if (this._status() === 'unlocked') this.lock();

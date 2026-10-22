@@ -1,7 +1,7 @@
 export const tr = {
   app: {
     name: 'Locry',
-    tagline: 'Şifreli notların ve görevlerin, sadece bu cihazda.',
+    tagline: 'Şifreli notların ve görevlerin. Anahtar yalnızca sende.',
     updateReady: 'Locry’nin yeni bir sürümü hazır.',
     reload: 'Yenile',
   },
@@ -138,6 +138,38 @@ export const tr = {
     deleteConfirm: 'Doğrula ve kasayı sil',
     deleted: 'Kasa silindi',
     mergedInto: 'Yedek “{{name}}” kasasına aitti; {{count}} kayıt bu kasaya birleştirildi.',
+  },
+  sync: {
+    title: 'Cihazlar arası eşitleme',
+    description:
+      'Bu kasayı telefonun ve diğer bilgisayarlarınla Google Drive üzerinden eşitler. Her cihaz kendi şifreli kopyasını yazar; Google içeriği göremez.',
+    howItWorks:
+      'Eşitleme yalnızca Locry açıkken çalışır: kilidi açınca, sekmeye dönünce, bir değişiklikten yaklaşık 30 saniye sonra ve 5 dakikada bir. Diğer cihazda Locry’yi aynı adreste aç (ör. alan adın); passkey’lerin parola yöneticinle eşitleniyorsa orada da çalışır.',
+    needsDrive: 'Eşitleme Google Drive’ı kullanır. Önce aşağıdaki Google Drive kartından bağlantıyı ayarla.',
+    enable: 'Eşitlemeyi aç',
+    disable: 'Eşitlemeyi kapat',
+    syncNow: 'Şimdi eşitle',
+    connect: 'Bağlan ve eşitle',
+    statusOff: 'Kapalı',
+    statusIdle: 'Eşitlendi',
+    statusSyncing: 'Eşitleniyor…',
+    statusNeedsAuth: 'Eşitlemek için Google’a bağlan',
+    statusError: 'Eşitleme başarısız',
+    lastSync: 'Son eşitleme: {{time}}',
+    never: 'Henüz eşitlenmedi.',
+    devices: 'Bu kasayı eşitleyen cihazlar',
+    thisDevice: 'bu cihaz',
+    done: 'Eşitlendi',
+    received: 'Eşitlendi: diğer cihazlardan {{count}} değişiklik alındı.',
+    conflicts: 'Aynı not iki cihazda değiştirilmiş; eski sürüm “(çakışma)” adıyla ayrı bir not olarak saklandı ({{count}}).',
+    conflictSuffix: 'çakışma',
+    enabled: 'Eşitleme açıldı',
+    disabled: 'Eşitleme kapatıldı. Drive’daki eşitleme kopyaları duruyor.',
+    failed: 'Eşitleme başarısız oldu.',
+    fromDrive: 'Eşitlenen kasalar',
+    fromDriveHint: 'Başka bir cihazda eşitlemesi açık kasalar. Seçtiğin kasa bu cihaza eklenir ve eşitlemesi açılır.',
+    noSnapshots: 'Drive’da eşitlenen kasa yok. Önce diğer cihazda Ayarlar → Cihazlar arası eşitleme’yi aç.',
+    snapshot: '{{device}} · {{time}}',
   },
   pages: {
     notes: {

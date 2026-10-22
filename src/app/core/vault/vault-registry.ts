@@ -20,6 +20,8 @@ export interface VaultProfile {
   createdAt: string;
   /** Position in the vault list (order of adding to this device). */
   order: number;
+  /** Last rename or recolor, to pick the newer one when syncing between devices. */
+  updatedAt?: string;
 }
 
 interface RegistrySchema extends DBSchema {

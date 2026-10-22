@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { EMBEDDING_RECORD_TYPE } from '../ai/documents';
 import { EncryptedStore } from '../storage/encrypted-store.service';
+import { LOCAL_ONLY_TYPES, TOMBSTONE_TYPE } from '../sync/sync-records';
 import { type VaultColor, isVaultColor } from '../vault/vault-registry';
 import { type ReAuth, VaultService } from '../vault/vault.service';
 import { type BackupRecord, type SealedBackup, createBackup, openBackup, readBackup } from './backup-format';
@@ -29,11 +29,12 @@ export type BackupUnlock = { method: 'current' } | ReAuth;
  * The vault's name and color travel inside the encrypted backup as this pseudo-record, so a
  * restore on another device can show the same name. It is never written to the store.
  */
-const PROFILE_RECORD = 'vault-profile';
+export const PROFILE_RECORD = 'vault-profile';
 
-interface ProfileValue {
+export interface ProfileValue {
   name: string;
   color: VaultColor;
+  updatedAt?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -45,11 +46,13 @@ export class BackupService {
   async export(): Promise<Uint8Array<ArrayBuffer>> {
     const header = this.vault.header();
     if (!header) throw new Error('No vault');
-    // Vectors are derived data: leave them out and rebuild after a restore.
-    const records = (await this.store.exportAll()).filter((r) => r.type !== EMBEDDING_RECORD_TYPE);
+    // Vectors and sync bookkeeping stay on the device; deletions only matter for sync.
+    const records = (await this.store.exportAll()).filter(
+      (r) => !LOCAL_ONLY_TYPES.has(r.type) && r.type !== TOMBSTONE_TYPE,
+    );
     const profile = this.vault.activeVault();
     if (profile) {
-      const value: ProfileValue = { name: profile.name, color: profile.color };
+      const value: ProfileValue = { name: profile.name, color: profile.color, updatedAt: profile.updatedAt };
       records.push({ type: PROFILE_RECORD, id: PROFILE_RECORD, value });
     }
     return createBackup(header, this.vault.requireKey(), records);
@@ -126,16 +129,18 @@ function isNewer(incoming: unknown, existing: unknown): boolean {
   return typeof a === 'string' && typeof b === 'string' && a > b;
 }
 
+/** Notes, tasks and lists; a sync snapshot used as a backup also carries tombstones. */
 function contentRecords(records: BackupRecord[]): BackupRecord[] {
-  return records.filter((r) => r.type !== PROFILE_RECORD);
+  return records.filter((r) => r.type !== PROFILE_RECORD && r.type !== TOMBSTONE_TYPE && !LOCAL_ONLY_TYPES.has(r.type));
 }
 
 /** Name and color stored in a backup; backups made before multiple vaults have none. */
-function backupProfile(records: BackupRecord[]): ProfileValue {
+export function backupProfile(records: BackupRecord[]): ProfileValue {
   const value = records.find((r) => r.type === PROFILE_RECORD)?.value as Partial<ProfileValue> | undefined;
   return {
     name: typeof value?.name === 'string' ? value.name.slice(0, 60) : '',
     color: isVaultColor(value?.color) ? value.color : 'blue',
+    updatedAt: typeof value?.updatedAt === 'string' ? value.updatedAt : undefined,
   };
 }
 

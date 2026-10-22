@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DOCUMENT, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideChevronsUpDown,
@@ -13,11 +13,13 @@ import {
   lucideSearch,
   lucideSettings,
 } from '@ng-icons/lucide';
+import { toast } from '@spartan-ng/brain/sonner';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { HlmKbdImports } from '@spartan-ng/helm/kbd';
 import { HlmSeparator } from '@spartan-ng/helm/separator';
 import { HlmSidebarImports, HlmSidebarService, provideHlmSidebarConfig } from '@spartan-ng/helm/sidebar';
 import { filter, map } from 'rxjs';
+import { errorKey } from '../core/i18n';
 import { VaultService } from '../core/vault/vault.service';
 import { TasksStore } from '../features/tasks/tasks.store';
 import { Logo } from '../shared/logo';
@@ -29,6 +31,8 @@ import { ShellUi } from './shell-ui.service';
 import { ShortcutsDialog } from './shortcuts';
 import { PreferencesMenu } from '../shared/preferences-menu';
 import { VaultLabel } from '../shared/vault-ui';
+import { SyncStatusLabel, announceSync, syncStatusLabel } from '../shared/sync-status';
+import { SyncService } from '../core/sync/sync.service';
 
 interface NavItem {
   path: string;
@@ -54,6 +58,7 @@ interface NavItem {
     PreferencesMenu,
     HlmDropdownMenuImports,
     VaultLabel,
+    SyncStatusLabel,
   ],
   providers: [
     provideIcons({
@@ -160,6 +165,18 @@ interface NavItem {
 
         <hlm-sidebar-footer>
           <ul hlmSidebarMenu>
+            @if (sync.status() !== 'off') {
+              <li hlmSidebarMenuItem>
+                <button
+                  hlmSidebarMenuButton
+                  [disabled]="sync.status() === 'syncing'"
+                  [tooltip]="statusLabel() | transloco"
+                  (click)="syncNow()"
+                >
+                  <app-sync-status-label class="group-data-[collapsible=icon]:[&>span]:hidden" />
+                </button>
+              </li>
+            }
             <li hlmSidebarMenuItem>
               <a
                 hlmSidebarMenuButton
@@ -187,7 +204,7 @@ interface NavItem {
       <main hlmSidebarInset>
         <header class="bg-background/80 sticky top-0 z-10 flex h-14 items-center gap-2 border-b px-4 backdrop-blur">
           <button hlmSidebarTrigger></button>
-          <hlm-separator orientation="vertical" class="mx-1 h-4" />
+          <hlm-separator orientation="vertical" class="mx-1 h-4 data-vertical:self-center" />
           <h1 class="text-sm font-medium">{{ title() | transloco }}</h1>
           <div class="ms-auto flex items-center gap-2">
             <button
@@ -238,10 +255,33 @@ export class AppShell {
     { initialValue: this.titleFor(this.router.url) },
   );
 
+  protected readonly sync = inject(SyncService);
+  protected readonly statusLabel = computed(() => syncStatusLabel(this.sync.status()));
+  private readonly transloco = inject(TranslocoService);
+
   constructor() {
     // Unlocked-only background services, kept out of the initial bundle.
     inject(AutoDriveBackupService);
     inject(StorageHealthService);
+
+    // On phones the sidebar is an overlay: close it once a page was chosen.
+    const sidebar = inject(HlmSidebarService);
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => sidebar.setOpenMobile(false));
+  }
+
+  /** From a click, so Google may show its popup when a new token is needed. */
+  protected async syncNow(): Promise<void> {
+    try {
+      announceSync(await this.sync.syncNow({ interactive: true }), this.transloco, 'sync.done');
+    } catch (error) {
+      console.error(error);
+      toast.error(this.transloco.translate(errorKey(error)));
+    }
   }
 
   /** Locks the open vault and shows the lock screen of the chosen one. */

@@ -2,14 +2,17 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideCloud, lucideFileUp, lucideInfo, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideCloud, lucideFileUp, lucideInfo, lucideRefreshCw, lucideTriangleAlert } from '@ng-icons/lucide';
 import { toast } from '@spartan-ng/brain/sonner';
 import { HlmAlertImports } from '@spartan-ng/helm/alert';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { BACKUP_FILE_EXTENSION, type SealedBackup } from '../../core/backup/backup-format';
 import { BackupService } from '../../core/backup/backup.service';
-import { type DriveBackup, DriveService } from '../../core/drive/drive.service';
+import type { DriveFile } from '../../core/drive/drive-api';
+import { DriveService } from '../../core/drive/drive.service';
+import { SyncService } from '../../core/sync/sync.service';
+import { relativeTime } from '../../shared/relative-time';
 import { errorKey } from '../../core/i18n';
 import { PreferencesService } from '../../core/preferences.service';
 import { currentRpId } from '../../core/vault/passkey';
@@ -36,7 +39,7 @@ import { ReAuthPrompt } from '../../shared/reauth';
     RouterLink,
     TranslocoPipe,
   ],
-  providers: [provideIcons({ lucideArrowLeft, lucideFileUp, lucideCloud, lucideInfo, lucideTriangleAlert })],
+  providers: [provideIcons({ lucideArrowLeft, lucideFileUp, lucideCloud, lucideInfo, lucideRefreshCw, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section hlmCard>
@@ -74,6 +77,25 @@ import { ReAuthPrompt } from '../../shared/reauth';
                 [disabled]="drive.busy()"
                 (restore)="pickFromDrive($event)"
               />
+              <h2 class="mt-2 text-sm font-medium">{{ 'sync.fromDrive' | transloco }}</h2>
+              @if (syncedVaults().length) {
+                <p class="text-muted-foreground text-xs">{{ 'sync.fromDriveHint' | transloco }}</p>
+                <ul class="divide-y rounded-lg border">
+                  @for (file of syncedVaults(); track file.id) {
+                    <li class="flex items-center gap-3 px-3 py-2.5">
+                      <ng-icon name="lucideRefreshCw" class="text-muted-foreground shrink-0" />
+                      <span class="flex-1 text-sm">
+                        {{ 'sync.snapshot' | transloco: { device: file.appProperties['locryDevice'] || '?', time: ago(file.modifiedTime) } }}
+                      </span>
+                      <button hlmBtn variant="outline" size="sm" [disabled]="drive.busy()" (click)="pickFromDrive(file, true)">
+                        {{ 'drive.restore' | transloco }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="text-muted-foreground text-xs">{{ 'sync.noSnapshots' | transloco }}</p>
+              }
             } @else {
               <button hlmBtn class="w-full" [disabled]="drive.busy()" (click)="connectDrive()">{{ 'drive.connect' | transloco }}</button>
             }
@@ -128,6 +150,19 @@ export class RestorePage {
   protected readonly showDrive = signal(false);
   protected readonly extension = BACKUP_FILE_EXTENSION;
   protected readonly backup = signal<SealedBackup | null>(null);
+  /** The chosen file is another device's sync snapshot: turn sync on after restoring. */
+  private readonly fromSync = signal(false);
+  private readonly sync = inject(SyncService);
+  /** The newest sync snapshot of each vault in Drive. */
+  protected readonly syncedVaults = computed(() => {
+    const seen = new Set<string>();
+    return (this.drive.syncSnapshots() ?? []).filter((f) => {
+      const vaultId = f.appProperties['locryVaultId'];
+      if (!vaultId || seen.has(vaultId)) return false;
+      seen.add(vaultId);
+      return true;
+    });
+  });
   protected readonly busy = signal(false);
   protected readonly fileError = signal<string | null>(null);
   protected readonly unlockError = signal<string | null>(null);
@@ -159,6 +194,7 @@ export class RestorePage {
     this.unlockError.set(null);
     try {
       this.backup.set(this.backups.read(await readFileBytes(file)));
+      this.fromSync.set(false);
     } catch (error) {
       this.backup.set(null);
       this.fileError.set(errorKey(error));
@@ -175,11 +211,16 @@ export class RestorePage {
     }
   }
 
-  protected async pickFromDrive(file: DriveBackup): Promise<void> {
+  protected ago(iso: string): string {
+    return relativeTime(iso, this.prefs.lang());
+  }
+
+  protected async pickFromDrive(file: DriveFile, fromSync = false): Promise<void> {
     this.fileError.set(null);
     this.unlockError.set(null);
     try {
       this.backup.set(await this.drive.download(file));
+      this.fromSync.set(fromSync);
       this.showDrive.set(false);
     } catch (error) {
       console.error(error);
@@ -200,6 +241,8 @@ export class RestorePage {
           ? this.transloco.translate('vaults.mergedInto', { name, count: summary.restored })
           : this.transloco.translate('restore.done', { count: summary.restored }),
       );
+      // Google access was just granted for the download, so this needs no popup.
+      if (this.fromSync()) void this.sync.enable().catch((error) => console.error(error));
       if (auth.method === 'recovery' && !this.vault.localPasskeySlots().length) {
         this.sitePasskeyFor.set(auth.recoveryKey);
         return;

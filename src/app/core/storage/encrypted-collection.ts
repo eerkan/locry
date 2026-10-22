@@ -71,7 +71,7 @@ export function injectEncryptedCollection<T extends { id: string }>(type: string
     remove(...ids) {
       const removed = new Set(ids);
       items.update((current) => current.filter((item) => !removed.has(item.id)));
-      return enqueue(() => Promise.all(ids.map((id) => store.delete(id))));
+      return enqueue(() => Promise.all(ids.map((id) => store.remove(type, id))));
     },
   };
 }

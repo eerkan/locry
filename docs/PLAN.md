@@ -134,27 +134,28 @@ aynı anda yalnızca biri açık.
 - ✅ Testler: kasa ayrımı ve geçiş, yeniden yüklemede son kasa, yeniden adlandırma, eski veritabanının kayda
   alınması, silme, yedekten ayrı kasa ekleme ve aynı kasaya birleştirme.
 
-### Faz 8 — Cihazlar arası eşitleme (telefon + bilgisayar) ⏳ planlandı
+### Faz 8 — Cihazlar arası eşitleme (telefon + bilgisayar) ✅ tamamlandı
 Kararlar: kendi alan adında HTTPS (Caddy profili), Drive üzerinden otomatik eşitleme, çakışmada kopya.
-- **Silme kayıtları (tombstone):** silinen kayıt yerine şifreli bir silme işareti kalır, böylece silmeler
-  diğer cihazlara geçer; 90 günden eski işaretler temizlenir. Yedeklerdeki birleştirme de bunu kullanır.
-- **Eşitleme dosyaları:** Drive `appDataFolder` içinde her cihaz yalnızca kendi dosyasına yazar
-  (`sync-<vaultId>-<deviceId>.locry`, mevcut yedek biçimi: gzip + AES-256-GCM). Diğer cihazların
-  dosyaları okunup birleştirilir; aynı dosyaya iki cihaz yazmadığı için yazma çakışması olmaz.
-  Google yalnızca dosya adı, boyut ve zamanı görür.
-- **Kasa başlığı eşitlenir:** anahtar yuvaları birleşir (silinen yuvalar da işaretlenir), telefonda eklenen
-  passkey bilgisayarda da görünür. iCloud Anahtar Zinciri / Google Parola Yöneticisi ile eşitlenen passkey
-  her cihazda aynı PRF anahtarını verir; farklı ekosistemde cihaz başına passkey eklenir.
-- **Çakışma:** her kaydın son eşitlenen sürümü yerelde tutulur. Kayıt iki tarafta da değiştiyse yeni olan
-  kalır; notlarda diğeri "(çakışma)" kopyası olarak saklanır, görevlerde son değişen kazanır.
-- **Zamanlama:** kilit açılınca, sekmeye dönünce, değişiklikten ~30 sn sonra ve 5 dakikada bir; yalnızca
-  uygulama açıkken. Google belirteci (~1 saat) sessizce yenilenmeye çalışılır, olmazsa kenar çubuğundaki
-  durum göstergesi "Eşitlemek için bağlan" der. Vektörler eşitlenmez, her cihaz kendisi dizinler.
-- **Yeni cihaz:** kurulum ekranında "Drive'daki kasaya bağlan" → Google → kasa seç → passkey ya da kurtarma
-  anahtarı → bu adres için passkey önerisi.
-- **Mobil:** küçük ekranda kenar çubuğu, not düzenleyici ve görev ayrıntısı; güvenli alanlar; iOS/Android'de
-  ana ekrana ekleme. Belgeler: alan adı + Caddy, OAuth istemcisine alan adının eklenmesi.
-- Testler: tombstone birleştirme, çakışma kopyası, başlık birleştirme, iki sahte cihazla uçtan uca eşitleme.
+- ✅ **Silme kayıtları:** notlar, görevler ve listeler silinince şifreli bir silme kaydı kalır (90 gün); vektörler ve
+  eşitleme durumu yalnızca cihazda tutulur, eşitlenmez ve yedeklere girmez.
+- ✅ **Eşitleme dosyaları:** her cihaz yalnızca kendi dosyasına yazar (`appDataFolder`, yedek biçimi + silme
+  kayıtları; `locrySync`, kasa ve cihaz kimliği uygulama özelliği olarak). Değişmeyen içerik yeniden yüklenmez;
+  görülen dosyalar `modifiedTime` ile atlanır. Eşitleme kopyaları yedek listesinde görünmez, budamaya girmez.
+- ✅ **Üç yönlü birleştirme:** kayıt başına son anlaşılan sürüm yerelde şifreli tutulur. Tek tarafta değişen alınır;
+  iki tarafta değişende düzenleme silmeyi yener, notlarda eski sürüm "(çakışma)" kopyası olur, görevlerde son
+  değişen kazanır. Görev sıralaması artık `updatedAt`'i günceller.
+- ✅ **Kasa başlığı:** passkey yuvaları birleşir, kaldırılan yuvalar ve eski kurtarma anahtarı `removedSlotIds` ile
+  geri gelmez. Başlık, kasa anahtarıyla açılan dosyanın AAD'si olduğundan değiştirilemez. Kasa adı ve rengi de
+  (zaman damgasıyla) eşitlenir.
+- ✅ **Zamanlama:** kilit açılınca, sekmeye dönünce, değişiklikten 30 sn sonra, 5 dakikada bir; yalnızca açıkken.
+  Belirteç yoksa arka planda açılır pencere açılmaz; kenar çubuğu "Eşitlemek için Google'a bağlan" der.
+- ✅ **Arayüz:** Ayarlar'da eşitleme kartı (aç/kapat, durum, son eşitleme, eşitleyen cihazlar), kenar çubuğunda
+  durum göstergesi, arka planda çakışma olursa bildirim.
+- ✅ **Yeni cihaz:** geri yükleme ekranında "Eşitlenen kasalar" → kasa eklenir, eşitlemesi açılır.
+- ✅ **Mobil:** menüden sayfa seçilince yan menü kapanır; dar ekranda not, görev, ayarlar ve kilit ekranı kontrol
+  edildi. Belgeler: README'de kurulum adımları ve çalışma şekli.
+- ✅ Testler: birleştirme kuralları, başlık birleştirme, iki sahte cihazla uçtan uca eşitleme (düzenleme, silme,
+  çakışma, passkey ve kasa adı), belirteç yokken bekleme, eşitleme kopyalarının yedeklerden ayrı tutulması.
 
 ## Kurulum notları
 

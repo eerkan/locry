@@ -27,6 +27,8 @@ interface VaultPreferences {
   lastDriveBackupAt: string | null;
   /** Opt-in: downloads the embedding model on first use. */
   semanticSearch: boolean;
+  /** Keep this vault in sync with other devices through Google Drive. */
+  sync: boolean;
 }
 
 interface Stored extends Preferences {
@@ -41,6 +43,7 @@ const VAULT_DEFAULTS: VaultPreferences = {
   driveAutoBackup: 'off',
   lastDriveBackupAt: null,
   semanticSearch: false,
+  sync: false,
 };
 
 /**
@@ -70,6 +73,7 @@ export class PreferencesService {
   readonly driveAutoBackup = () => this.vaultPrefs().driveAutoBackup;
   readonly lastDriveBackupAt = () => this.vaultPrefs().lastDriveBackupAt;
   readonly semanticSearch = () => this.vaultPrefs().semanticSearch;
+  readonly sync = () => this.vaultPrefs().sync;
 
   constructor() {
     const view = this.document.defaultView;
@@ -129,6 +133,10 @@ export class PreferencesService {
     this.updateVault({ semanticSearch });
   }
 
+  setSync(sync: boolean): void {
+    this.updateVault({ sync });
+  }
+
   /** Changes the active vault's settings; ignored when no vault exists yet. */
   private updateVault(patch: Partial<VaultPreferences>): void {
     const id = this.vault.activeVault()?.id;
@@ -177,5 +185,6 @@ function parseVaultPreferences(value: Partial<VaultPreferences>): VaultPreferenc
       : VAULT_DEFAULTS.driveAutoBackup,
     lastDriveBackupAt: typeof value.lastDriveBackupAt === 'string' ? value.lastDriveBackupAt : null,
     semanticSearch: value.semanticSearch === true,
+    sync: value.sync === true,
   };
 }

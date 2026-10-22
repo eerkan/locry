@@ -15,6 +15,11 @@ export const DRIVE_FETCH = new InjectionToken<Fetch>('DRIVE_FETCH', {
 
 const AUTO_BACKUP_INTERVAL_MS = { daily: 24 * 3600_000, weekly: 7 * 24 * 3600_000 } as const;
 
+/** Sync snapshots carry this app property; they are not listed as backups. */
+export function isSyncFile(file: DriveFile): boolean {
+  return file.appProperties['locrySync'] === '1';
+}
+
 /** A Drive backup file plus what we know about it without downloading. */
 export interface DriveBackup extends DriveFile {
   /** Made from the vault on this device. */
@@ -51,8 +56,22 @@ export class DriveService {
   readonly files = computed<DriveBackup[] | null>(() => {
     const files = this._files();
     const vaultId = this.vault.header()?.vaultId;
-    return files?.map((f) => ({ ...f, fromThisVault: !!vaultId && f.appProperties['locryVaultId'] === vaultId })) ?? null;
+    return (
+      files
+        ?.filter((f) => !isSyncFile(f))
+        .map((f) => ({ ...f, fromThisVault: !!vaultId && f.appProperties['locryVaultId'] === vaultId })) ?? null
+    );
   });
+  /**
+   * Sync snapshots in Drive (one per vault and device), newest change first; they live in
+   * the same folder but are managed by the sync engine.
+   */
+  readonly syncSnapshots = computed<DriveFile[] | null>(
+    () =>
+      this._files()
+        ?.filter(isSyncFile)
+        .sort((a, b) => b.modifiedTime.localeCompare(a.modifiedTime)) ?? null,
+  );
 
   constructor() {
     // Forget the token and the listing whenever the vault locks.
@@ -127,6 +146,14 @@ export class DriveService {
     return !last || now - new Date(last).getTime() >= AUTO_BACKUP_INTERVAL_MS[schedule];
   }
 
+  /**
+   * Runs Drive calls with a token (asking for one only when `interactive`), without marking
+   * the service busy. For background work such as sync.
+   */
+  withApi<T>(interactive: boolean, task: (api: DriveApi) => Promise<T>): Promise<T> {
+    return this.withToken(interactive, () => task(this.api));
+  }
+
   /** True while a valid token is in memory, so a backup can run without a popup. */
   hasValidToken(): boolean {
     const token = this.token();
@@ -135,7 +162,7 @@ export class DriveService {
 
   private async prune(vaultId: string): Promise<void> {
     const keep = Math.max(1, this.prefs.driveKeep());
-    const ours = (this._files() ?? []).filter((f) => f.appProperties['locryVaultId'] === vaultId);
+    const ours = (this._files() ?? []).filter((f) => !isSyncFile(f) && f.appProperties['locryVaultId'] === vaultId);
     const stale = ours.slice(keep);
     for (const file of stale) await this.api.delete(file.id);
     if (stale.length) {

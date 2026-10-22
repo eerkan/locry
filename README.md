@@ -1,13 +1,15 @@
 # Locry
 
-Tamamen tarayıcıda, sunucusuz çalışan **şifreli not ve görev** uygulaması. Veriler yalnızca bu cihazda,
-geçiş anahtarına (passkey) bağlı bir anahtarla şifrelenmiş olarak durur.
+Tamamen tarayıcıda, sunucusuz çalışan **şifreli not ve görev** uygulaması. Veriler cihazında, geçiş anahtarına
+(passkey) bağlı bir anahtarla şifrelenmiş olarak durur; istersen Google Drive üzerinden şifreli olarak diğer
+cihazlarınla eşitlenir.
 
 - Markdown notlar (bölünmüş önizleme, etiketler, sabitleme, arşiv)
 - Görevler (akıllı görünümler, listeler, alt görevler, öncelik, bitiş tarihi, sürükle-bırak)
 - Passkey ile giriş, kurtarma anahtarı, otomatik kilit
 - Birden fazla bağımsız kasa (ör. Kişisel ve İş), her biri kendi passkey'i ve kurtarma anahtarıyla
 - Sıkıştırılmış ve şifreli `.locry` yedekleri; Google Drive'a yedekleme
+- Telefon ve bilgisayar arasında Google Drive üzerinden uçtan uca şifreli eşitleme
 - Tarayıcı içi yapay zekâ ile anlamsal arama (isteğe bağlı), ⌘K komut paleti
 - Kurulabilir PWA, çevrimdışı çalışma, TR/EN arayüz, açık/koyu tema
 
@@ -123,8 +125,8 @@ yoksa ayrı bir kasa olarak eklenir. Kasa silme yalnızca bu cihazdaki veriyi si
 | Önizleme | DOMPurify; dış görseller yüklenmez; ek olarak İçerik Güvenliği Politikası (CSP) |
 | Depolama | Tarayıcıdan kalıcı depolama istenir; durum Ayarlar'da görünür |
 
-Dışarıya yalnızca senin açtığın özellikler bağlanır: Google Drive yedeği (`www.googleapis.com`) ve
-anlamsal arama modelinin ilk indirmesi (`huggingface.co`). Notların hiçbir zaman cihazdan çıkmaz.
+Dışarıya yalnızca senin açtığın özellikler bağlanır: Google Drive yedeği ve eşitlemesi (`www.googleapis.com`) ve
+anlamsal arama modelinin ilk indirmesi (`huggingface.co`). Notların cihazdan yalnızca şifreli olarak çıkar.
 
 Passkey PRF desteği: Chrome/Edge 118+, Safari 18+; iCloud Anahtar Zinciri, Google Parola Yöneticisi,
 1Password veya bir donanım güvenlik anahtarı.
@@ -148,6 +150,39 @@ Bunun için kurulumu çalıştıran kişinin **bir kez** bir Google OAuth Client
 Değer çalışma anında `/config.json` olarak okunur: Docker'da `.env`'i değiştirip `docker compose up -d` yeterlidir,
 `yarn start` ve `yarn serve:prod` de `.env`'i okur. `LOCRY_GOOGLE_CLIENT_ID` boşsa her kullanıcı Ayarlar'da kendi
 Client ID'sini girebilir; bu seçenek gömülü bir ID varken de **Gelişmiş** olarak durur.
+
+## Cihazlar arası eşitleme (telefon + bilgisayar)
+
+Bir kasayı birden fazla cihazda kullanmak için Google Drive aracı olarak kullanılır; sunucu yoktur.
+
+**Kurulum**
+
+1. Locry'yi bir alan adında HTTPS ile yayınla ([Alan adında yayınlama](#alan-adında-https-yayınlama)). Telefon
+   bilgisayardaki `localhost`'a ulaşamaz; passkey'ler de adrese bağlıdır, bu yüzden iki cihazda da aynı adresi
+   (`https://locry.ornek.com`) kullanmak en kolayıdır.
+2. Google Cloud'daki OAuth istemcisinin *Authorized JavaScript origins* listesine `https://locry.ornek.com` ekle.
+   Uygulama *Testing* durumundaysa Google hesabını *Test users* listesine ekle ya da uygulamayı yayınla.
+3. Bilgisayarda: **Ayarlar → Cihazlar arası eşitleme → Eşitlemeyi aç**.
+4. Telefonda: adresi aç (iPhone'da Safari → Paylaş → *Ana Ekrana Ekle*; Android'de Chrome → *Uygulamayı yükle*),
+   **Yedekten geri yükle → Google Drive'dan geri yükle**, *Eşitlenen kasalar* altından kasayı seç ve aç:
+   - passkey'lerin iCloud Anahtar Zinciri / Google Parola Yöneticisi ile eşitleniyorsa aynı passkey çalışır;
+   - çalışmıyorsa (başka adres ya da başka ekosistem) kurtarma anahtarıyla aç; Locry bu cihaz için passkey önerir.
+   Kasa eklenir ve eşitlemesi kendiliğinden açılır.
+
+**Nasıl çalışır**
+
+- Her cihaz Drive'daki gizli uygulama klasörüne kasanın kendi şifreli kopyasını yazar ve diğer cihazlarınkini
+  okuyup birleştirir. Her dosyaya yalnızca bir cihaz yazdığından cihazlar birbirinin yazdığını ezemez. Google
+  yalnızca dosya adını, boyutunu, zamanını ve cihaz türünü (ör. "iPhone · Safari") görür.
+- Silmeler silme kaydı olarak taşınır (90 gün tutulur). Bir cihazda silinen, diğerinde düzenlenen kayıtta
+  düzenleme kazanır.
+- Aynı not iki cihazda değiştirildiyse yeni sürüm kalır, eskisi "(çakışma)" adlı ayrı bir not olarak saklanır.
+  Görev ve listelerde son değişiklik kazanır.
+- Kasada eklenen/kaldırılan passkey'ler, yenilenen kurtarma anahtarı, kasa adı ve rengi de eşitlenir.
+  Akıllı arama vektörleri eşitlenmez; her cihaz kendisi hesaplar.
+- Eşitleme yalnızca Locry açıkken çalışır: kilidi açınca, sekmeye dönünce, değişiklikten ~30 sn sonra ve 5 dakikada
+  bir. Google erişim izni yaklaşık 1 saat geçerlidir ve kilitlenince silinir; süresi dolunca kenar çubuğunda
+  **Eşitlemek için Google'a bağlan** görünür, tek tıkla devam eder.
 
 ## Anlamsal arama
 
