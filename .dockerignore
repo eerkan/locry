@@ -20,3 +20,4 @@ CODEBASE.md
 Dockerfile
 compose.yaml
 .dockerignore
+.env

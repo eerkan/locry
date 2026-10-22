@@ -45,16 +45,30 @@ Node kurmadan, bir konteynerde çalıştırmak için:
 docker compose up -d --build
 ```
 
-Uygulama yine `http://localhost:4200` adresinde açılır. Durdurmak için `docker compose down`.
+Uygulama varsayılan olarak `http://localhost:4200` adresinde açılır. Durdurmak için `docker compose down`.
+
+Port ve dinlenecek adres `.env` dosyasından okunur (yoksa varsayılanlar kullanılır):
+
+```bash
+cp .env.example .env
+```
+
+| Değişken | Varsayılan | Açıklama |
+|---|---|---|
+| `LOCRY_PORT` | `4200` | Host tarafındaki port → `http://localhost:<port>` |
+| `LOCRY_BIND_ADDRESS` | `127.0.0.1` | Portun açılacağı arayüz; yalnızca bu makine |
 
 - İmaj çok aşamalıdır: derleme Node 24 ile yapılır, son imajda yalnızca derlenmiş uygulama ve bağımlılıksız
   küçük bir sunucu bulunur. Konteyner root olmayan kullanıcıyla, salt okunur dosya sistemiyle ve yetkileri
   düşürülmüş olarak çalışır.
-- Port yalnızca bu makinenin `127.0.0.1` adresine açılır; ağdaki başka cihazlar erişemez.
+- Port varsayılan olarak yalnızca bu makinenin `127.0.0.1` adresine açılır; ağdaki başka cihazlar erişemez.
+  `0.0.0.0` kullanma: passkey'ler ve service worker güvenli bağlam ister, diğer cihazlar bunu yalnızca HTTPS ile alır.
 - **Konteynerde veri yoktur.** Notlar, görevler ve anahtarlar tarayıcıda şifreli durur; konteyneri silmek ya da
   yeniden oluşturmak veriyi etkilemez, bu yüzden volume gerekmez. Yedek için uygulamadaki yedekleme özelliklerini kullan.
-- Host tarafındaki portu `4200` dışında bir değere değiştirirsen tarayıcı bunu ayrı bir site sayar; o adreste boş
-  bir kasa görürsün. `yarn start` ile konteyner aynı portu kullandığından ikisini aynı anda çalıştırma.
+- `LOCRY_PORT`'u değiştirirsen tarayıcı bunu ayrı bir site sayar: yeni adreste boş bir kasa görürsün (passkey'ler
+  porttan bağımsız çalışır; eski verileri yedekle taşıyabilirsin). Google Drive kullanıyorsan yeni adresi OAuth
+  istemcisinin "Authorized JavaScript origins" listesine ekle.
+- Varsayılan portta `yarn start` ile konteyner aynı portu kullanır; ikisini aynı anda çalıştırma.
 
 ## Güvenlik modeli
 
