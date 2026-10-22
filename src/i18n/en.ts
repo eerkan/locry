@@ -441,6 +441,7 @@ export const en: Translation = {
       cancelled: 'The operation was cancelled or timed out.',
       unknownCredential: 'This passkey does not belong to this vault.',
       alreadyRegistered: 'This device already has a passkey for this vault.',
+      invalidDomain: 'Passkeys do not work on this address. Open Locry at http://localhost instead of an IP address (127.0.0.1).',
       failed: 'The passkey operation failed.',
     },
     vault: {

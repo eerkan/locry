@@ -22,7 +22,8 @@ COPY --chown=node:node scripts/serve.mjs ./scripts/serve.mjs
 
 USER node
 EXPOSE 4200
+# Send Host: localhost, otherwise the server's IP-to-localhost redirect would apply.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO /dev/null http://127.0.0.1:4200/ || exit 1
+  CMD wget -qO /dev/null --header 'Host: localhost:4200' http://127.0.0.1:4200/ || exit 1
 
 CMD ["node", "scripts/serve.mjs"]

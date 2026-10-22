@@ -35,7 +35,8 @@ yarn serve:prod
 Tarayıcı adres çubuğundaki "Yükle" simgesiyle Locry'yi masaüstü uygulaması olarak kurabilirsin.
 
 > Adres önemli: passkey'ler `localhost` alan adına, veriler ise `http://localhost:4200` kaynağına bağlıdır.
-> Başka bir portta açarsan boş bir kasa görürsün.
+> Başka bir portta açarsan boş bir kasa görürsün. Passkey'ler IP adresinde çalışmadığından `127.0.0.1` (ör. Docker
+> Desktop'taki bağlantı) otomatik olarak `localhost`'a yönlendirilir.
 
 ### Docker
 

@@ -8,6 +8,7 @@ export type PasskeyErrorCode =
   | 'cancelled'
   | 'unknownCredential'
   | 'alreadyRegistered'
+  | 'invalidDomain'
   | 'failed';
 
 export class PasskeyError extends Error {
@@ -142,6 +143,8 @@ function toPasskeyError(error: unknown): PasskeyError {
     }
     if (error.name === 'NotSupportedError') return new PasskeyError('unsupported', error);
     if (error.name === 'InvalidStateError') return new PasskeyError('alreadyRegistered', error);
+    // e.g. the app was opened on an IP address such as 127.0.0.1 instead of localhost.
+    if (error.name === 'SecurityError') return new PasskeyError('invalidDomain', error);
   }
   return new PasskeyError('failed', error);
 }

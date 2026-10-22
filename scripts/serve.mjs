@@ -34,7 +34,39 @@ function fileFor(urlPath) {
   }
 }
 
+// Passkeys (WebAuthn) reject IP addresses as relying-party IDs, so 127.0.0.1 and [::1]
+// are sent to the same path on localhost. Docker Desktop links containers as 127.0.0.1.
+const LOOPBACK_IP = /^(127\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[::1\])(:\d+)?$/;
+
+// A browser that already installed the app on an IP keeps serving it from its service worker
+// and never sees the redirect. When it checks that worker for updates, hand it this one
+// instead: it unregisters itself, clears the IP origin's caches and moves open tabs over.
+const RETIRE_WORKER = `
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil((async () => {
+  await self.registration.unregister();
+  for (const name of await caches.keys()) await caches.delete(name);
+  for (const client of await self.clients.matchAll({ type: 'window' })) {
+    const url = new URL(client.url);
+    url.hostname = 'localhost';
+    client.navigate(url.href);
+  }
+})()));
+`;
+
 createServer((req, res) => {
+  const hostHeader = req.headers.host ?? '';
+  if (LOOPBACK_IP.test(hostHeader)) {
+    if (req.url === '/ngsw-worker.js') {
+      res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(RETIRE_WORKER);
+      return;
+    }
+    const port = hostHeader.match(/:(\d+)$/)?.[1];
+    res.writeHead(308, { Location: `http://localhost${port ? `:${port}` : ''}${req.url ?? '/'}` }).end();
+    return;
+  }
+
   const urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
   // Client-side routes (no file extension) get the app shell.
   const file = fileFor(urlPath) ?? (extname(urlPath) ? null : join(root, 'index.html'));

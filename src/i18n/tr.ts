@@ -439,6 +439,8 @@ export const tr = {
       cancelled: 'İşlem iptal edildi veya zaman aşımına uğradı.',
       unknownCredential: 'Bu geçiş anahtarı bu kasaya ait değil.',
       alreadyRegistered: 'Bu cihazda bu kasa için zaten bir geçiş anahtarı var.',
+      invalidDomain:
+        'Geçiş anahtarları bu adreste çalışmıyor. Locry’yi IP adresi (127.0.0.1) yerine http://localhost üzerinden aç.',
       failed: 'Geçiş anahtarı işlemi başarısız oldu.',
     },
     vault: {
