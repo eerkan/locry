@@ -1,8 +1,10 @@
 import { Injectable, InjectionToken, computed, effect, inject, signal, untracked } from '@angular/core';
-import { BACKUP_FORMAT_VERSION, type SealedBackup, backupFileName } from '../backup/backup-format';
+import { BACKUP_FORMAT_VERSION, type SealedBackup, backupFileName, openBackup } from '../backup/backup-format';
 import { BackupService } from '../backup/backup.service';
 import { type DriveAutoBackup, PreferencesService } from '../preferences.service';
 import { RuntimeConfigService } from '../runtime-config.service';
+import { deviceId, deviceName } from '../sync/device';
+import { type MergeSummary, SnapshotMerger } from '../sync/snapshot-merger';
 import { VaultService } from '../vault/vault.service';
 import { type DriveFile, DriveApi, type Fetch } from './drive-api';
 import { type AccessToken, DriveError, GoogleAuth } from './google-auth';
@@ -31,6 +33,13 @@ export function isSyncFile(file: DriveFile): boolean {
 export interface DriveBackup extends DriveFile {
   /** Made from the vault on this device. */
   fromThisVault: boolean;
+  /** Platform and browser of the device that made it, e.g. "iPhone · Safari"; empty for older backups. */
+  device: string;
+  fromThisDevice: boolean;
+}
+
+export interface BackupResult extends MergeSummary {
+  file: DriveFile;
 }
 
 /**
@@ -45,6 +54,8 @@ export class DriveService {
   private readonly backups = inject(BackupService);
   private readonly vault = inject(VaultService);
   private readonly runtime = inject(RuntimeConfigService);
+  private readonly merger = inject(SnapshotMerger);
+  private readonly deviceId = deviceId();
   private readonly api = new DriveApi(() => this.requireToken(), inject(DRIVE_FETCH));
 
   private readonly token = signal<AccessToken | null>(null);
@@ -66,7 +77,12 @@ export class DriveService {
     return (
       files
         ?.filter((f) => !isSyncFile(f))
-        .map((f) => ({ ...f, fromThisVault: !!vaultId && f.appProperties['locryVaultId'] === vaultId })) ?? null
+        .map((f) => ({
+          ...f,
+          fromThisVault: !!vaultId && f.appProperties['locryVaultId'] === vaultId,
+          device: f.appProperties['locryDevice'] ?? '',
+          fromThisDevice: f.appProperties['locryDeviceId'] === this.deviceId,
+        })) ?? null
     );
   });
   /**
@@ -114,21 +130,79 @@ export class DriveService {
    * Uploads a fresh backup of the vault and prunes old ones of this vault beyond the
    * configured limit. With `interactive: false` it never opens a popup and fails instead.
    */
-  async backupNow(options: { interactive: boolean } = { interactive: true }): Promise<DriveFile> {
+  async backupNow(options: { interactive: boolean } = { interactive: true }): Promise<BackupResult> {
     return this.run(() =>
-      this.withToken(options.interactive, async () => {
-        const vaultId = this.vault.header()?.vaultId ?? '';
-        const content = await this.backups.export();
-        const uploaded = await this.api.upload(backupFileName(new Date(), true), content, {
-          locryVaultId: vaultId,
-          locryFormat: String(BACKUP_FORMAT_VERSION),
-        });
-        this.prefs.setDrive({ lastDriveBackupAt: uploaded.createdTime || new Date().toISOString() });
-        await this.loadFiles();
-        await this.prune(vaultId);
-        return uploaded;
-      }),
+      this.withToken(options.interactive, () =>
+        this.merger.exclusive(async () => {
+          const vaultId = this.vault.header()?.vaultId ?? '';
+          const merged = await this.mergeOtherDevices(vaultId);
+          const content = await this.backups.export();
+          const uploaded = await this.api.upload(backupFileName(new Date(), true), content, {
+            locryVaultId: vaultId,
+            locryDeviceId: this.deviceId,
+            locryDevice: deviceName(),
+            locryFormat: String(BACKUP_FORMAT_VERSION),
+          });
+          this.prefs.setDrive({ lastDriveBackupAt: uploaded.createdTime || new Date().toISOString() });
+          await this.loadFiles();
+          await this.prune(vaultId);
+          return { file: uploaded, ...merged };
+        }),
+      ),
     );
+  }
+
+  /** Whether another device backed this vault up since this device last merged its backups. */
+  async otherDevicesBackedUp(): Promise<boolean> {
+    const vaultId = this.vault.header()?.vaultId ?? '';
+    const files = await this.withToken(false, () => this.api.list());
+    const state = await this.merger.loadState();
+    return files.some((f) => {
+      const device = f.appProperties['locryDeviceId'];
+      return (
+        !isSyncFile(f) &&
+        f.appProperties['locryVaultId'] === vaultId &&
+        !!device &&
+        device !== this.deviceId &&
+        this.merger.isNew(state, device, f.createdTime)
+      );
+    });
+  }
+
+  /**
+   * Before backing up, brings in what other devices backed up since this device last looked
+   * (their newest backup each), so a backup never drops changes made on the phone.
+   */
+  private async mergeOtherDevices(vaultId: string): Promise<MergeSummary> {
+    const files = await this.api.list();
+    this._files.set(files.filter((f) => f.name.endsWith('.locry')));
+    const newest = new Map<string, DriveFile>();
+    for (const file of files) {
+      const device = file.appProperties['locryDeviceId'];
+      if (isSyncFile(file) || file.appProperties['locryVaultId'] !== vaultId || !device || device === this.deviceId) continue;
+      if ((newest.get(device)?.createdTime ?? '') < file.createdTime) newest.set(device, file);
+    }
+    const state = await this.merger.loadState();
+    const total: MergeSummary = { received: 0, conflicts: 0 };
+    for (const [deviceId, file] of newest) {
+      if (!this.merger.isNew(state, deviceId, file.createdTime)) continue;
+      let sealed: SealedBackup;
+      let records;
+      try {
+        sealed = this.backups.read(await this.api.download(file.id));
+        if (sealed.header.vault.vaultId !== vaultId) continue;
+        records = await openBackup(sealed, this.vault.requireKey());
+      } catch (error) {
+        if (error instanceof DriveError) throw error;
+        console.warn('Skipping unreadable backup of another device', file.id, error);
+        continue;
+      }
+      const merged = await this.merger.merge(state, { deviceId, at: file.createdTime }, sealed.header.vault, records);
+      total.received += merged.received;
+      total.conflicts += merged.conflicts;
+    }
+    await this.merger.saveState(state);
+    return total;
   }
 
   /** Downloads and parses a backup (not decrypted yet). */
@@ -169,7 +243,10 @@ export class DriveService {
 
   private async prune(vaultId: string): Promise<void> {
     const keep = Math.max(1, this.prefs.driveKeep());
-    const ours = (this._files() ?? []).filter((f) => !isSyncFile(f) && f.appProperties['locryVaultId'] === vaultId);
+    // Only this device's backups: another device's may hold changes that exist nowhere else.
+    const ours = (this._files() ?? []).filter(
+      (f) => !isSyncFile(f) && f.appProperties['locryVaultId'] === vaultId && f.appProperties['locryDeviceId'] === this.deviceId,
+    );
     const stale = ours.slice(keep);
     for (const file of stale) await this.api.delete(file.id);
     if (stale.length) {

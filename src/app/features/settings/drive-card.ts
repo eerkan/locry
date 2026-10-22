@@ -9,6 +9,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmSpinner } from '@spartan-ng/helm/spinner';
 import type { SealedBackup } from '../../core/backup/backup-format';
+import { announceBackup } from '../../core/drive/auto-drive-backup.service';
 import { type DriveBackup, DriveService } from '../../core/drive/drive.service';
 import { errorKey } from '../../core/i18n';
 import { type DriveAutoBackup, PreferencesService } from '../../core/preferences.service';
@@ -204,8 +205,7 @@ export class DriveCard {
 
   protected backupNow(): Promise<void> {
     return this.attempt(async () => {
-      await this.drive.backupNow();
-      toast.success(this.transloco.translate('drive.backupDone'));
+      announceBackup(await this.drive.backupNow(), this.transloco, 'drive.backupDone');
     });
   }
 

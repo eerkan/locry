@@ -22,7 +22,15 @@ import { PreferencesService } from '../core/preferences.service';
             <ng-icon name="lucideCloud" class="text-muted-foreground shrink-0" />
             <div class="flex min-w-0 flex-1 flex-col">
               <span class="text-sm">{{ formatDate(file.createdTime) }}</span>
-              <span class="text-muted-foreground text-xs">{{ formatSize(file.size) }}</span>
+              <span class="text-muted-foreground text-xs">
+                {{ formatSize(file.size) }}
+                @if (file.device) {
+                  · {{ file.device }}
+                  @if (file.fromThisDevice) {
+                    ({{ 'sync.thisDevice' | transloco }})
+                  }
+                }
+              </span>
             </div>
             @if (showVaultBadge()) {
               <span hlmBadge [variant]="file.fromThisVault ? 'secondary' : 'outline'">

@@ -13,8 +13,16 @@ export interface MergeResult {
   writes: SyncEntry[];
   /** Losing sides of edit conflicts, as new records (see `makeCopy`). */
   copies: SyncEntry[];
-  /** The agreed version of every merged id afterwards. */
-  base: Record<string, string>;
+  /** Versions in the other device's state just merged: the next merge with it compares to these. */
+  remoteVersions: Record<string, string>;
+}
+
+/** What a merge compares against to tell who changed what. */
+export interface MergeBases {
+  /** Versions in this device's previous state from the other device (undefined: never merged it). */
+  remote?: Readonly<Record<string, string>>;
+  /** Versions this device last published (sync snapshot or backup), which others may have seen. */
+  published: Readonly<Record<string, string>>;
 }
 
 /**
@@ -37,60 +45,62 @@ const isDeleted = (entry: SyncEntry) => entry.type === TOMBSTONE_TYPE;
 const sameContent = (a: SyncEntry, b: SyncEntry) => a.type === b.type && JSON.stringify(a.value) === JSON.stringify(b.value);
 
 /**
- * Three-way merge of another device's entries into ours. `base` holds the version both sides
- * last agreed on; an entry changed on one side only is taken from that side. When both
- * changed, an edit beats a deletion (nothing is lost), otherwise the newer edit wins and the
- * older one is kept through `makeCopy` (e.g. a "conflict" copy of a note).
+ * Merges another device's entries into ours.
+ *
+ * "They changed" a record when it differs from what we last saw from that very device, so a
+ * stale copy (an older backup, a device that has not seen our edit yet) never overwrites our
+ * newer version. "I changed" it when it differs from what this device last published, i.e.
+ * an edit the other device cannot have seen. Then:
+ * - only they changed: theirs is taken if newer; if older, ours stays and theirs is kept as
+ *   a copy (concurrent edits, nothing lost);
+ * - both changed: the newer edit wins and the other is kept as a copy;
+ * - an edit always beats a deletion, unless the deletion is the only change.
  */
 export function mergeEntries(
   local: readonly SyncEntry[],
   remote: readonly SyncEntry[],
-  base: Readonly<Record<string, string>>,
+  bases: MergeBases,
   makeCopy: (loser: SyncEntry) => SyncEntry | null = () => null,
 ): MergeResult {
   const ours = new Map(local.map((e) => [e.id, e]));
   const writes: SyncEntry[] = [];
   const copies: SyncEntry[] = [];
-  const nextBase: Record<string, string> = { ...base };
+  const keepCopy = (loser: SyncEntry) => {
+    const copy = isDeleted(loser) ? null : makeCopy(loser);
+    if (copy) copies.push(copy);
+  };
 
   for (const theirs of remote) {
     const mine = ours.get(theirs.id);
-    const theirVersion = versionOf(theirs);
     if (!mine) {
       writes.push(theirs);
-      nextBase[theirs.id] = theirVersion;
       continue;
     }
+    const theirVersion = versionOf(theirs);
     const myVersion = versionOf(mine);
-    if (myVersion === theirVersion || sameContent(mine, theirs)) {
-      nextBase[theirs.id] = myVersion;
-      continue;
-    }
-    const agreed = base[theirs.id];
-    const iChanged = myVersion !== agreed;
-    const theyChanged = theirVersion !== agreed;
+    if (myVersion === theirVersion || sameContent(mine, theirs)) continue;
+    // Never merged that device yet: it most likely started from what we published.
+    const theyChanged = theirVersion !== (bases.remote ?? bases.published)[theirs.id];
     if (!theyChanged) continue;
-    if (!iChanged) {
-      writes.push(theirs);
-      nextBase[theirs.id] = theirVersion;
+    const iChanged = myVersion !== bases.published[theirs.id];
+
+    if (isDeleted(mine) || isDeleted(theirs)) {
+      // They edited what we deleted: the edit wins (on first contact only if it is newer than
+      // the deletion; it may be an old copy). They deleted what we did not touch: delete.
+      // They deleted what we edited: our edit wins.
+      const editAfterDeletion = bases.remote !== undefined || timeOf(theirs) > timeOf(mine);
+      if (isDeleted(mine) ? editAfterDeletion : !iChanged) writes.push(theirs);
       continue;
     }
-
-    // Both sides changed since they last agreed.
-    let winner: SyncEntry;
-    if (isDeleted(mine) !== isDeleted(theirs)) {
-      winner = isDeleted(mine) ? theirs : mine;
+    const theirsNewer = (timeOf(theirs).localeCompare(timeOf(mine)) || theirVersion.localeCompare(myVersion)) > 0;
+    if (theirsNewer) {
+      writes.push(theirs);
+      if (iChanged) keepCopy(mine);
     } else {
-      const order = timeOf(theirs).localeCompare(timeOf(mine)) || theirVersion.localeCompare(myVersion);
-      winner = order > 0 ? theirs : mine;
-      const loser = winner === theirs ? mine : theirs;
-      const copy = isDeleted(loser) ? null : makeCopy(loser);
-      if (copy) copies.push(copy);
+      keepCopy(theirs);
     }
-    if (winner === theirs) writes.push(theirs);
-    nextBase[theirs.id] = versionOf(winner);
   }
-  return { writes, copies, base: nextBase };
+  return { writes, copies, remoteVersions: Object.fromEntries(remote.map((e) => [e.id, versionOf(e)])) };
 }
 
 /**

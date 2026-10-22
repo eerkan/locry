@@ -2,7 +2,6 @@ import { DOCUMENT, DestroyRef, Injectable, computed, effect, inject, signal, unt
 import { TranslocoService } from '@jsverse/transloco';
 import { toast } from '@spartan-ng/brain/sonner';
 import { BACKUP_FORMAT_VERSION, createBackup, openBackup, readBackup } from '../backup/backup-format';
-import { PROFILE_RECORD, type ProfileValue, backupProfile } from '../backup/backup.service';
 import { toBase64Url, utf8Encode } from '../crypto/bytes';
 import type { DriveApi, DriveFile } from '../drive/drive-api';
 import { DriveService, isSyncFile } from '../drive/drive.service';
@@ -10,17 +9,17 @@ import { DriveError } from '../drive/google-auth';
 import { PreferencesService } from '../preferences.service';
 import { EncryptedStore } from '../storage/encrypted-store.service';
 import { VaultService } from '../vault/vault.service';
-import { type SyncEntry, mergeEntries, versionOf } from './merge';
-import { LOCAL_ONLY_TYPES, SYNC_STATE_TYPE, isTombstone } from './sync-records';
+import { deviceId, deviceName } from './device';
+import type { SyncEntry } from './merge';
+import { SnapshotMerger } from './snapshot-merger';
+
+export { deviceName } from './device';
 
 /** Waits this long after a local change before syncing, so typing does not upload every second. */
 const CHANGE_DEBOUNCE_MS = 30_000;
 const PERIODIC_MS = 5 * 60_000;
 /** Returning to the tab syncs again when the last sync is older than this. */
 const FOCUS_MIN_GAP_MS = 60_000;
-/** Tombstones older than this are dropped; devices offline for longer may bring records back. */
-const TOMBSTONE_TTL_MS = 90 * 24 * 3600_000;
-const DEVICE_ID_KEY = 'locry.device-id';
 
 export type SyncStatus = 'off' | 'idle' | 'syncing' | 'needsAuth' | 'error';
 
@@ -40,19 +39,6 @@ export interface SyncSummary {
   uploaded: boolean;
 }
 
-/** What this device last agreed with the others, kept encrypted in the vault (not synced). */
-interface SyncState {
-  /** Version per record id as of the last sync. */
-  base: Record<string, string>;
-  /** `modifiedTime` of other devices' snapshots already merged, by Drive file id. */
-  seen: Record<string, string>;
-  /** Hash of the content last uploaded, to skip unchanged uploads. */
-  uploadedHash: string | null;
-  lastSyncAt: string | null;
-}
-
-const EMPTY_STATE: SyncState = { base: {}, seen: {}, uploadedHash: null, lastSyncAt: null };
-
 /**
  * Keeps a vault in sync between devices through Google Drive, without a server.
  *
@@ -69,6 +55,7 @@ export class SyncService {
   private readonly prefs = inject(PreferencesService);
   private readonly transloco = inject(TranslocoService);
   private readonly document = inject(DOCUMENT);
+  private readonly merger = inject(SnapshotMerger);
 
   private readonly _status = signal<SyncStatus>('off');
   private readonly _lastSyncAt = signal<string | null>(null);
@@ -191,145 +178,84 @@ export class SyncService {
     this.timer = setTimeout(() => void this.syncNow(), delay);
   }
 
-  private async run(api: DriveApi): Promise<SyncSummary> {
-    const vaultId = this.vault.header()!.vaultId;
-    const key = this.vault.requireKey();
-    const files = (await api.list()).filter((f) => isSyncFile(f) && f.appProperties['locryVaultId'] === vaultId);
-    const own = files.find((f) => f.appProperties['locryDeviceId'] === this.deviceId);
-    const state = await this.loadState();
-    const summary: SyncSummary = { received: 0, conflicts: 0, uploaded: false };
+  private run(api: DriveApi): Promise<SyncSummary> {
+    return this.merger.exclusive(async () => {
+      const vaultId = this.vault.header()!.vaultId;
+      const key = this.vault.requireKey();
+      const files = (await api.list()).filter((f) => isSyncFile(f) && f.appProperties['locryVaultId'] === vaultId);
+      const own = files.find((f) => f.appProperties['locryDeviceId'] === this.deviceId);
+      const state = await this.merger.loadState();
+      const summary: SyncSummary = { received: 0, conflicts: 0, uploaded: false };
 
-    for (const file of files) {
-      if (file === own || state.seen[file.id] === file.modifiedTime) continue;
-      let records;
-      let sealed;
-      try {
-        sealed = readBackup(await api.download(file.id));
-        if (sealed.header.vault.vaultId !== vaultId) continue;
-        records = await openBackup(sealed, key);
-      } catch (error) {
-        // A snapshot this key cannot open (corrupted or tampered with): leave it alone.
-        if (error instanceof DriveError) throw error;
-        console.warn('Skipping unreadable sync snapshot', file.id, error);
-        continue;
+      for (const file of files) {
+        const from = { deviceId: file.appProperties['locryDeviceId'] ?? file.id, at: file.modifiedTime };
+        if (file === own || !this.merger.isNew(state, from.deviceId, from.at)) continue;
+        let records;
+        let sealed;
+        try {
+          sealed = readBackup(await api.download(file.id));
+          if (sealed.header.vault.vaultId !== vaultId) continue;
+          records = await openBackup(sealed, key);
+        } catch (error) {
+          // A snapshot this key cannot open (corrupted or tampered with): leave it alone.
+          if (error instanceof DriveError) throw error;
+          console.warn('Skipping unreadable sync snapshot', file.id, error);
+          continue;
+        }
+        const merged = await this.merger.merge(state, from, sealed.header.vault, records);
+        summary.received += merged.received;
+        summary.conflicts += merged.conflicts;
       }
-      await this.vault.mergeHeader(sealed.header.vault);
-      await this.mergeProfile(records);
 
-      const result = mergeEntries(
-        await this.localEntries(),
-        records.filter((r) => isSynced(r.type)),
-        state.base,
-        (loser) => this.conflictCopy(loser),
+      await this.merger.expireTombstones();
+      const current = await this.merger.localEntries();
+      const profile = this.merger.profileRecord();
+      const header = this.vault.header()!;
+      const hash = await contentHash([header.keySlots, header.removedSlotIds, profile, current]);
+      let ownFile: DriveFile | undefined = own;
+      if (!own || hash !== state.uploadedHash) {
+        const content = await createBackup(header, key, profile ? [...current, profile] : current);
+        const properties = {
+          locrySync: '1',
+          locryVaultId: vaultId,
+          locryDeviceId: this.deviceId,
+          locryDevice: deviceName(),
+          locryFormat: String(BACKUP_FORMAT_VERSION),
+        };
+        ownFile = own
+          ? await api.update(own.id, content, properties)
+          : await api.upload(`locry-sync-${vaultId.slice(0, 8)}-${this.deviceId.slice(0, 8)}.locry`, content, properties);
+        state.uploadedHash = hash;
+        summary.uploaded = true;
+      }
+
+      // Everything published now is what this device agrees on.
+      this.merger.published(state, current);
+      state.lastSyncAt = new Date().toISOString();
+      await this.merger.saveState(state);
+      this._lastSyncAt.set(state.lastSyncAt);
+      this._devices.set(
+        files
+          .map((f) => (f === own ? ownFile! : f))
+          .map((f) => ({
+            deviceId: f.appProperties['locryDeviceId'] ?? '',
+            name: f.appProperties['locryDevice'] ?? '',
+            modifiedTime: f.modifiedTime,
+            self: f.appProperties['locryDeviceId'] === this.deviceId,
+          }))
+          .concat(own ? [] : [{ deviceId: this.deviceId, name: deviceName(), modifiedTime: ownFile!.modifiedTime, self: true }]),
       );
-      await this.store.applySync([...result.writes, ...result.copies]);
-      state.base = result.base;
-      state.seen[file.id] = file.modifiedTime;
-      summary.received += result.writes.length;
-      summary.conflicts += result.copies.length;
-    }
-
-    const expired = (await this.localEntries())
-      .filter((e) => isTombstone(e.value) && Date.now() - Date.parse(e.value.deletedAt) > TOMBSTONE_TTL_MS)
-      .map((e) => e.id);
-    if (expired.length) await this.store.applySync([], expired);
-
-    const current = await this.localEntries();
-    const profile = this.profileRecord();
-    const header = this.vault.header()!;
-    const hash = await contentHash([header.keySlots, header.removedSlotIds, profile, current]);
-    let ownFile: DriveFile | undefined = own;
-    if (!own || hash !== state.uploadedHash) {
-      const content = await createBackup(header, key, profile ? [...current, profile] : current);
-      const properties = {
-        locrySync: '1',
-        locryVaultId: vaultId,
-        locryDeviceId: this.deviceId,
-        locryDevice: deviceName(),
-        locryFormat: String(BACKUP_FORMAT_VERSION),
-      };
-      ownFile = own
-        ? await api.update(own.id, content, properties)
-        : await api.upload(`locry-sync-${vaultId.slice(0, 8)}-${this.deviceId.slice(0, 8)}.locry`, content, properties);
-      state.uploadedHash = hash;
-      summary.uploaded = true;
-    }
-
-    // Everything published now is what this device agrees on.
-    state.base = Object.fromEntries(current.map((e) => [e.id, versionOf(e)]));
-    for (const id of Object.keys(state.seen)) if (!files.some((f) => f.id === id)) delete state.seen[id];
-    state.lastSyncAt = new Date().toISOString();
-    await this.store.put(SYNC_STATE_TYPE, SYNC_STATE_TYPE, state);
-    this._lastSyncAt.set(state.lastSyncAt);
-    this._devices.set(
-      files
-        .map((f) => (f === own ? ownFile! : f))
-        .map((f) => ({
-          deviceId: f.appProperties['locryDeviceId'] ?? '',
-          name: f.appProperties['locryDevice'] ?? '',
-          modifiedTime: f.modifiedTime,
-          self: f.appProperties['locryDeviceId'] === this.deviceId,
-        }))
-        .concat(own ? [] : [{ deviceId: this.deviceId, name: deviceName(), modifiedTime: ownFile!.modifiedTime, self: true }]),
-    );
-    return summary;
-  }
-
-  private async localEntries(): Promise<SyncEntry[]> {
-    return (await this.store.exportAll()).filter((r) => isSynced(r.type));
-  }
-
-  private async loadState(): Promise<SyncState> {
-    const stored = await this.store.get<SyncState>(SYNC_STATE_TYPE, SYNC_STATE_TYPE);
-    return { ...EMPTY_STATE, ...stored, base: { ...stored?.base }, seen: { ...stored?.seen } };
+      return summary;
+    });
   }
 
   private async loadLastSync(): Promise<void> {
     try {
-      this._lastSyncAt.set((await this.loadState()).lastSyncAt);
+      this._lastSyncAt.set((await this.merger.loadState()).lastSyncAt);
     } catch {
       this._lastSyncAt.set(null);
     }
   }
-
-  private profileRecord(): SyncEntry | null {
-    const profile = this.vault.activeVault();
-    if (!profile) return null;
-    const value: ProfileValue = { name: profile.name, color: profile.color, updatedAt: profile.updatedAt };
-    return { type: PROFILE_RECORD, id: PROFILE_RECORD, value };
-  }
-
-  /** Takes the vault's name and color from another device when they were changed there later. */
-  private async mergeProfile(records: SyncEntry[]): Promise<void> {
-    if (!records.some((r) => r.type === PROFILE_RECORD)) return;
-    const remote = backupProfile(records);
-    const local = this.vault.activeVault();
-    if (!local || !remote.updatedAt || (local.updatedAt && local.updatedAt >= remote.updatedAt)) return;
-    await this.vault.updateProfile(local.id, remote);
-  }
-
-  /** Keeps the losing side of a note edited on two devices as a separate note. */
-  private conflictCopy(loser: SyncEntry): SyncEntry | null {
-    if (loser.type !== 'note') return null;
-    const note = loser.value as { title?: string; pinned?: boolean };
-    const id = crypto.randomUUID();
-    const suffix = this.transloco.translate('sync.conflictSuffix');
-    return {
-      type: 'note',
-      id,
-      value: {
-        ...note,
-        id,
-        title: `${note.title || this.transloco.translate('pages.notes.untitled')} (${suffix})`,
-        pinned: false,
-        updatedAt: new Date().toISOString(),
-      },
-    };
-  }
-}
-
-function isSynced(type: string): boolean {
-  return !LOCAL_ONLY_TYPES.has(type) && type !== PROFILE_RECORD;
 }
 
 /** Order-independent hash of what would be uploaded. */
@@ -340,43 +266,3 @@ async function contentHash(parts: unknown[]): Promise<string> {
   return toBase64Url(new Uint8Array(digest));
 }
 
-/** A random id for this browser, shared by all vaults on it. */
-function deviceId(): string {
-  try {
-    let id = localStorage.getItem(DEVICE_ID_KEY);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(DEVICE_ID_KEY, id);
-    }
-    return id;
-  } catch {
-    return crypto.randomUUID();
-  }
-}
-
-/** A short, human label such as "Mac · Chrome", shown in the device list. */
-export function deviceName(userAgent = navigator.userAgent): string {
-  const os = /iPhone/.test(userAgent)
-    ? 'iPhone'
-    : /iPad/.test(userAgent)
-      ? 'iPad'
-      : /Android/.test(userAgent)
-        ? 'Android'
-        : /Mac OS X|Macintosh/.test(userAgent)
-          ? 'Mac'
-          : /Windows/.test(userAgent)
-            ? 'Windows'
-            : /Linux/.test(userAgent)
-              ? 'Linux'
-              : '';
-  const browser = /Edg\//.test(userAgent)
-    ? 'Edge'
-    : /Firefox\//.test(userAgent)
-      ? 'Firefox'
-      : /Chrome\//.test(userAgent)
-        ? 'Chrome'
-        : /Safari\//.test(userAgent)
-          ? 'Safari'
-          : '';
-  return [os, browser].filter(Boolean).join(' · ') || 'Browser';
-}

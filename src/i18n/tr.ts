@@ -478,6 +478,7 @@ export const tr = {
     notConnected: 'Bağlı değil',
     disconnect: 'Bağlantıyı kes',
     backupNow: 'Şimdi yedekle',
+    backupMerged: 'Drive’a yedeklendi. Önce diğer cihazların yedeklerinden {{count}} değişiklik bu kasaya birleştirildi.',
     backupDone: 'Drive’a yedeklendi',
     backupFailed: 'Drive yedeği alınamadı',
     refresh: 'Yenile',

@@ -190,6 +190,19 @@ gerçek ekran görüntüleri.
 - ✅ Yol üstünde: üretim sunucusunun sıkıştırma önbelleği aynı uzunluktaki yeni HTML'i eski sürümle karıştırıyordu
   (artık dosyanın değişme zamanına bağlı).
 
+### Faz 11 — Cihazlar arası yedeklerin birleştirilmesi ✅ tamamlandı
+- ✅ Drive yedekleri cihaz kimliği ve adıyla etiketlenir; budama yalnızca bu cihazın yedeklerini siler (önceden
+  sık yedek alan bir cihaz, diğer cihazın tek kopyası olan yedeği silebiliyordu).
+- ✅ Yedeklemeden önce diğer cihazların bu cihazın henüz birleştirmediği en yeni yedekleri birleştirilir;
+  yedekler silme kayıtlarını da taşır. Otomatik yedek, yerelde değişiklik yokken de yeni bir yabancı yedek varsa çalışır.
+- ✅ Birleştirme motoru düzeltildi: "onlar değiştirdi mi" artık o cihazdan en son görülen hale, "ben değiştirdim mi"
+  bu cihazın en son yayınladığı hale göre. Önceki tek ortak tabanla, eski bir kopya (eski yedek ya da yeni düzenlemeyi
+  henüz görmemiş bir cihaz) daha yeni bir düzenlemeyi ezebiliyordu. Dosya yedeği indirmek ve yedekten geri yüklemek
+  de yayın/ortak hal sayılır; ilk karşılaşmada gereksiz çakışma kopyası oluşmaz.
+- ✅ Eşitleme ve yedekleme aynı birleştirici üzerinden, sırayla çalışır (`SnapshotMerger`).
+- ✅ Testler: telefon yedeğinin birleştirilmesi ve korunması, silmenin taşınması, eski yedeğin yeni düzenlemeyi
+  ezmemesi, değişiklik yokken yabancı yedek için otomatik yedek, birleştirme kuralları.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`

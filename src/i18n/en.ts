@@ -480,6 +480,7 @@ export const en: Translation = {
     notConnected: 'Not connected',
     disconnect: 'Disconnect',
     backupNow: 'Back up now',
+    backupMerged: 'Backed up to Drive. {{count}} changes from other devices’ backups were merged into this vault first.',
     backupDone: 'Backed up to Drive',
     backupFailed: 'Drive backup failed',
     refresh: 'Refresh',

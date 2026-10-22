@@ -174,6 +174,13 @@ Bunun için kurulumu çalıştıran kişinin **bir kez** bir Google OAuth Client
    (non-sensitive) izin olarak sınıflandırır, güvenlik incelemesi gerekmez. *Testing* durumunda yalnızca eklenen
    test kullanıcıları bağlanabilir.
 
+**Birden fazla cihazdan yedekleme:** Her yedek, onu alan cihazla etiketlenir (listede "iPhone · Safari" gibi
+görünür). Bir cihaz Drive'a yedek almadan önce aynı kasanın başka cihazlardan gelen, henüz birleştirmediği en yeni
+yedeklerini indirip birleştirir; eşitlemedeki kurallar geçerlidir: eski bir kopya yeni düzenlemeyi ezmez, düzenleme
+silmeyi yener, iki tarafta değişen notun eski sürümü "(çakışma)" kopyası olarak kalır. Böylece bilgisayarın yedeği
+telefonda yapılan değişiklikleri de içerir. "Son N yedek" budaması yalnızca o cihazın kendi yedeklerini siler.
+Otomatik yedek, bu cihazda değişiklik olmasa da başka bir cihaz yeni yedek aldıysa çalışır.
+
 Değer çalışma anında `/config.json` olarak okunur: Docker'da `.env`'i değiştirip `docker compose up -d` yeterlidir,
 `yarn start` ve `yarn serve:prod` de `.env`'i okur. `LOCRY_GOOGLE_CLIENT_ID` boşsa her kullanıcı Ayarlar'da kendi
 Client ID'sini girebilir; bu seçenek gömülü bir ID varken de **Gelişmiş** olarak durur.

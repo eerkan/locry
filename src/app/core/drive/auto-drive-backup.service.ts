@@ -3,7 +3,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EncryptedStore } from '../storage/encrypted-store.service';
 import { VaultService } from '../vault/vault.service';
-import { DriveService } from './drive.service';
+import { type BackupResult, DriveService } from './drive.service';
 
 /** Often enough for the shortest schedule (5 minutes). */
 const CHECK_INTERVAL_MS = 60_000;
@@ -39,16 +39,16 @@ export class AutoDriveBackupService {
 
   async check(now = Date.now()): Promise<void> {
     if (this.running || !this.drive.autoBackupDue(now)) return;
-    // Frequent schedules would otherwise upload identical copies and prune the older,
-    // different ones away: skip when nothing changed since the last automatic backup.
-    const changes = this.store.changes();
-    if (changes === this.changesAtLastBackup) return;
     if (this.drive.hasValidToken()) {
       this.running = true;
       try {
-        await this.drive.backupNow({ interactive: false });
-        this.changesAtLastBackup = changes;
-        toast.success(this.transloco.translate('drive.autoBackupDone'));
+        // Frequent schedules would otherwise upload identical copies: skip when nothing changed
+        // here and no other device backed up something new to merge.
+        const changes = this.store.changes();
+        if (changes === this.changesAtLastBackup && !(await this.drive.otherDevicesBackedUp())) return;
+        const result = await this.drive.backupNow({ interactive: false });
+        this.changesAtLastBackup = this.store.changes();
+        announceBackup(result, this.transloco, 'drive.autoBackupDone');
       } catch (error) {
         console.error(error);
       } finally {
@@ -68,11 +68,20 @@ export class AutoDriveBackupService {
 
   private async backupFromClick(): Promise<void> {
     try {
-      await this.drive.backupNow({ interactive: true });
-      toast.success(this.transloco.translate('drive.backupDone'));
+      announceBackup(await this.drive.backupNow({ interactive: true }), this.transloco, 'drive.backupDone');
     } catch (error) {
       console.error(error);
       toast.error(this.transloco.translate('drive.backupFailed'));
     }
   }
+}
+
+/** Toast after a backup; mentions changes merged in from other devices first. */
+export function announceBackup(result: BackupResult, transloco: TranslocoService, doneKey: string): void {
+  if (result.conflicts) toast.warning(transloco.translate('sync.conflicts', { count: result.conflicts }), { duration: 10_000 });
+  toast.success(
+    result.received
+      ? transloco.translate('drive.backupMerged', { count: result.received })
+      : transloco.translate(doneKey),
+  );
 }

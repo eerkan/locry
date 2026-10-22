@@ -3,6 +3,8 @@ import { TranslocoService } from '@jsverse/transloco';
 import { IDBFactory } from 'fake-indexeddb';
 import { BackupService } from '../backup/backup.service';
 import { randomBytes } from '../crypto/bytes';
+import { openBackup, readBackup } from '../backup/backup-format';
+import { AutoDriveBackupService } from '../drive/auto-drive-backup.service';
 import { DRIVE_FETCH, DriveService } from '../drive/drive.service';
 import { FakeDrive, FakeGoogleAuth } from '../drive/fake-drive.testing';
 import { GoogleAuth } from '../drive/google-auth';
@@ -182,6 +184,101 @@ describe('SyncService', () => {
     expect(driveService.files()?.length).toBe(1);
     expect(driveService.syncSnapshots()?.length).toBe(2);
     expect(drive.files.filter((f) => f.appProperties['locrySync'] === '1')).toHaveLength(2);
+  });
+
+  describe('Drive backups from several devices (sync off)', () => {
+    /** The same vault on the laptop and, restored from a file backup, on the phone. */
+    async function sameVaultOnBoth(): Promise<void> {
+      const laptop = await boot('laptop');
+      await laptop.vault.completeSetup(await laptop.vault.prepareVault('Mac', { name: 'Kişisel' }));
+      await laptop.store.put('note', 'n1', { id: 'n1', title: 'Alışveriş', updatedAt: '2026-01-01T00:00:00Z' });
+      await laptop.store.put('task', 't1', { id: 't1', title: 'Fatura', updatedAt: '2026-01-01T00:00:00Z' });
+      const file = await laptop.backups.export();
+      const phone = await boot('phone');
+      await phone.backups.restoreAsVault(await phone.backups.open(phone.backups.read(file), { method: 'passkey' }));
+    }
+
+    const driveOf = () => TestBed.inject(DriveService);
+    const latestBackupOf = async (deviceId: string, device: Device) => {
+      const file = drive.files
+        .filter((f) => f.appProperties['locryDeviceId'] === deviceId && f.appProperties['locrySync'] !== '1')
+        .sort((a, b) => b.createdTime.localeCompare(a.createdTime))[0];
+      const records = await openBackup(readBackup(file.content as Uint8Array<ArrayBuffer>), device.vault.requireKey());
+      return records.filter((r) => r.type === 'note').map((r) => (r.value as { title: string }).title).sort();
+    };
+
+    it('merges what the phone backed up before the laptop backs up, and keeps the phone backup', async () => {
+      await sameVaultOnBoth();
+      const phone = await boot('phone');
+      await phone.store.put('note', 'n2', { id: 'n2', title: 'Telefondan', updatedAt: '2026-01-02T00:00:00Z' });
+      await phone.store.remove('task', 't1');
+      await driveOf().connect();
+      await driveOf().backupNow();
+
+      const laptop = await boot('laptop');
+      await laptop.store.put('note', 'n3', { id: 'n3', title: 'Laptoptan', updatedAt: '2026-01-02T00:00:00Z' });
+      TestBed.inject(PreferencesService).setDrive({ driveKeep: 1 });
+      await driveOf().connect();
+      const first = await driveOf().backupNow();
+      expect(first.received).toBe(2); // the new note and the deletion
+      expect(await titles(laptop)).toEqual(['Alışveriş', 'Laptoptan', 'Telefondan']);
+      expect(await laptop.store.list('task')).toEqual([]);
+      // The laptop's backup holds both devices' changes...
+      expect(await latestBackupOf('laptop-device', laptop)).toEqual(['Alışveriş', 'Laptoptan', 'Telefondan']);
+
+      // ...and pruning its own backups never deletes the phone's.
+      await driveOf().backupNow();
+      const devices = drive.files.map((f) => f.appProperties['locryDeviceId']).sort();
+      expect(devices).toEqual(['laptop-device', 'phone-device']);
+      // Nothing new from the phone the second time.
+      expect((await driveOf().backupNow()).received).toBe(0);
+    });
+
+    it('does not let an older phone backup undo a newer laptop edit', async () => {
+      await sameVaultOnBoth();
+      const laptop = await boot('laptop');
+      await laptop.store.put('note', 'n1', { id: 'n1', title: 'Laptop sürümü', updatedAt: '2026-01-02T00:00:00Z' });
+      await driveOf().connect();
+      await driveOf().backupNow();
+
+      // The phone never saw that edit; it changes something else and backs up.
+      const phone = await boot('phone');
+      await phone.store.put('note', 'n2', { id: 'n2', title: 'Telefondan', updatedAt: '2026-01-03T00:00:00Z' });
+      await driveOf().connect();
+      await driveOf().backupNow();
+      // The phone took the laptop's edit while merging before its backup.
+      expect(await titles(phone)).toEqual(['Laptop sürümü', 'Telefondan']);
+
+      const back = await boot('laptop');
+      await driveOf().connect();
+      await driveOf().backupNow();
+      expect(await titles(back)).toEqual(['Laptop sürümü', 'Telefondan']);
+    });
+
+    it('backs up on schedule to merge a phone backup even when nothing changed here', async () => {
+      await sameVaultOnBoth();
+      const laptop = await boot('laptop');
+      TestBed.inject(PreferencesService).setDrive({ driveAutoBackup: '5m' });
+      await driveOf().connect();
+      const auto = TestBed.inject(AutoDriveBackupService);
+      await auto.check();
+      await auto.check(Date.now() + 6 * 60_000);
+      const laptopBackups = () => drive.files.filter((f) => f.appProperties['locryDeviceId'] === 'laptop-device').length;
+      expect(laptopBackups()).toBe(1); // unchanged: skipped
+
+      const phone = await boot('phone');
+      await phone.store.put('note', 'n2', { id: 'n2', title: 'Telefondan', updatedAt: '2026-01-02T00:00:00Z' });
+      await driveOf().connect();
+      await driveOf().backupNow();
+
+      const again = await boot('laptop');
+      TestBed.inject(PreferencesService).setDrive({ driveAutoBackup: '5m' });
+      await driveOf().connect();
+      const autoAgain = TestBed.inject(AutoDriveBackupService);
+      await autoAgain.check(Date.now() + 6 * 60_000);
+      expect(await titles(again)).toEqual(['Alışveriş', 'Telefondan']);
+      expect(laptopBackups()).toBe(2);
+    });
   });
 
   it('names devices by platform and browser', () => {

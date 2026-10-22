@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { EncryptedStore } from '../storage/encrypted-store.service';
 import { LOCAL_ONLY_TYPES, TOMBSTONE_TYPE } from '../sync/sync-records';
-import { type VaultColor, isVaultColor } from '../vault/vault-registry';
+import { PROFILE_RECORD, type ProfileValue, backupProfile } from './vault-profile';
 import { type ReAuth, VaultService } from '../vault/vault.service';
 import { type BackupRecord, type SealedBackup, createBackup, openBackup, readBackup } from './backup-format';
+import { SnapshotMerger } from '../sync/snapshot-merger';
 
 export type RestoreMode = 'merge' | 'replace';
 
@@ -25,37 +26,29 @@ export interface OpenedBackup {
 
 export type BackupUnlock = { method: 'current' } | ReAuth;
 
-/**
- * The vault's name and color travel inside the encrypted backup as this pseudo-record, so a
- * restore on another device can show the same name. It is never written to the store.
- */
-export const PROFILE_RECORD = 'vault-profile';
-
-export interface ProfileValue {
-  name: string;
-  color: VaultColor;
-  updatedAt?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class BackupService {
   private readonly vault = inject(VaultService);
   private readonly store = inject(EncryptedStore);
+  private readonly merger = inject(SnapshotMerger);
 
   /** Creates a compressed, encrypted `.locry` file of everything in the vault. */
   async export(): Promise<Uint8Array<ArrayBuffer>> {
     const header = this.vault.header();
     if (!header) throw new Error('No vault');
-    // Vectors and sync bookkeeping stay on the device; deletions only matter for sync.
-    const records = (await this.store.exportAll()).filter(
-      (r) => !LOCAL_ONLY_TYPES.has(r.type) && r.type !== TOMBSTONE_TYPE,
-    );
+    // Vectors and sync bookkeeping stay on the device. Tombstones are included so that merging
+    // this backup on another device deletes what was deleted here; restoring ignores them.
+    const records = (await this.store.exportAll()).filter((r) => !LOCAL_ONLY_TYPES.has(r.type));
     const profile = this.vault.activeVault();
     if (profile) {
       const value: ProfileValue = { name: profile.name, color: profile.color, updatedAt: profile.updatedAt };
       records.push({ type: PROFILE_RECORD, id: PROFILE_RECORD, value });
     }
-    return createBackup(header, this.vault.requireKey(), records);
+    const file = await createBackup(header, this.vault.requireKey(), records);
+    // Another device may restore or merge this file: its content is now "published", which
+    // later merges compare against to tell this device's own new edits apart.
+    await this.markPublished();
+    return file;
   }
 
   /** Parses a file without decrypting it. Throws `BackupError` for anything that is not a backup. */
@@ -118,7 +111,15 @@ export class BackupService {
     const records = contentRecords(opened.records);
     await this.vault.adoptVault(header, opened.key, backupProfile(opened.records));
     await this.store.importAll(records, true);
+    // The restored state also exists on the device that made the backup: a known common state.
+    await this.markPublished();
     return { restored: records.length, keptLocal: 0, byType: countByType(records), merged: false };
+  }
+
+  private async markPublished(): Promise<void> {
+    const state = await this.merger.loadState();
+    this.merger.published(state, await this.merger.localEntries());
+    await this.merger.saveState(state);
   }
 }
 
@@ -134,18 +135,10 @@ function contentRecords(records: BackupRecord[]): BackupRecord[] {
   return records.filter((r) => r.type !== PROFILE_RECORD && r.type !== TOMBSTONE_TYPE && !LOCAL_ONLY_TYPES.has(r.type));
 }
 
-/** Name and color stored in a backup; backups made before multiple vaults have none. */
-export function backupProfile(records: BackupRecord[]): ProfileValue {
-  const value = records.find((r) => r.type === PROFILE_RECORD)?.value as Partial<ProfileValue> | undefined;
-  return {
-    name: typeof value?.name === 'string' ? value.name.slice(0, 60) : '',
-    color: isVaultColor(value?.color) ? value.color : 'blue',
-    updatedAt: typeof value?.updatedAt === 'string' ? value.updatedAt : undefined,
-  };
-}
-
 function countByType(records: BackupRecord[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const record of records) counts[record.type] = (counts[record.type] ?? 0) + 1;
   return counts;
 }
+
+export { PROFILE_RECORD, type ProfileValue, backupProfile } from './vault-profile';
