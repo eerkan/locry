@@ -22,3 +22,4 @@ compose.yaml
 .dockerignore
 .env
 public/config.json
+deploy

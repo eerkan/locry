@@ -4,6 +4,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideEllipsis, lucideFingerprint, lucidePencil, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from '@spartan-ng/brain/sonner';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
+import { HlmBadge } from '@spartan-ng/helm/badge';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmDialogImports } from '@spartan-ng/helm/dialog';
@@ -12,7 +13,7 @@ import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInput } from '@spartan-ng/helm/input';
 import { errorKey } from '../../core/i18n';
 import { PreferencesService } from '../../core/preferences.service';
-import type { KeySlot } from '../../core/vault/vault-header';
+import { type KeySlot, slotRpId } from '../../core/vault/vault-header';
 import { type ReAuth, VaultService } from '../../core/vault/vault.service';
 import { ReAuthPrompt } from '../../shared/reauth';
 
@@ -20,6 +21,7 @@ import { ReAuthPrompt } from '../../shared/reauth';
   selector: 'app-passkeys-card',
   imports: [
     HlmAlertDialogImports,
+    HlmBadge,
     HlmButton,
     HlmCardImports,
     HlmDialogImports,
@@ -46,8 +48,15 @@ import { ReAuthPrompt } from '../../shared/reauth';
                 <ng-icon name="lucideFingerprint" />
               </span>
               <div class="flex min-w-0 flex-1 flex-col">
-                <span class="truncate text-sm font-medium">{{ slot.label }}</span>
-                <span class="text-muted-foreground text-xs">{{ 'pages.settings.addedOn' | transloco: { date: formatDate(slot.createdAt) } }}</span>
+                <span class="flex items-center gap-2">
+                  <span class="truncate text-sm font-medium">{{ slot.label }}</span>
+                  @if (site(slot) !== vault.rpId) {
+                    <span hlmBadge variant="outline" class="text-[10px]">{{ 'pages.settings.passkeyOtherSite' | transloco }}</span>
+                  }
+                </span>
+                <span class="text-muted-foreground text-xs">
+                  {{ site(slot) }} · {{ 'pages.settings.addedOn' | transloco: { date: formatDate(slot.createdAt) } }}
+                </span>
               </div>
               <button
                 hlmBtn
@@ -151,6 +160,10 @@ export class PasskeysCard {
   protected readonly label = signal('');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  protected site(slot: KeySlot): string {
+    return slotRpId(slot);
+  }
 
   protected formatDate(iso: string): string {
     return new Intl.DateTimeFormat(this.prefs.lang(), { dateStyle: 'medium' }).format(new Date(iso));

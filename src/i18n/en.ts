@@ -80,6 +80,12 @@ export const en: Translation = {
     restoreInstead: 'Restore from backup',
     restoreInsteadHint: 'Bring over a vault you used on another device from its .locry backup.',
   },
+  sitePasskey: {
+    title: 'Create a passkey for this address',
+    description:
+      'This vault’s passkeys belong to another address; passkeys only work where they were created. Create one now to unlock with your fingerprint or face on {{site}}.',
+    later: 'Later',
+  },
   restore: {
     title: 'Restore from backup',
     description: 'Choose a .locry backup file. It opens with a passkey or the recovery key of the vault it came from.',
@@ -88,6 +94,8 @@ export const en: Translation = {
     unlockTitle: 'Open the backup',
     restoring: 'Restoring…',
     done: 'Backup restored: {{count}} records.',
+    otherSite:
+      'This backup’s passkeys belong to {{sites}} and do not work on {{site}}. Open it with the recovery key; you can then create a passkey for this address.',
   },
   unlock: {
     title: 'Vault locked',
@@ -95,6 +103,8 @@ export const en: Translation = {
     withPasskey: 'Unlock with passkey',
     waiting: 'Waiting for passkey…',
     useRecovery: 'Use recovery key',
+    noPasskeyHere:
+      'This vault’s passkeys belong to {{sites}} and do not work on {{site}}. Unlock with the recovery key; you can then create a passkey for this address.',
   },
   recover: {
     title: 'Unlock with recovery key',
@@ -298,6 +308,7 @@ export const en: Translation = {
       passkeyLabelDefault: 'New passkey',
       passkeyAdded: 'Passkey added',
       passkeyActions: 'Passkey actions',
+      passkeyOtherSite: 'Other address',
       renamePasskey: 'Rename',
       removePasskey: 'Remove',
       removePasskeyTitle: 'Remove this passkey?',
@@ -455,6 +466,7 @@ export const en: Translation = {
       corrupted: 'The vault data could not be read or is corrupted.',
       locked: 'The vault is locked.',
       lastPasskey: 'The last passkey cannot be removed.',
+      noPasskeyForSite: 'No passkey works on this address. Use the recovery key.',
     },
     unexpected: 'An unexpected error occurred.',
   },

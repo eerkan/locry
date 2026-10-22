@@ -6,6 +6,7 @@ import { gunzip, gzip } from '../crypto/compression';
 import { EncryptedStore } from '../storage/encrypted-store.service';
 import { LocryDb } from '../storage/locry-db';
 import { type PasskeyAssertion, PasskeyClient, type PasskeyRegistration } from '../vault/passkey';
+import { passkeySlotsFor } from '../vault/vault-header';
 import { VaultService } from '../vault/vault.service';
 import { BackupError, createBackup, openBackup, readBackup } from './backup-format';
 import { BackupService } from './backup.service';
@@ -15,6 +16,8 @@ class FakeAuthenticators {
   private readonly secrets = new Map<string, Uint8Array<ArrayBuffer>>();
   /** Which credential the next assertion uses; defaults to the first one registered. */
   use: string | null = null;
+  /** Site new passkeys are created for (simulates using Locry on another address). */
+  site = 'localhost';
   registered: string[] = [];
 
   async register(options: { excludeCredentialIds?: string[] }): Promise<PasskeyRegistration> {
@@ -22,7 +25,7 @@ class FakeAuthenticators {
     if (options.excludeCredentialIds?.includes(id)) throw new Error('duplicate');
     this.secrets.set(id, randomBytes(32));
     this.registered.push(id);
-    return { credentialId: id, prfOutput: new Uint8Array(this.secrets.get(id)!) };
+    return { credentialId: id, rpId: this.site, prfOutput: new Uint8Array(this.secrets.get(id)!) };
   }
 
   async assert(options: { credentialIds: string[] }): Promise<PasskeyAssertion> {
@@ -229,5 +232,53 @@ describe('vault management and restore', () => {
     second.vault.lock();
     await second.vault.unlockWithRecoveryKey(setup.recoveryKey);
     expect(second.vault.header()?.vaultId).toBe(first.vault.header()?.vaultId);
+  });
+
+  it('records the site of each passkey and only uses passkeys of the current site', async () => {
+    const { vault } = await boot();
+    await vault.completeSetup(await vault.prepareVault('Mac'));
+    expect(vault.passkeySlots()[0].rpId).toBe(vault.rpId);
+    expect(vault.localPasskeySlots()).toHaveLength(1);
+  });
+
+  it('restores a backup made on another site with the recovery key, then adds a passkey here', async () => {
+    // Vault created on a public domain.
+    authenticators.site = 'locry.example.com';
+    const first = await boot();
+    const setup = await first.vault.prepareVault('Phone');
+    await first.vault.completeSetup(setup);
+    await first.store.put('note', 'n1', { title: 'Domainden gelen not' });
+    const file = await first.backups.export();
+    TestBed.inject(LocryDb).close();
+
+    // Restored on localhost: the backup's passkeys cannot work here.
+    globalThis.indexedDB = new IDBFactory();
+    authenticators.site = 'localhost';
+    const second = await boot();
+    const backup = second.backups.read(file);
+    await expect(second.backups.open(backup, { method: 'passkey' })).rejects.toMatchObject({ code: 'noPasskeyForSite' });
+    await second.backups.restoreAsNewVault(await second.backups.open(backup, { method: 'recovery', recoveryKey: setup.recoveryKey }));
+    expect(await second.store.get('note', 'n1')).toEqual({ title: 'Domainden gelen not' });
+    expect(second.vault.localPasskeySlots()).toEqual([]);
+
+    second.vault.lock();
+    await expect(second.vault.unlockWithPasskey()).rejects.toMatchObject({ code: 'noPasskeyForSite' });
+    await second.vault.unlockWithRecoveryKey(setup.recoveryKey);
+    await second.vault.addPasskey('Mac', { method: 'recovery', recoveryKey: setup.recoveryKey });
+    expect(second.vault.localPasskeySlots().map((s) => s.rpId)).toEqual(['localhost']);
+
+    second.vault.lock();
+    authenticators.use = second.vault.localPasskeySlots()[0].credentialId!;
+    await second.vault.unlockWithPasskey();
+    expect(second.vault.isUnlocked()).toBe(true);
+  });
+
+  it('treats passkey slots without a site as localhost (created before sites were recorded)', async () => {
+    const { vault } = await boot();
+    await vault.completeSetup(await vault.prepareVault('Mac'));
+    const header = vault.header()!;
+    const legacy = { ...header, keySlots: header.keySlots.map(({ rpId: _rpId, ...slot }) => slot) };
+    expect(passkeySlotsFor(legacy, 'localhost')).toHaveLength(1);
+    expect(passkeySlotsFor(legacy, 'locry.example.com')).toHaveLength(0);
   });
 });

@@ -59,6 +59,8 @@ cp .env.example .env
 | `LOCRY_PORT` | `4200` | Host tarafındaki port → `http://localhost:<port>` |
 | `LOCRY_BIND_ADDRESS` | `127.0.0.1` | Portun açılacağı arayüz; yalnızca bu makine |
 | `LOCRY_GOOGLE_CLIENT_ID` | boş | Gömülü Google Client ID; kullanıcılar sadece "Google ile bağlan"a basar |
+| `COMPOSE_PROFILES` | boş | `https` yazınca Caddy (otomatik HTTPS) da başlar |
+| `LOCRY_DOMAIN` | boş | Caddy'nin yayınlayacağı alan adı, ör. `locry.ornek.com` |
 
 - İmaj çok aşamalıdır: derleme Node 24 ile yapılır, son imajda yalnızca derlenmiş uygulama ve bağımlılıksız
   küçük bir sunucu bulunur. Konteyner root olmayan kullanıcıyla, salt okunur dosya sistemiyle ve yetkileri
@@ -71,6 +73,34 @@ cp .env.example .env
   porttan bağımsız çalışır; eski verileri yedekle taşıyabilirsin). Google Drive kullanıyorsan yeni adresi OAuth
   istemcisinin "Authorized JavaScript origins" listesine ekle.
 - Varsayılan portta `yarn start` ile konteyner aynı portu kullanır; ikisini aynı anda çalıştırma.
+
+### Alan adında (HTTPS) yayınlama
+
+Locry'yi bir alan adında da çalıştırabilirsin; localdeki kullanım bununla birlikte çalışmaya devam eder.
+Passkey'ler, service worker ve tarayıcı şifrelemesi güvenli bağlam ister, yani alan adında **HTTPS şarttır**.
+Compose dosyasındaki isteğe bağlı Caddy servisi sertifikayı otomatik alır ve yeniler. `.env`:
+
+```bash
+COMPOSE_PROFILES=https
+LOCRY_DOMAIN=locry.ornek.com
+```
+
+```bash
+docker compose up -d --build
+```
+
+Alan adının DNS kaydı bu sunucuyu göstermeli ve 80/443 portları dışarıdan erişilebilir olmalı.
+
+**Her adres ayrı bir kasadır.** Passkey'ler oluşturuldukları adrese (`localhost`, `locry.ornek.com`), tarayıcı
+verileri de adrese bağlıdır. Verileri taşımak için:
+
+1. Bir adreste yedek al (dosya ya da Google Drive).
+2. Diğer adreste **Yedekten geri yükle**. Yedeğin passkey'leri o adreste çalışmadığı için Locry doğrudan
+   **kurtarma anahtarını** ister.
+3. Geri yüklemeden hemen sonra o adres için yeni bir passkey oluştur (Locry bunu önerir).
+
+Ayarlar'daki passkey listesi her passkey'in hangi adrese ait olduğunu gösterir. Google Drive kullanıyorsan alan
+adını da OAuth istemcisinin *Authorized JavaScript origins* listesine ekle.
 
 ## Güvenlik modeli
 

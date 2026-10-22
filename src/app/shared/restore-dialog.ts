@@ -11,6 +11,8 @@ import type { SealedBackup } from '../core/backup/backup-format';
 import { BackupService, type BackupUnlock, type OpenedBackup, type RestoreMode } from '../core/backup/backup.service';
 import { errorKey } from '../core/i18n';
 import { PreferencesService } from '../core/preferences.service';
+import { currentRpId } from '../core/vault/passkey';
+import { passkeySites, passkeySlotsFor } from '../core/vault/vault-header';
 import { ReAuthPrompt } from './reauth';
 
 /**
@@ -62,7 +64,16 @@ import { ReAuthPrompt } from './reauth';
           </hlm-dialog-footer>
         } @else if (needsUnlock()) {
           <p class="text-muted-foreground text-sm">{{ 'pages.settings.restoreOtherVault' | transloco }}</p>
-          <app-reauth passkeyLabel="unlock.withPasskey" [busy]="busy()" [error]="error()" (submitted)="unlock($event)" />
+          @if (!passkeyUsableHere()) {
+            <p class="text-muted-foreground text-sm">{{ 'restore.otherSite' | transloco: { sites: backupSites(), site: rpId } }}</p>
+          }
+          <app-reauth
+            passkeyLabel="unlock.withPasskey"
+            [allowPasskey]="passkeyUsableHere()"
+            [busy]="busy()"
+            [error]="error()"
+            (submitted)="unlock($event)"
+          />
         } @else {
           <div class="flex justify-center py-6"><hlm-spinner /></div>
         }
@@ -88,6 +99,16 @@ export class RestoreDialog {
   protected readonly mode = signal<RestoreMode>('merge');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  protected readonly rpId = currentRpId();
+  protected readonly passkeyUsableHere = computed(() => {
+    const backup = this.backup();
+    return !backup || passkeySlotsFor(backup.header.vault, this.rpId).length > 0;
+  });
+  protected readonly backupSites = computed(() => {
+    const backup = this.backup();
+    return backup ? passkeySites(backup.header.vault).join(', ') : '';
+  });
 
   protected readonly backupDate = computed(() => {
     const backup = this.backup();

@@ -20,8 +20,15 @@ export class PasskeyError extends Error {
   }
 }
 
+/** WebAuthn relying-party ID of this page: its host name, e.g. "localhost". */
+export function currentRpId(): string {
+  return location.hostname;
+}
+
 export interface PasskeyRegistration {
   credentialId: string;
+  /** Site the passkey was created for. */
+  rpId: string;
   prfOutput: Uint8Array<ArrayBuffer>;
 }
 
@@ -66,7 +73,7 @@ export async function registerPasskey(options: {
   try {
     credential = (await navigator.credentials.create({
       publicKey: {
-        rp: { name: 'Locry', id: location.hostname },
+        rp: { name: 'Locry', id: currentRpId() },
         user: { id: randomBytes(16), name: options.userName, displayName: options.displayName },
         // No server verifies the attestation; the challenge only satisfies the API.
         challenge: randomBytes(32),
@@ -92,11 +99,11 @@ export async function registerPasskey(options: {
 
   const credentialId = toBase64Url(credential.rawId);
   if (prf.results?.first) {
-    return { credentialId, prfOutput: toBytes(prf.results.first) };
+    return { credentialId, rpId: currentRpId(), prfOutput: toBytes(prf.results.first) };
   }
 
   const assertion = await assertPasskey({ prfSalt: options.prfSalt, credentialIds: [credentialId] });
-  return { credentialId, prfOutput: assertion.prfOutput };
+  return { credentialId, rpId: currentRpId(), prfOutput: assertion.prfOutput };
 }
 
 /** Asks the user to authenticate with one of the given passkeys and returns the PRF output. */
@@ -110,7 +117,7 @@ export async function assertPasskey(options: {
   try {
     credential = (await navigator.credentials.get({
       publicKey: {
-        rpId: location.hostname,
+        rpId: currentRpId(),
         challenge: randomBytes(32),
         userVerification: 'required',
         allowCredentials: options.credentialIds.map((id) => ({

@@ -13,6 +13,12 @@ export interface KeySlot {
   kind: KeySlotKind;
   /** Passkey credential id (base64url), only for `passkey` slots. */
   credentialId?: string;
+  /**
+   * Site (WebAuthn relying party) the passkey belongs to, e.g. "localhost" or
+   * "locry.example.com". A passkey only works on its own site. Slots created before this
+   * field existed have none and were all made on localhost.
+   */
+  rpId?: string;
   label: string;
   createdAt: string;
   wrappedKey: SealedBox;
@@ -120,6 +126,21 @@ export async function unwrapVaultKeyRaw(
     wipe(raw);
     throw error;
   }
+}
+
+/** Site a passkey slot belongs to; older slots without the field were created on localhost. */
+export function slotRpId(slot: KeySlot): string {
+  return slot.rpId ?? 'localhost';
+}
+
+/** Passkey slots that can be used on the given site. */
+export function passkeySlotsFor(header: VaultHeader, rpId: string): KeySlot[] {
+  return header.keySlots.filter((s) => s.kind === 'passkey' && s.credentialId && slotRpId(s) === rpId);
+}
+
+/** Distinct sites of a header's passkeys, for messages like "these passkeys belong to …". */
+export function passkeySites(header: VaultHeader): string[] {
+  return [...new Set(header.keySlots.filter((s) => s.kind === 'passkey').map(slotRpId))];
 }
 
 export function isVaultHeader(value: unknown): value is VaultHeader {

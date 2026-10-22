@@ -78,6 +78,12 @@ export const tr = {
     restoreInstead: 'Yedekten geri yükle',
     restoreInsteadHint: 'Başka bir cihazda kullandığın bir kasayı .locry yedeğinden aktar.',
   },
+  sitePasskey: {
+    title: 'Bu adres için geçiş anahtarı oluştur',
+    description:
+      'Bu kasanın geçiş anahtarları başka bir adrese ait; geçiş anahtarları yalnızca oluşturuldukları adreste çalışır. {{site}} üzerinde kasayı parmak izi veya yüz tanımayla açmak için şimdi bir tane oluştur.',
+    later: 'Sonra',
+  },
   restore: {
     title: 'Yedekten geri yükle',
     description: 'Bir .locry yedek dosyası seç. Yedek, oluşturulduğu kasanın geçiş anahtarıyla veya kurtarma anahtarıyla açılır.',
@@ -86,6 +92,8 @@ export const tr = {
     unlockTitle: 'Yedeği aç',
     restoring: 'Geri yükleniyor…',
     done: 'Yedek geri yüklendi: {{count}} kayıt.',
+    otherSite:
+      'Bu yedeğin geçiş anahtarları {{sites}} adresine ait ve {{site}} üzerinde çalışmaz. Yedeği kurtarma anahtarıyla aç; ardından bu adres için yeni bir geçiş anahtarı oluşturabilirsin.',
   },
   unlock: {
     title: 'Kasa kilitli',
@@ -93,6 +101,8 @@ export const tr = {
     withPasskey: 'Geçiş anahtarıyla aç',
     waiting: 'Geçiş anahtarı bekleniyor…',
     useRecovery: 'Kurtarma anahtarı kullan',
+    noPasskeyHere:
+      'Bu kasanın geçiş anahtarları {{sites}} adresine ait ve {{site}} üzerinde çalışmaz. Kurtarma anahtarıyla aç; ardından bu adres için bir geçiş anahtarı oluşturabilirsin.',
   },
   recover: {
     title: 'Kurtarma anahtarıyla aç',
@@ -296,6 +306,7 @@ export const tr = {
       passkeyLabelDefault: 'Yeni geçiş anahtarı',
       passkeyAdded: 'Geçiş anahtarı eklendi',
       passkeyActions: 'Geçiş anahtarı işlemleri',
+      passkeyOtherSite: 'Başka adres',
       renamePasskey: 'Yeniden adlandır',
       removePasskey: 'Kaldır',
       removePasskeyTitle: 'Geçiş anahtarı kaldırılsın mı?',
@@ -454,6 +465,7 @@ export const tr = {
       corrupted: 'Kasa verisi okunamadı veya bozulmuş.',
       locked: 'Kasa kilitli.',
       lastPasskey: 'Son geçiş anahtarı kaldırılamaz.',
+      noPasskeyForSite: 'Bu adreste çalışan bir geçiş anahtarı yok. Kurtarma anahtarını kullan.',
     },
     unexpected: 'Beklenmeyen bir hata oluştu.',
   },

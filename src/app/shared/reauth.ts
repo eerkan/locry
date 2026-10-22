@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, linkedSignal, output, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideFingerprint, lucideKeyRound, lucideTriangleAlert } from '@ng-icons/lucide';
@@ -24,7 +24,7 @@ import type { ReAuth } from '../core/vault/vault.service';
         <p hlmAlertDescription>{{ error()! | transloco }}</p>
       </div>
     }
-    @if (method() === 'passkey') {
+    @if (method() === 'passkey' && allowPasskey()) {
       <button hlmBtn class="w-full" [disabled]="busy()" (click)="submitted.emit({ method: 'passkey' })">
         @if (busy()) {
           <hlm-spinner />
@@ -61,7 +61,9 @@ import type { ReAuth } from '../core/vault/vault.service';
         }
         {{ 'reauth.continue' | transloco }}
       </button>
-      <button hlmBtn variant="link" size="sm" (click)="method.set('passkey')">{{ 'reauth.usePasskey' | transloco }}</button>
+      @if (allowPasskey()) {
+        <button hlmBtn variant="link" size="sm" (click)="method.set('passkey')">{{ 'reauth.usePasskey' | transloco }}</button>
+      }
     }
   `,
 })
@@ -71,8 +73,10 @@ export class ReAuthPrompt {
   readonly error = input<string | null>(null);
   readonly passkeyLabel = input('reauth.withPasskey');
   readonly allowRecovery = input(true);
+  /** False when no passkey can work here (e.g. they belong to another site): recovery key only. */
+  readonly allowPasskey = input(true);
   readonly submitted = output<ReAuth>();
 
-  protected readonly method = signal<'passkey' | 'recovery'>('passkey');
+  protected readonly method = linkedSignal<'passkey' | 'recovery'>(() => (this.allowPasskey() ? 'passkey' : 'recovery'));
   protected readonly recoveryKey = signal('');
 }

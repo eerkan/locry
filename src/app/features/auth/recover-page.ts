@@ -12,14 +12,30 @@ import { HlmSpinner } from '@spartan-ng/helm/spinner';
 import { errorKey } from '../../core/i18n';
 import { safeNext } from '../../core/vault/vault.guard';
 import { VaultService } from '../../core/vault/vault.service';
+import { AddSitePasskey } from '../../shared/add-site-passkey';
 
 @Component({
   selector: 'app-recover-page',
-  imports: [HlmAlertImports, HlmButton, HlmCardImports, HlmFieldImports, HlmSpinner, NgIcon, RouterLink, TranslocoPipe],
+  imports: [
+    AddSitePasskey,
+    HlmAlertImports,
+    HlmButton,
+    HlmCardImports,
+    HlmFieldImports,
+    HlmSpinner,
+    NgIcon,
+    RouterLink,
+    TranslocoPipe,
+  ],
   providers: [provideIcons({ lucideKeyRound, lucideArrowLeft, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section hlmCard>
+      @if (sitePasskeyFor(); as recoveryKey) {
+        <div hlmCardContent>
+          <app-add-site-passkey [recoveryKey]="recoveryKey" (done)="finish()" />
+        </div>
+      } @else {
       <div hlmCardHeader>
         <h1 hlmCardTitle class="text-xl">{{ 'recover.title' | transloco }}</h1>
         <p hlmCardDescription>{{ 'recover.description' | transloco }}</p>
@@ -59,6 +75,7 @@ import { VaultService } from '../../core/vault/vault.service';
           {{ 'recover.submit' | transloco }}
         </button>
       </div>
+      }
     </section>
   `,
 })
@@ -70,6 +87,8 @@ export class RecoverPage {
   private readonly transloco = inject(TranslocoService);
 
   protected readonly input = signal('');
+  /** Set when this site has no passkey for the vault: offer to create one with this key. */
+  protected readonly sitePasskeyFor = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -77,15 +96,25 @@ export class RecoverPage {
     this.busy.set(true);
     this.error.set(null);
     try {
-      await this.vault.unlockWithRecoveryKey(this.input());
+      const recoveryKey = this.input();
+      await this.vault.unlockWithRecoveryKey(recoveryKey);
       this.input.set('');
+      if (!this.vault.localPasskeySlots().length) {
+        this.sitePasskeyFor.set(recoveryKey);
+        return;
+      }
       toast.info(this.transloco.translate('recover.unlocked'));
-      await this.router.navigateByUrl(safeNext(this.next()) ?? '/notes', { replaceUrl: true });
+      await this.finish();
     } catch (error) {
       console.error(error);
       this.error.set(errorKey(error));
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected async finish(): Promise<void> {
+    this.sitePasskeyFor.set(null);
+    await this.router.navigateByUrl(safeNext(this.next()) ?? '/notes', { replaceUrl: true });
   }
 }

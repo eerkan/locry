@@ -3,7 +3,7 @@ import { importAesKey } from '../crypto/aead';
 import { wipe } from '../crypto/bytes';
 import { formatRecoveryKey, generateRecoveryKey, parseRecoveryKey } from '../crypto/recovery-key';
 import { LocryDb } from '../storage/locry-db';
-import { PasskeyClient } from './passkey';
+import { PasskeyClient, currentRpId } from './passkey';
 import {
   VAULT_FORMAT_VERSION,
   type VaultHeader,
@@ -13,6 +13,7 @@ import {
   isVaultHeader,
   newPrfSalt,
   newVaultId,
+  passkeySlotsFor,
   passkeyKek,
   recoveryKek,
   unwrapVaultKey,
@@ -28,7 +29,9 @@ export type VaultErrorCode =
   | 'unknownPasskey'
   | 'corrupted'
   | 'locked'
-  | 'lastPasskey';
+  | 'lastPasskey'
+  /** The vault has passkeys, but none for this site (e.g. restored from localhost onto a domain). */
+  | 'noPasskeyForSite';
 
 export class VaultError extends Error {
   constructor(
@@ -75,6 +78,13 @@ export class VaultService {
   /** Increments every time an unlocked vault locks; lets others react to locking reliably. */
   readonly lockCount = this._lockCount.asReadonly();
   readonly passkeySlots = computed(() => this._header()?.keySlots.filter((s) => s.kind === 'passkey') ?? []);
+  /** This page's site; passkeys only work on the site they were created for. */
+  readonly rpId = currentRpId();
+  /** Passkeys that can unlock the vault on this site. */
+  readonly localPasskeySlots = computed(() => {
+    const header = this._header();
+    return header ? passkeySlotsFor(header, this.rpId) : [];
+  });
 
   /** Loads the vault header from IndexedDB. Safe to call repeatedly. */
   init(): Promise<void> {
@@ -104,6 +114,7 @@ export class VaultService {
       const passkeySlot = await createKeySlot(vaultId, vaultKey.raw, await passkeyKek(registration.prfOutput, vaultId), {
         kind: 'passkey',
         credentialId: registration.credentialId,
+        rpId: registration.rpId,
         label: passkeyLabel,
       });
       const recoverySlot = await createKeySlot(vaultId, vaultKey.raw, await recoveryKek(recoveryKey, vaultId), {
@@ -196,7 +207,8 @@ export class VaultService {
     const header = this.requireUnlockedHeader();
     const raw = await this.rawKeyFor(header, auth);
     try {
-      const existing = header.keySlots.filter((s) => s.kind === 'passkey' && s.credentialId).map((s) => s.credentialId!);
+      // Only this site's passkeys can live on this authenticator for this site.
+      const existing = passkeySlotsFor(header, this.rpId).map((s) => s.credentialId!);
       const registration = await this.passkeys.register({
         userName: label,
         displayName: label,
@@ -207,6 +219,7 @@ export class VaultService {
         const slot = await createKeySlot(header.vaultId, raw, await passkeyKek(registration.prfOutput, header.vaultId), {
           kind: 'passkey',
           credentialId: registration.credentialId,
+          rpId: registration.rpId,
           label,
         });
         await this.saveHeader({ ...header, keySlots: [...header.keySlots, slot] });
@@ -286,7 +299,8 @@ export class VaultService {
   }
 
   private async rawKeyWithPasskey(header: VaultHeader): Promise<Uint8Array<ArrayBuffer>> {
-    const slots = header.keySlots.filter((s) => s.kind === 'passkey' && s.credentialId);
+    const slots = passkeySlotsFor(header, this.rpId);
+    if (!slots.length) throw new VaultError('noPasskeyForSite');
     const assertion = await this.passkeys.assert({
       prfSalt: header.prfSalt,
       credentialIds: slots.map((s) => s.credentialId!),

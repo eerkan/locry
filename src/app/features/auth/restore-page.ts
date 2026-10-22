@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideCloud, lucideFileUp, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideCloud, lucideFileUp, lucideInfo, lucideTriangleAlert } from '@ng-icons/lucide';
 import { toast } from '@spartan-ng/brain/sonner';
 import { HlmAlertImports } from '@spartan-ng/helm/alert';
 import { HlmButton } from '@spartan-ng/helm/button';
@@ -12,7 +12,10 @@ import { BackupService } from '../../core/backup/backup.service';
 import { type DriveBackup, DriveService } from '../../core/drive/drive.service';
 import { errorKey } from '../../core/i18n';
 import { PreferencesService } from '../../core/preferences.service';
-import type { ReAuth } from '../../core/vault/vault.service';
+import { currentRpId } from '../../core/vault/passkey';
+import { passkeySites, passkeySlotsFor } from '../../core/vault/vault-header';
+import { type ReAuth, VaultService } from '../../core/vault/vault.service';
+import { AddSitePasskey } from '../../shared/add-site-passkey';
 import { readFileBytes } from '../../shared/download';
 import { DriveBackupList } from '../../shared/drive-backup-list';
 import { DriveSetup } from '../../shared/drive-setup';
@@ -22,6 +25,7 @@ import { ReAuthPrompt } from '../../shared/reauth';
 @Component({
   selector: 'app-restore-page',
   imports: [
+    AddSitePasskey,
     DriveBackupList,
     DriveSetup,
     HlmAlertImports,
@@ -32,10 +36,15 @@ import { ReAuthPrompt } from '../../shared/reauth';
     RouterLink,
     TranslocoPipe,
   ],
-  providers: [provideIcons({ lucideArrowLeft, lucideFileUp, lucideCloud, lucideTriangleAlert })],
+  providers: [provideIcons({ lucideArrowLeft, lucideFileUp, lucideCloud, lucideInfo, lucideTriangleAlert })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section hlmCard>
+      @if (sitePasskeyFor(); as recoveryKey) {
+        <div hlmCardContent>
+          <app-add-site-passkey [recoveryKey]="recoveryKey" (done)="finish()" />
+        </div>
+      } @else {
       <div hlmCardHeader>
         <h1 hlmCardTitle class="text-xl">{{ 'restore.title' | transloco }}</h1>
         <p hlmCardDescription>{{ 'restore.description' | transloco }}</p>
@@ -80,7 +89,19 @@ import { ReAuthPrompt } from '../../shared/reauth';
 
         @if (backup()) {
           <h2 class="text-sm font-medium">{{ 'restore.unlockTitle' | transloco }}</h2>
-          <app-reauth passkeyLabel="unlock.withPasskey" [busy]="busy()" [error]="unlockError()" (submitted)="restore($event)" />
+          @if (!passkeyUsableHere()) {
+            <div hlmAlert>
+              <ng-icon name="lucideInfo" />
+              <p hlmAlertDescription>{{ 'restore.otherSite' | transloco: { sites: backupSites(), site: rpId } }}</p>
+            </div>
+          }
+          <app-reauth
+            passkeyLabel="unlock.withPasskey"
+            [allowPasskey]="passkeyUsableHere()"
+            [busy]="busy()"
+            [error]="unlockError()"
+            (submitted)="restore($event)"
+          />
         }
       </div>
       <div hlmCardFooter>
@@ -89,6 +110,7 @@ import { ReAuthPrompt } from '../../shared/reauth';
           {{ 'common.back' | transloco }}
         </a>
       </div>
+      }
     </section>
   `,
 })
@@ -98,13 +120,27 @@ export class RestorePage {
   private readonly transloco = inject(TranslocoService);
   private readonly prefs = inject(PreferencesService);
 
+  private readonly vault = inject(VaultService);
+  protected readonly rpId = currentRpId();
   protected readonly drive = inject(DriveService);
+  /** Set after a recovery-key restore with no passkey for this site: offer to create one. */
+  protected readonly sitePasskeyFor = signal<string | null>(null);
   protected readonly showDrive = signal(false);
   protected readonly extension = BACKUP_FILE_EXTENSION;
   protected readonly backup = signal<SealedBackup | null>(null);
   protected readonly busy = signal(false);
   protected readonly fileError = signal<string | null>(null);
   protected readonly unlockError = signal<string | null>(null);
+
+  /** The backup's passkeys only work on the site they were made for. */
+  protected readonly passkeyUsableHere = computed(() => {
+    const backup = this.backup();
+    return !backup || passkeySlotsFor(backup.header.vault, this.rpId).length > 0;
+  });
+  protected readonly backupSites = computed(() => {
+    const backup = this.backup();
+    return backup ? passkeySites(backup.header.vault).join(', ') : '';
+  });
 
   protected readonly backupLabel = computed(() => {
     const backup = this.backup();
@@ -159,12 +195,21 @@ export class RestorePage {
     try {
       const summary = await this.backups.restoreAsNewVault(await this.backups.open(backup, auth));
       toast.success(this.transloco.translate('restore.done', { count: summary.restored }));
-      await this.router.navigateByUrl('/notes', { replaceUrl: true });
+      if (auth.method === 'recovery' && !this.vault.localPasskeySlots().length) {
+        this.sitePasskeyFor.set(auth.recoveryKey);
+        return;
+      }
+      await this.finish();
     } catch (error) {
       console.error(error);
       this.unlockError.set(errorKey(error));
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected async finish(): Promise<void> {
+    this.sitePasskeyFor.set(null);
+    await this.router.navigateByUrl('/notes', { replaceUrl: true });
   }
 }

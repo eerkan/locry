@@ -1,0 +1,13 @@
+# HTTPS in front of Locry for a public domain (compose profile "https").
+# Caddy obtains and renews the certificate automatically; the domain's DNS must point to this
+# host and ports 80/443 must be reachable from the internet.
+{$LOCRY_DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	reverse_proxy locry:4200
+}
