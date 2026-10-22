@@ -1,0 +1,22 @@
+# Installed and built inside the image
+node_modules
+dist
+.angular
+.nx
+out-tsc
+coverage
+
+# Local tooling and metadata
+.git
+.claude
+.playwright-mcp
+.vscode
+.idea
+CODEBASE.md
+*.log
+.DS_Store
+
+# Container files themselves
+Dockerfile
+compose.yaml
+.dockerignore

@@ -6,6 +6,9 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../dist/locry/browser');
 const port = Number(process.env.PORT ?? 4200);
+// Loopback only by default; the Docker image sets HOST=0.0.0.0 and the compose file
+// publishes the port on the host's loopback interface instead.
+const host = process.env.HOST ?? '127.0.0.1';
 
 const types = {
   '.html': 'text/html; charset=utf-8',
@@ -47,6 +50,9 @@ createServer((req, res) => {
     'Referrer-Policy': 'no-referrer',
   });
   createReadStream(file).pipe(res);
-}).listen(port, '127.0.0.1', () => {
-  console.log(`Locry: http://localhost:${port}`);
+}).listen(port, host, () => {
+  console.log(`Locry: http://localhost:${port} (listening on ${host})`);
 });
+
+// Exit promptly on `docker stop` (SIGTERM) instead of waiting for the kill timeout.
+for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => process.exit(0));

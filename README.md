@@ -37,6 +37,25 @@ Tarayıcı adres çubuğundaki "Yükle" simgesiyle Locry'yi masaüstü uygulamas
 > Adres önemli: passkey'ler `localhost` alan adına, veriler ise `http://localhost:4200` kaynağına bağlıdır.
 > Başka bir portta açarsan boş bir kasa görürsün.
 
+### Docker
+
+Node kurmadan, bir konteynerde çalıştırmak için:
+
+```bash
+docker compose up -d --build
+```
+
+Uygulama yine `http://localhost:4200` adresinde açılır. Durdurmak için `docker compose down`.
+
+- İmaj çok aşamalıdır: derleme Node 24 ile yapılır, son imajda yalnızca derlenmiş uygulama ve bağımlılıksız
+  küçük bir sunucu bulunur. Konteyner root olmayan kullanıcıyla, salt okunur dosya sistemiyle ve yetkileri
+  düşürülmüş olarak çalışır.
+- Port yalnızca bu makinenin `127.0.0.1` adresine açılır; ağdaki başka cihazlar erişemez.
+- **Konteynerde veri yoktur.** Notlar, görevler ve anahtarlar tarayıcıda şifreli durur; konteyneri silmek ya da
+  yeniden oluşturmak veriyi etkilemez, bu yüzden volume gerekmez. Yedek için uygulamadaki yedekleme özelliklerini kullan.
+- Host tarafındaki portu `4200` dışında bir değere değiştirirsen tarayıcı bunu ayrı bir site sayar; o adreste boş
+  bir kasa görürsün. `yarn start` ile konteyner aynı portu kullandığından ikisini aynı anda çalıştırma.
+
 ## Güvenlik modeli
 
 | Konu | Uygulama |

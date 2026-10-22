@@ -1,0 +1,19 @@
+name: locry
+
+services:
+  locry:
+    build: .
+    image: locry:latest
+    container_name: locry
+    restart: unless-stopped
+    ports:
+      # Loopback only: the app is for this machine. Keep 4200 on the host side, because
+      # passkeys and the encrypted browser data belong to http://localhost:4200.
+      - "127.0.0.1:4200:4200"
+    # The container holds no user data (everything lives encrypted in the browser),
+    # so it can run read-only and without privileges.
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
