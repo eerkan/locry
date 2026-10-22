@@ -1,0 +1,23 @@
+{
+  "name": "Locry",
+  "short_name": "Locry",
+  "description": "Şifreli notlar ve görevler, yalnızca bu cihazda. / Encrypted notes and tasks, on this device only.",
+  "lang": "tr",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./",
+  "theme_color": "#18181b",
+  "background_color": "#fafafa",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-any-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-any-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Notlar / Notes", "url": "./notes", "icons": [{ "src": "icons/icon-any-192.png", "sizes": "192x192" }] },
+    { "name": "Görevler / Tasks", "url": "./tasks", "icons": [{ "src": "icons/icon-any-192.png", "sizes": "192x192" }] }
+  ]
+}

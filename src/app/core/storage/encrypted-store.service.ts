@@ -1,0 +1,73 @@
+import { Injectable, inject, signal } from '@angular/core';
+import { open, seal } from '../crypto/aead';
+import { utf8Decode, utf8Encode } from '../crypto/bytes';
+import { VaultService } from '../vault/vault.service';
+import { LocryDb } from './locry-db';
+
+/**
+ * Typed, encrypted key-value records on top of IndexedDB. Each record is serialized to JSON
+ * and sealed with the vault key; the AAD binds the ciphertext to its type and id.
+ */
+@Injectable({ providedIn: 'root' })
+export class EncryptedStore {
+  private readonly db = inject(LocryDb);
+  private readonly vault = inject(VaultService);
+  private readonly _revision = signal(0);
+
+  /** Bumped after bulk changes (restore) so in-memory collections reload. */
+  readonly revision = this._revision.asReadonly();
+
+  async put<T>(type: string, id: string, value: T): Promise<void> {
+    const box = await seal(this.vault.requireKey(), utf8Encode(JSON.stringify(value)), aad(type, id));
+    await this.db.putRecord({ id, type, box });
+  }
+
+  async get<T>(type: string, id: string): Promise<T | undefined> {
+    const record = await this.db.getRecord(id);
+    if (!record || record.type !== type) return undefined;
+    return this.decrypt<T>(record.type, record.id, record.box);
+  }
+
+  async list<T>(type: string): Promise<T[]> {
+    const records = await this.db.getRecordsByType(type);
+    return Promise.all(records.map((r) => this.decrypt<T>(r.type, r.id, r.box)));
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db.deleteRecord(id);
+  }
+
+  /** Every record, decrypted. */
+  async exportAll(): Promise<{ type: string; id: string; value: unknown }[]> {
+    const records = await this.db.getAllRecords();
+    return Promise.all(
+      records.map(async (r) => ({ type: r.type, id: r.id, value: await this.decrypt<unknown>(r.type, r.id, r.box) })),
+    );
+  }
+
+  /**
+   * Encrypts and writes many records in a single transaction, then notifies collections.
+   * With `replace`, all existing records are removed in the same transaction.
+   */
+  async importAll(records: { type: string; id: string; value: unknown }[], replace: boolean): Promise<void> {
+    const key = this.vault.requireKey();
+    const sealed = await Promise.all(
+      records.map(async (r) => ({
+        id: r.id,
+        type: r.type,
+        box: await seal(key, utf8Encode(JSON.stringify(r.value)), aad(r.type, r.id)),
+      })),
+    );
+    await this.db.writeRecords(sealed, replace);
+    this._revision.update((n) => n + 1);
+  }
+
+  private async decrypt<T>(type: string, id: string, box: Parameters<typeof open>[1]): Promise<T> {
+    const plaintext = await open(this.vault.requireKey(), box, aad(type, id));
+    return JSON.parse(utf8Decode(plaintext)) as T;
+  }
+}
+
+function aad(type: string, id: string): string {
+  return `locry:v1:record:${type}:${id}`;
+}

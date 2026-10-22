@@ -1,0 +1,170 @@
+import { Injectable, computed, inject } from '@angular/core';
+import { foldForSearch } from '../../features/notes/note';
+import { type SearchDoc, docKey, similarity } from './documents';
+import { EMBEDDER } from './embedding.service';
+import { SemanticIndexService } from './semantic-index.service';
+
+/**
+ * e5 similarities sit in a narrow band, and the band shifts per query: on our TR/EN test
+ * notes the right note scored 0.82-0.86 while unrelated ones reached 0.84 for other queries.
+ * A fixed threshold cannot separate them, but the right note always stands out from the
+ * query's own distribution, so relevance is a z-score over all indexed documents.
+ */
+/** Semantic-only results must stand out this many standard deviations (9/10 test queries exact). */
+const MIN_Z = 1.2;
+/** With few documents the distribution is meaningless; fall back to an absolute floor. */
+const MIN_DOCS_FOR_STATS = 5;
+const ABSOLUTE_FLOOR = 0.84;
+/** Similar notes: passage-passage scores run higher (0.85-0.93), so be stricter. */
+const SIMILAR_MIN_Z = 1.5;
+const SIMILAR_MIN_SIMILARITY = 0.9;
+const INACTIVE_PENALTY = 0.85;
+
+export type SearchKind = 'all' | 'note' | 'task';
+
+export interface SearchResult {
+  doc: SearchDoc;
+  score: number;
+  /** Which signals matched: words, meaning, or both. */
+  matchedBy: 'keyword' | 'semantic' | 'both';
+  snippet: string;
+}
+
+/** Hybrid search: keyword matching always, plus vector similarity when the model is ready. */
+@Injectable({ providedIn: 'root' })
+export class SearchService {
+  private readonly index = inject(SemanticIndexService);
+  private readonly embedder = inject(EMBEDDER);
+
+  /** Changes whenever results could differ: documents, vectors or model readiness. */
+  readonly revision = computed(() => [this.index.docs(), this.index.vectors(), this.index.ready()]);
+
+  async search(query: string, options: { kind?: SearchKind; limit?: number } = {}): Promise<SearchResult[]> {
+    const terms = foldForSearch(query).split(/\s+/).filter(Boolean);
+    if (!terms.length) return [];
+    const kind = options.kind ?? 'all';
+    const docs = this.index.docs().filter((d) => kind === 'all' || d.kind === kind);
+
+    let queryVector: Float32Array | null = null;
+    if (this.index.ready()) {
+      try {
+        [queryVector] = await this.embedder.embed([query], 'query');
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    const vectors = this.index.vectors();
+    // Score every indexed document (not just the filtered kind) so the statistics are stable.
+    const similarities = new Map<string, number>();
+    if (queryVector) {
+      for (const doc of this.index.docs()) {
+        const chunks = vectors.get(docKey(doc));
+        if (chunks?.length) similarities.set(docKey(doc), bestSimilarity(queryVector, chunks));
+      }
+    }
+    const relevance = relevanceScale([...similarities.values()], MIN_Z, ABSOLUTE_FLOOR);
+
+    const results: SearchResult[] = [];
+    for (const doc of docs) {
+      const keyword = keywordScore(doc, terms);
+      const sim = similarities.get(docKey(doc));
+      const z = sim === undefined ? 0 : relevance(sim);
+      const semanticMatch = z >= 1;
+      if (keyword === 0 && !semanticMatch) continue;
+
+      // z of 1 (just relevant) .. 2.5+ (clearly the best match) maps to 0.4 .. 1.
+      const semantic = semanticMatch ? Math.min(1, 0.4 + (z - 1) * 0.4) : 0;
+      let score = queryVector ? 0.55 * keyword + 0.45 * semantic : keyword;
+      if (doc.inactive) score *= INACTIVE_PENALTY;
+      results.push({
+        doc,
+        score,
+        matchedBy: keyword && semanticMatch ? 'both' : keyword ? 'keyword' : 'semantic',
+        snippet: snippet(doc, terms),
+      });
+    }
+    return results.sort((a, b) => b.score - a.score).slice(0, options.limit ?? 50);
+  }
+
+  /** Notes most similar in meaning to the given one (needs the model's vectors). */
+  similarNotes(noteId: string, limit = 3): SearchResult[] {
+    const vectors = this.index.vectors();
+    const source = vectors.get(docKey({ kind: 'note', id: noteId }));
+    if (!source?.length) return [];
+    const centroid = mean(source);
+    const scored = this.index
+      .docs()
+      .filter((d) => d.kind === 'note' && d.id !== noteId)
+      .flatMap((doc) => {
+        const target = vectors.get(docKey(doc));
+        return target?.length ? [{ doc, sim: bestSimilarity(centroid, target) }] : [];
+      });
+    const relevance = relevanceScale(
+      scored.map((s) => s.sim),
+      SIMILAR_MIN_Z,
+      SIMILAR_MIN_SIMILARITY,
+    );
+    return scored
+      .filter((s) => s.sim >= SIMILAR_MIN_SIMILARITY && relevance(s.sim) >= 1)
+      .sort((a, b) => b.sim - a.sim)
+      .slice(0, limit)
+      .map(({ doc, sim }) => ({ doc, score: sim, matchedBy: 'semantic' as const, snippet: snippet(doc, []) }));
+  }
+}
+
+/** Share of query terms found, with matches in the title counting extra. */
+export function keywordScore(doc: Pick<SearchDoc, 'title' | 'body'>, terms: string[]): number {
+  const title = foldForSearch(doc.title);
+  const body = foldForSearch(doc.body);
+  let score = 0;
+  for (const term of terms) {
+    if (containsTerm(title, term)) score += 1;
+    else if (containsTerm(body, term)) score += 0.7;
+  }
+  return Math.min(1, score / terms.length);
+}
+
+/**
+ * Substring match, except that very short terms ("iş", "ve") must start a word: otherwise
+ * "iş" would match inside "alışveriş" and "listesi".
+ */
+function containsTerm(text: string, term: string): boolean {
+  if (term.length >= 3) return text.includes(term);
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}`, 'u').test(text);
+}
+
+export function bestSimilarity(query: Float32Array, chunks: Float32Array[]): number {
+  return Math.max(...chunks.map((c) => similarity(query, c)));
+}
+
+/**
+ * Returns a function mapping a similarity to "how relevant", where >= 1 means relevant:
+ * the z-score divided by `minZ` when there are enough samples, otherwise a comparison
+ * against `floor` (>= floor maps to 1+).
+ */
+export function relevanceScale(samples: number[], minZ: number, floor: number): (sim: number) => number {
+  if (samples.length < MIN_DOCS_FOR_STATS) return (sim) => (sim >= floor ? 1 + (sim - floor) * 20 : 0);
+  const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+  const std = Math.sqrt(samples.reduce((a, b) => a + (b - avg) ** 2, 0) / samples.length) || 1e-6;
+  return (sim) => (sim - avg) / std / minZ;
+}
+
+/** Text around the first matching term, or the beginning of the body. */
+export function snippet(doc: Pick<SearchDoc, 'body'>, terms: string[], radius = 70): string {
+  const body = doc.body.replace(/\s+/g, ' ').trim();
+  const folded = foldForSearch(body);
+  // Folding keeps string length for Turkish letters, so indices map back onto `body`.
+  const at = terms.map((t) => folded.indexOf(t)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+  if (at === undefined) return body.length > radius * 2 ? `${body.slice(0, radius * 2).trimEnd()}…` : body;
+  const start = Math.max(0, at - radius);
+  const end = Math.min(body.length, at + radius);
+  return `${start > 0 ? '…' : ''}${body.slice(start, end).trim()}${end < body.length ? '…' : ''}`;
+}
+
+function mean(vectors: Float32Array[]): Float32Array {
+  const out = new Float32Array(vectors[0].length);
+  for (const v of vectors) for (let i = 0; i < v.length; i++) out[i] += v[i] / vectors.length;
+  const norm = Math.hypot(...out) || 1;
+  return out.map((x) => x / norm);
+}
