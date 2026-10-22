@@ -1,5 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
 import { DOCUMENT, Injectable, PLATFORM_ID, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  DEFAULT_EMBEDDING_MODEL,
+  type EmbeddingModelId,
+  LEGACY_EMBEDDING_MODEL,
+  isEmbeddingModelId,
+} from './ai/embedding-protocol';
 import { LEGACY_DB_NAME } from './storage/locry-db';
 import { VaultService } from './vault/vault.service';
 
@@ -30,6 +36,8 @@ interface VaultPreferences {
   semanticSearch: boolean;
   /** Keep this vault in sync with other devices through Google Drive. */
   sync: boolean;
+  /** Model for semantic search; each device downloads and runs its own. */
+  embeddingModel: EmbeddingModelId;
 }
 
 interface Stored extends Preferences {
@@ -45,6 +53,7 @@ const VAULT_DEFAULTS: VaultPreferences = {
   lastDriveBackupAt: null,
   semanticSearch: false,
   sync: false,
+  embeddingModel: DEFAULT_EMBEDDING_MODEL,
 };
 
 /**
@@ -76,6 +85,14 @@ export class PreferencesService {
   readonly lastDriveBackupAt = () => this.vaultPrefs().lastDriveBackupAt;
   readonly semanticSearch = () => this.vaultPrefs().semanticSearch;
   readonly sync = () => this.vaultPrefs().sync;
+  readonly embeddingModel = () => this.vaultPrefs().embeddingModel;
+
+  /** Models used by any vault on this device with semantic search on (their files stay cached). */
+  readonly embeddingModelsInUse = computed(() => {
+    const { vaults, legacy } = this.prefs();
+    const all = [...Object.values(vaults), ...(legacy ? [legacy] : [])];
+    return new Set(all.filter((v) => v.semanticSearch).map((v) => v.embeddingModel));
+  });
 
   constructor() {
     const view = this.document.defaultView;
@@ -143,6 +160,10 @@ export class PreferencesService {
     this.updateVault({ sync });
   }
 
+  setEmbeddingModel(embeddingModel: EmbeddingModelId): void {
+    this.updateVault({ embeddingModel });
+  }
+
   /** Changes the active vault's settings; ignored when no vault exists yet. */
   private updateVault(patch: Partial<VaultPreferences>): void {
     const id = this.vault.activeVault()?.id;
@@ -193,5 +214,12 @@ function parseVaultPreferences(value: Partial<VaultPreferences>): VaultPreferenc
     lastDriveBackupAt: typeof value.lastDriveBackupAt === 'string' ? value.lastDriveBackupAt : null,
     semanticSearch: value.semanticSearch === true,
     sync: value.sync === true,
+    // Vaults that turned smart search on before models were selectable keep their model,
+    // so nothing is downloaded or re-indexed without asking.
+    embeddingModel: isEmbeddingModelId(value.embeddingModel)
+      ? value.embeddingModel
+      : value.semanticSearch === true
+        ? LEGACY_EMBEDDING_MODEL
+        : DEFAULT_EMBEDDING_MODEL,
   };
 }

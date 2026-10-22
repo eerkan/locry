@@ -12,6 +12,7 @@ import { LocryDb } from '../storage/locry-db';
 import { PasskeyClient } from '../vault/passkey';
 import { VaultService } from '../vault/vault.service';
 import { EMBEDDING_RECORD_TYPE, chunkDoc, decodeVector, encodeVector, markdownToText } from './documents';
+import { EMBEDDING_MODELS } from './embedding-protocol';
 import { EMBEDDER, type Embedder } from './embedding.service';
 import { SearchService, bestSimilarity, keywordScore, relevanceScale, snippet } from './search.service';
 import { SemanticIndexService } from './semantic-index.service';
@@ -22,7 +23,8 @@ import { SemanticIndexService } from './semantic-index.service';
  */
 class FakeEmbedder implements Embedder {
   readonly status = signal<'ready'>('ready');
-  readonly model = 'fake-model';
+  /** Calibrated like e5-small, whose similarity band the fake mimics. */
+  readonly spec = signal({ ...EMBEDDING_MODELS['e5-small'], repo: 'fake-model' });
   calls: string[][] = [];
 
   async embed(texts: string[]): Promise<Float32Array[]> {
@@ -90,10 +92,12 @@ describe('scoring', () => {
   });
 
   it('judges relevance against the query\'s own score distribution', () => {
-    // Measured with the real model for "egzersiz": only the right note stands out.
-    const sims = [0.839, 0.83, 0.825, 0.81, 0.81, 0.807, 0.804, 0.793];
+    // Measured with the real model for "egzersiz": only the right note stands out (the vault
+    // is doubled to have enough documents for statistics; mean and spread stay the same).
+    const measured = [0.839, 0.83, 0.825, 0.81, 0.81, 0.807, 0.804, 0.793];
+    const sims = [...measured, ...measured];
     const relevance = relevanceScale(sims, 1.2, 0.84);
-    expect(sims.filter((s) => relevance(s) >= 1)).toEqual([0.839]);
+    expect(sims.filter((s) => relevance(s) >= 1)).toEqual([0.839, 0.839]);
     // Too few documents for statistics: absolute floor.
     const few = relevanceScale([0.83, 0.86], 1.2, 0.84);
     expect([few(0.83) >= 1, few(0.86) >= 1]).toEqual([false, true]);
@@ -192,6 +196,22 @@ describe('semantic index and search', () => {
 
     expect((await search.search('otel', { kind: 'task' })).map((r) => r.doc.title)).toEqual(['Otel faturasını öde']);
     expect(await search.search('   ')).toEqual([]);
+  });
+
+  it('re-embeds everything with a newly chosen model and only searches its vectors', async () => {
+    await notes.create({ title: 'Tatil planı', content: 'Antalya otel rezervasyonu' });
+    await tasks.createTask('Faturayı öde');
+    await settle();
+    const before = embedder.calls.flat().length;
+
+    embedder.spec.set({ ...EMBEDDING_MODELS['embeddinggemma'], repo: 'other-model' });
+    // Until re-embedded, vectors of the previous model are not used for search.
+    expect(index.vectors().size).toBe(0);
+    await settle();
+    expect(embedder.calls.flat().length).toBe(before + 2);
+    expect(index.vectors().size).toBe(2);
+    const stored = await store.list<{ model: string }>(EMBEDDING_RECORD_TYPE);
+    expect(stored.map((r) => r.model)).toEqual(['other-model', 'other-model']);
   });
 
   it('falls back to keyword search when semantic search is off', async () => {

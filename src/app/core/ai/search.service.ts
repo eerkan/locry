@@ -5,28 +5,25 @@ import { EMBEDDER } from './embedding.service';
 import { SemanticIndexService } from './semantic-index.service';
 
 /**
- * e5 similarities sit in a narrow band, and the band shifts per query: on our TR/EN test
- * notes the right note scored 0.82-0.86 while unrelated ones reached 0.84 for other queries.
- * A fixed threshold cannot separate them, but the right note always stands out from the
- * query's own distribution, so relevance is a z-score over all indexed documents.
+ * Similarities sit in a narrow band that shifts per query (e5: the right note at 0.82-0.86
+ * while unrelated ones reached 0.84 for other queries), and the band differs per model. A
+ * fixed threshold cannot separate them, but the right note stands out from the query's own
+ * distribution, so relevance is a z-score over all indexed documents.
  */
-/** Semantic-only results must stand out this many standard deviations (9/10 test queries exact). */
-const MIN_Z = 1.2;
-/** With few documents the distribution is meaningless; fall back to an absolute floor. */
-const MIN_DOCS_FOR_STATS = 5;
-const ABSOLUTE_FLOOR = 0.84;
-/** Similar notes: passage-passage scores run higher (0.85-0.93), so be stricter. */
-const SIMILAR_MIN_Z = 1.5;
-const SIMILAR_MIN_SIMILARITY = 0.9;
-const INACTIVE_PENALTY = 0.85;
 /**
+ * Below this many documents a z-score says little (two right notes among six pull each other
+ * down), so small vaults compare against the model's absolute floor instead.
+ */
+const MIN_DOCS_FOR_STATS = 15;
+/** Similar notes: passage-passage scores run higher, so be stricter. */
+const SIMILAR_MIN_Z = 1.5;
+const INACTIVE_PENALTY = 0.85;
+/*
  * Hubness correction: short, generic texts (a task called "Gym") sit close to the centre of
  * all vectors and look similar to every query. Subtracting each chunk's similarity to the
- * centroid removes that bias. Measured on TR/EN sample vaults (notes + short tasks), it took
- * the right note to the top in 9/12 TR and 10/11 EN queries (was 7/12 and 7/11) and halved
- * unrelated matches.
+ * centroid removes that bias. Its weight, and how many standard deviations a semantic-only
+ * match must stand out (minZ), are calibrated per model (see EMBEDDING_MODELS).
  */
-const HUB_WEIGHT = 1;
 
 export type SearchKind = 'all' | 'note' | 'task';
 
@@ -80,10 +77,13 @@ export class SearchService {
       for (const doc of this.index.docs()) {
         const key = docKey(doc);
         const chunks = vectors.get(key);
-        if (chunks?.length) similarities.set(key, bestSimilarity(queryVector, chunks, hubness.get(key)));
+        if (chunks?.length) {
+          similarities.set(key, bestSimilarity(queryVector, chunks, hubness.get(key), this.index.spec().hubWeight));
+        }
       }
     }
-    const relevance = relevanceScale([...similarities.values()], MIN_Z, ABSOLUTE_FLOOR);
+    const spec = this.index.spec();
+    const relevance = relevanceScale([...similarities.values()], spec.minZ, spec.floor);
 
     const results: SearchResult[] = [];
     for (const doc of docs) {
@@ -120,13 +120,14 @@ export class SearchService {
         const target = vectors.get(docKey(doc));
         return target?.length ? [{ doc, sim: bestSimilarity(centroid, target) }] : [];
       });
+    const floor = this.index.spec().similarFloor;
     const relevance = relevanceScale(
       scored.map((s) => s.sim),
       SIMILAR_MIN_Z,
-      SIMILAR_MIN_SIMILARITY,
+      floor,
     );
     return scored
-      .filter((s) => s.sim >= SIMILAR_MIN_SIMILARITY && relevance(s.sim) >= 1)
+      .filter((s) => s.sim >= floor && relevance(s.sim) >= 1)
       .sort((a, b) => b.sim - a.sim)
       .slice(0, limit)
       .map(({ doc, sim }) => ({ doc, score: sim, matchedBy: 'semantic' as const, snippet: snippet(doc, []) }));
@@ -156,8 +157,8 @@ function containsTerm(text: string, term: string): boolean {
 }
 
 /** Best chunk similarity, optionally corrected by each chunk's hubness. */
-export function bestSimilarity(query: Float32Array, chunks: Float32Array[], hubness?: number[]): number {
-  return Math.max(...chunks.map((c, i) => similarity(query, c) - (hubness ? HUB_WEIGHT * hubness[i] : 0)));
+export function bestSimilarity(query: Float32Array, chunks: Float32Array[], hubness?: number[], hubWeight = 1): number {
+  return Math.max(...chunks.map((c, i) => similarity(query, c) - (hubness ? hubWeight * hubness[i] : 0)));
 }
 
 /**

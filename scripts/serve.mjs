@@ -40,12 +40,13 @@ const PAGES = { '/': 'index.html', '/en': 'en/index.html', '/en/': 'en/index.htm
 const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.webmanifest', '.svg', '.txt', '.xml', '.wasm']);
 const compressed = new Map();
 
-/** Brotli or gzip, if the client accepts it; results are cached per file and site origin. */
+/** Brotli or gzip, if the client accepts it; cached per file version and site origin. */
 function encodeBody(req, file, body) {
   const accept = String(req.headers['accept-encoding'] ?? '');
   const encoding = /\bbr\b/.test(accept) ? 'br' : /\bgzip\b/.test(accept) ? 'gzip' : null;
   if (!encoding || body.length < 1024) return { body, encoding: null };
-  const key = `${encoding}:${file}:${body.length}:${req.headers.host}`;
+  // The modification time tells builds apart: file names inside the HTML change, not its length.
+  const key = `${encoding}:${file}:${statSync(file).mtimeMs}:${body.length}:${req.headers.host}`;
   if (!compressed.has(key)) {
     compressed.set(
       key,

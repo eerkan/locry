@@ -1,12 +1,20 @@
 import { DOCUMENT, Injectable, InjectionToken, type Signal, computed, inject, signal } from '@angular/core';
-import { EMBEDDING_MODEL, type EmbeddingKind, type WorkerRequest, type WorkerResponse } from './embedding-protocol';
+import { PreferencesService } from '../preferences.service';
+import {
+  EMBEDDING_MODELS,
+  type EmbeddingKind,
+  type EmbeddingModelSpec,
+  type WorkerRequest,
+  type WorkerResponse,
+} from './embedding-protocol';
 
 export type EmbedderStatus = 'off' | 'loading' | 'ready' | 'error';
 
 /** What the index and search need from an embedding model (faked in tests). */
 export interface Embedder {
   readonly status: Signal<EmbedderStatus>;
-  readonly model: string;
+  /** The model chosen for the open vault. */
+  readonly spec: Signal<EmbeddingModelSpec>;
   embed(texts: string[], kind: EmbeddingKind): Promise<Float32Array[]>;
 }
 
@@ -16,12 +24,17 @@ export const EMBEDDER = new InjectionToken<Embedder>('EMBEDDER', {
 });
 
 const BATCH_SIZE = 8;
+/** Cache Storage name Transformers.js keeps downloaded model files in. */
+const MODEL_CACHE = 'transformers-cache';
 
 /** Runs the embedding model in a Web Worker so the UI never blocks on inference. */
 @Injectable({ providedIn: 'root' })
 export class EmbeddingService implements Embedder {
   private readonly document = inject(DOCUMENT);
-  readonly model = EMBEDDING_MODEL;
+  private readonly prefs = inject(PreferencesService);
+  readonly spec = computed(() => EMBEDDING_MODELS[this.prefs.embeddingModel()]);
+  /** The model the running worker has loaded. */
+  private loaded: EmbeddingModelSpec | null = null;
 
   private worker: Worker | null = null;
   private nextId = 1;
@@ -41,9 +54,15 @@ export class EmbeddingService implements Embedder {
     return total ? files.reduce((sum, f) => sum + f.loaded, 0) / total : 0;
   });
 
-  /** Starts the worker and loads the model (downloaded once, then served from the browser cache). */
+  /**
+   * Starts the worker and loads the chosen model (downloaded once, then served from the
+   * browser cache). A worker running another model is replaced.
+   */
   start(): Promise<void> {
-    if (this.readyPromise) return this.readyPromise;
+    const spec = this.spec();
+    if (this.readyPromise && this.loaded?.id === spec.id) return this.readyPromise;
+    if (this.readyPromise) this.stop();
+    this.loaded = spec;
     this._status.set('loading');
     this._error.set(null);
     this.fileProgress.set({});
@@ -80,7 +99,7 @@ export class EmbeddingService implements Embedder {
     });
 
     const wasmPaths = new URL('ort/', this.document.baseURI).href;
-    this.post({ type: 'init', model: this.model, wasmPaths });
+    this.post({ type: 'init', model: spec, wasmPaths });
     return this.readyPromise;
   }
 
@@ -91,12 +110,30 @@ export class EmbeddingService implements Embedder {
     this.readyPromise = null;
     for (const { reject } of this.pending.values()) reject(new Error('Embedding stopped'));
     this.pending.clear();
+    this.loaded = null;
     this._status.set('off');
   }
 
+  /**
+   * Deletes downloaded model files that no vault on this device uses any more (models are
+   * 100-600 MB each). Files of the given repositories are kept.
+   */
+  async pruneCache(keepRepos: Iterable<string>): Promise<void> {
+    if (typeof caches === 'undefined') return;
+    const keep = [...keepRepos];
+    const cache = await caches.open(MODEL_CACHE);
+    for (const request of await cache.keys()) {
+      const { hostname, pathname } = new URL(request.url);
+      if (!hostname.endsWith('huggingface.co') && !hostname.endsWith('hf.co')) continue;
+      if (!keep.some((repo) => pathname.startsWith(`/${repo}/`))) await cache.delete(request);
+    }
+  }
+
   async embed(texts: string[], kind: EmbeddingKind): Promise<Float32Array[]> {
-    if (this._status() !== 'ready') throw new Error('Model not ready');
-    const prefixed = texts.map((t) => `${kind}: ${t}`);
+    const spec = this.loaded;
+    if (this._status() !== 'ready' || !spec) throw new Error('Model not ready');
+    const prefix = kind === 'query' ? spec.queryPrefix : spec.passagePrefix;
+    const prefixed = texts.map((t) => `${prefix}${t}`);
     const out: Float32Array[] = [];
     for (let i = 0; i < prefixed.length; i += BATCH_SIZE) {
       out.push(...(await this.request(prefixed.slice(i, i + BATCH_SIZE))));
@@ -122,5 +159,6 @@ export class EmbeddingService implements Embedder {
     this.worker?.terminate();
     this.worker = null;
     this.readyPromise = null;
+    this.loaded = null;
   }
 }

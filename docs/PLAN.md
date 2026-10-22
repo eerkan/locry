@@ -178,6 +178,18 @@ gerçek ekran görüntüleri.
   ilgisiz eşleşmeler yarıya indi), arama alıntılarında Markdown tablo çizgileri.
 - ✅ Lighthouse: masaüstü 100/100/100/100; mobil performans 92–94, erişilebilirlik / en iyi uygulamalar / SEO 100.
 
+### Faz 10 — Seçilebilir gömme (embedding) modelleri ✅ tamamlandı
+- ✅ Beş model, kasa başına seçim: EmbeddingGemma 300M (varsayılan, q4 `no_gather` — tarayıcının WASM çalışma
+  zamanında düz q4'ün GatherBlockQuantized işlemi yok), Multilingual E5 Small / Base, Snowflake Arctic Embed M v2.0,
+  BGE-M3. Model kataloğunda depo, yükleme biçimi, havuzlama, önekler, boyut ve kalibrasyon.
+- ✅ Ölçüm (TR/EN, 23 sorgu): doğru not ilk sırada Gemma 20/23, E5 Small/Base 19/23, Arctic ve BGE-M3 16/23.
+  Model başına hubness ağırlığı, z eşiği, az belge için mutlak taban ve benzer not tabanı.
+- ✅ 15'ten az belgeli kasalarda z-skoru yerine modelin mutlak tabanı.
+- ✅ Model değişimi: onay penceresi (boyut, belge sayısı), işçi yeni modelle yeniden başlar, tüm belgeler yeniden
+  vektörlenir, kullanılmayan model dosyaları tarayıcı önbelleğinden silinir; önceden açık kasalar E5 Small'da kalır.
+- ✅ Yol üstünde: üretim sunucusunun sıkıştırma önbelleği aynı uzunluktaki yeni HTML'i eski sürümle karıştırıyordu
+  (artık dosyanın değişme zamanına bağlı).
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`

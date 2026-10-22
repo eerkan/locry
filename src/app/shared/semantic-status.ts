@@ -19,7 +19,7 @@ import { SemanticIndexService } from '../core/ai/semantic-index.service';
         <ng-icon name="lucideSparkles" class="text-primary shrink-0 text-xl" />
         <div class="flex flex-1 flex-col gap-1">
           <p class="text-sm font-medium">{{ 'pages.search.semanticOffTitle' | transloco }}</p>
-          <p class="text-muted-foreground text-xs">{{ 'pages.search.semanticOffDescription' | transloco }}</p>
+          <p class="text-muted-foreground text-xs">{{ 'pages.search.semanticOffDescription' | transloco: { model: index.spec().name, size: index.spec().downloadMb } }}</p>
         </div>
         <button hlmBtn size="sm" (click)="index.enable()">{{ 'pages.search.enable' | transloco }}</button>
       </div>

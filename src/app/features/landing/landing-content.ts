@@ -231,7 +231,7 @@ const tr: LandingContent = {
   search: {
     title: 'Anlamla arayan, gizliliği koruyan yapay zekâ',
     text:
-      '“Tatil planı” diye aradığında “Antalya otel rezervasyonu” notunu da bulur. Çok dilli bir dil modeli (multilingual-e5-small) bir kez indirilir ve tamamen tarayıcında çalışır.',
+      '“Tatil planı” diye aradığında “Antalya otel rezervasyonu” notunu da bulur. Varsayılan model Google’ın EmbeddingGemma’sı; Ayarlar’dan beş çok dilli model arasından seçebilirsin. Model bir kez indirilir ve tamamen tarayıcında çalışır.',
     bullets: [
       'Kelime ve anlam araması birlikte; Türkçe ve İngilizce',
       'Vektörler de şifreli saklanır, yedeklere ve eşitlemeye girmez',
@@ -513,7 +513,7 @@ const en: LandingContent = {
   search: {
     title: 'AI that searches by meaning and keeps your privacy',
     text:
-      'Search for “vacation plans” and find your “Hotel booking in Lisbon” note too. A multilingual language model (multilingual-e5-small) is downloaded once and runs entirely in your browser.',
+      'Search for “vacation plans” and find your “Hotel booking in Lisbon” note too. The default model is Google’s EmbeddingGemma, and Settings offers five multilingual models to choose from. The model is downloaded once and runs entirely in your browser.',
     bullets: [
       'Keyword and semantic search together, in English and Turkish',
       'Vectors are stored encrypted and stay out of backups and sync',

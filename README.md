@@ -213,8 +213,28 @@ Bir kasayı birden fazla cihazda kullanmak için Google Drive aracı olarak kull
 
 ## Anlamsal arama
 
-**Ara** sayfasından açılır. `Xenova/multilingual-e5-small` modeli (~120 MB) bir kez indirilir, tarayıcıda
-önbelleğe alınır ve bir Web Worker içinde çalışır. Vektörler şifreli saklanır ve yedeklere eklenmez.
+**Ara** sayfasından ya da **Ayarlar → Akıllı arama**'dan açılır. Seçilen model bir kez indirilir, tarayıcıda
+önbelleğe alınır ve bir Web Worker içinde (WASM) çalışır. Vektörler şifreli saklanır; yedeklere ve eşitlemeye girmez.
+
+Her kasa kendi modelini seçer (Ayarlar → Akıllı arama → Model):
+
+| Model | İndirme | Vektör | Maks. metin | Lisans | Not |
+|---|---|---|---|---|---|
+| **EmbeddingGemma 300M** (varsayılan) | 195 MB | 768 | 2.048 token | Gemma şartları | TR/EN testinde en isabetli; telefonda da çalışır |
+| Multilingual E5 Small | 118 MB | 384 | 512 token | MIT | En küçük ve hızlı |
+| Multilingual E5 Base | 279 MB | 768 | 512 token | MIT | Bilgisayar için |
+| Snowflake Arctic Embed M v2.0 | 311 MB | 768 | 8.192 token | Apache 2.0 | Uzun metinler; bilgisayar için |
+| BGE-M3 | 568 MB | 1024 | 8.192 token | MIT | En büyük; bilgisayar için |
+
+Örnek TR/EN kasalarda (notlar + kısa görevler, 23 sorgu) doğru not ilk sırada: Gemma 20/23, E5 Small 19/23,
+E5 Base 19/23, Arctic 16/23, BGE-M3 16/23. Her modelin benzerlik ölçeği farklı olduğu için eşikleri ve "her şeye
+benzeyen" kısa belgeler için düzeltme ağırlığı model başına ayrı kalibre edildi (`embedding-protocol.ts`).
+
+**Model değiştirilince:** yeni model indirilir (önceden indirildiyse indirilmez), tüm notlar ve görevler arka
+planda yeni modelle yeniden vektörlenir, eski vektörler yenileriyle değişir. Bu sırada kelime araması çalışmaya
+devam eder. Eski modelin dosyaları, bu cihazda onu kullanan başka bir kasa yoksa tarayıcıdan silinir. Notlara,
+yedeklere ve eşitlemeye dokunulmaz; model seçimi cihaza özeldir (telefonda daha hafif bir model seçilebilir).
+Akıllı aramayı bu sürümden önce açmış kasalar E5 Small'da kalır.
 
 ## Klavye kısayolları
 

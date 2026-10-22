@@ -20,7 +20,7 @@ Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uc
 - Multiple vaults: independent vaults (e.g. Personal and Work), each with its own keys, backups and settings
 - Backups: single-file, gzip-compressed and encrypted `.locry` files, to a file or Google Drive (app-data folder only)
 - Sync: optional, through Google Drive; each device writes its own encrypted snapshot and merges the others; deletions sync; when a note was edited on two devices the older version is kept as a "(conflict)" copy
-- Smart search: semantic + keyword search with the multilingual-e5-small model running in the browser (Web Worker); notes are never sent to an AI service
+- Smart search: semantic + keyword search with a multilingual embedding model running in the browser (Web Worker, WASM); default EmbeddingGemma 300M, or choose multilingual-e5-small, multilingual-e5-base, Snowflake Arctic Embed M v2.0 or BGE-M3 per vault; notes are never sent to an AI service
 - Platforms: modern browsers (Chrome/Edge 118+, Safari 18+); installable PWA on macOS, Windows, Linux, iOS and Android; works offline
 - Self-hosting: static files plus a tiny Node server in Docker (`docker compose up -d --build`); optional Caddy for automatic HTTPS on a domain
 

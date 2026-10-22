@@ -9,6 +9,7 @@ import {
   EMBEDDING_RECORD_TYPE,
   type SearchDoc,
   chunkDoc, chunksHash, decodeVector, docKey, encodeVector, markdownToText } from './documents';
+import { EMBEDDING_MODELS, type EmbeddingModelId } from './embedding-protocol';
 import { EMBEDDER, EmbeddingService } from './embedding.service';
 
 /** Stored (encrypted) vectors for one document. */
@@ -43,6 +44,8 @@ export class SemanticIndexService {
   readonly indexing = this._indexing.asReadonly();
   readonly enabled = computed(() => this.prefs.semanticSearch());
   readonly ready = computed(() => this.enabled() && this.embedder.status() === 'ready');
+  /** The model used for this vault's vectors. */
+  readonly spec = computed(() => this.embedder.spec());
 
   /** Every searchable document, derived from the decrypted notes and tasks. */
   readonly docs = computed<SearchDoc[]>(() => [
@@ -66,7 +69,7 @@ export class SemanticIndexService {
 
   /** Decoded vectors per document key, for search. */
   readonly vectors = computed(() => {
-    const model = this.embedder.model;
+    const model = this.embedder.spec().repo;
     const map = new Map<string, Float32Array[]>();
     for (const record of this.collection.items()) {
       if (record.model === model) map.set(record.id, record.vectors.map(decodeVector));
@@ -75,14 +78,20 @@ export class SemanticIndexService {
   });
 
   constructor() {
-    // Run the model only while it is wanted and the vault is open.
+    // Run the chosen model only while it is wanted and the vault is open. Choosing another
+    // model restarts the worker; the index then re-embeds everything (the model is part of
+    // each document's hash) and files of models no vault uses any more are deleted.
     effect(() => {
       const wanted = this.enabled() && this.vault.isUnlocked();
+      this.embedder.spec();
       const embedder = this.embedder;
       untracked(() => {
         if (!(embedder instanceof EmbeddingService)) return;
-        if (wanted) void embedder.start().catch((error) => console.error(error));
-        else embedder.stop();
+        if (!wanted) return embedder.stop();
+        void embedder
+          .start()
+          .then(() => this.pruneModelCache())
+          .catch((error) => console.error(error));
       });
     });
 
@@ -98,10 +107,22 @@ export class SemanticIndexService {
     this.prefs.setSemanticSearch(true);
   }
 
-  /** Turns semantic search off and deletes the stored vectors. */
+  /** Turns semantic search off and deletes the stored vectors and unused model files. */
   async disable(): Promise<void> {
     this.prefs.setSemanticSearch(false);
     await this.collection.remove(...this.collection.items().map((r) => r.id));
+    await this.pruneModelCache();
+  }
+
+  /** Switches this vault to another model; everything is embedded again with it. */
+  setModel(id: EmbeddingModelId): void {
+    this.prefs.setEmbeddingModel(id);
+  }
+
+  private async pruneModelCache(): Promise<void> {
+    if (!(this.embedder instanceof EmbeddingService)) return;
+    const inUse = [...this.prefs.embeddingModelsInUse()].map((id) => EMBEDDING_MODELS[id].repo);
+    await this.embedder.pruneCache(inUse).catch((error) => console.error(error));
   }
 
   /** Drops all vectors and embeds everything again. */
@@ -136,7 +157,7 @@ export class SemanticIndexService {
   }
 
   private async syncOnce(): Promise<void> {
-    const model = this.embedder.model;
+    const model = this.embedder.spec().repo;
     const docs = this.docs();
     const wanted = new Set(docs.map(docKey));
 
