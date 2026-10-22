@@ -155,6 +155,10 @@ export class DriveCard {
   protected readonly keepOptions = [3, 5, 10, 20, 50];
   protected readonly autoOptions: { value: DriveAutoBackup; label: string }[] = [
     { value: 'off', label: 'drive.autoOff' },
+    { value: '5m', label: 'drive.auto5m' },
+    { value: '15m', label: 'drive.auto15m' },
+    { value: '30m', label: 'drive.auto30m' },
+    { value: 'hourly', label: 'drive.autoHourly' },
     { value: 'daily', label: 'drive.autoDaily' },
     { value: 'weekly', label: 'drive.autoWeekly' },
   ];
@@ -166,7 +170,8 @@ export class DriveCard {
   }
 
   protected setAuto(value: string): void {
-    if (value === 'off' || value === 'daily' || value === 'weekly') this.prefs.setDrive({ driveAutoBackup: value });
+    const option = this.autoOptions.find((o) => o.value === value);
+    if (option) this.prefs.setDrive({ driveAutoBackup: option.value });
   }
 
   protected setKeep(value: string): void {

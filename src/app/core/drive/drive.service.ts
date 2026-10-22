@@ -1,7 +1,7 @@
 import { Injectable, InjectionToken, computed, effect, inject, signal, untracked } from '@angular/core';
 import { BACKUP_FORMAT_VERSION, type SealedBackup, backupFileName } from '../backup/backup-format';
 import { BackupService } from '../backup/backup.service';
-import { PreferencesService } from '../preferences.service';
+import { type DriveAutoBackup, PreferencesService } from '../preferences.service';
 import { RuntimeConfigService } from '../runtime-config.service';
 import { VaultService } from '../vault/vault.service';
 import { type DriveFile, DriveApi, type Fetch } from './drive-api';
@@ -13,7 +13,14 @@ export const DRIVE_FETCH = new InjectionToken<Fetch>('DRIVE_FETCH', {
   factory: () => (...args: Parameters<Fetch>) => fetch(...args),
 });
 
-const AUTO_BACKUP_INTERVAL_MS = { daily: 24 * 3600_000, weekly: 7 * 24 * 3600_000 } as const;
+const AUTO_BACKUP_INTERVAL_MS: Record<Exclude<DriveAutoBackup, 'off'>, number> = {
+  '5m': 5 * 60_000,
+  '15m': 15 * 60_000,
+  '30m': 30 * 60_000,
+  hourly: 3600_000,
+  daily: 24 * 3600_000,
+  weekly: 7 * 24 * 3600_000,
+};
 
 /** Sync snapshots carry this app property; they are not listed as backups. */
 export function isSyncFile(file: DriveFile): boolean {

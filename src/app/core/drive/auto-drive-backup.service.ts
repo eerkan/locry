@@ -1,10 +1,12 @@
 import { DestroyRef, Injectable, effect, inject, untracked } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { toast } from '@spartan-ng/brain/sonner';
+import { EncryptedStore } from '../storage/encrypted-store.service';
 import { VaultService } from '../vault/vault.service';
 import { DriveService } from './drive.service';
 
-const CHECK_INTERVAL_MS = 5 * 60_000;
+/** Often enough for the shortest schedule (5 minutes). */
+const CHECK_INTERVAL_MS = 60_000;
 
 /**
  * Runs scheduled Drive backups while the app is open and unlocked. Browsers only allow the
@@ -16,14 +18,18 @@ export class AutoDriveBackupService {
   private readonly drive = inject(DriveService);
   private readonly vault = inject(VaultService);
   private readonly transloco = inject(TranslocoService);
+  private readonly store = inject(EncryptedStore);
   private promptedThisUnlock = false;
   private running = false;
+  /** Local change counter at the last automatic backup of this session. */
+  private changesAtLastBackup: number | null = null;
 
   constructor() {
     effect(() => {
       const unlocked = this.vault.isUnlocked();
       untracked(() => {
         this.promptedThisUnlock = false;
+        this.changesAtLastBackup = null;
         if (unlocked) setTimeout(() => void this.check(), 3000);
       });
     });
@@ -31,12 +37,17 @@ export class AutoDriveBackupService {
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
   }
 
-  async check(): Promise<void> {
-    if (this.running || !this.drive.autoBackupDue()) return;
+  async check(now = Date.now()): Promise<void> {
+    if (this.running || !this.drive.autoBackupDue(now)) return;
+    // Frequent schedules would otherwise upload identical copies and prune the older,
+    // different ones away: skip when nothing changed since the last automatic backup.
+    const changes = this.store.changes();
+    if (changes === this.changesAtLastBackup) return;
     if (this.drive.hasValidToken()) {
       this.running = true;
       try {
         await this.drive.backupNow({ interactive: false });
+        this.changesAtLastBackup = changes;
         toast.success(this.transloco.translate('drive.autoBackupDone'));
       } catch (error) {
         console.error(error);

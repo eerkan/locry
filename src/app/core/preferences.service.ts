@@ -11,7 +11,8 @@ import { VaultService } from './vault/vault.service';
 
 export type Lang = 'tr' | 'en';
 export type Theme = 'light' | 'dark' | 'system';
-export type DriveAutoBackup = 'off' | 'daily' | 'weekly';
+export const DRIVE_AUTO_BACKUP = ['off', '5m', '15m', '30m', 'hourly', 'daily', 'weekly'] as const;
+export type DriveAutoBackup = (typeof DRIVE_AUTO_BACKUP)[number];
 
 const STORAGE_KEY = 'locry.preferences';
 
@@ -208,7 +209,7 @@ function parseVaultPreferences(value: Partial<VaultPreferences>): VaultPreferenc
   return {
     lastBackupAt: typeof value.lastBackupAt === 'string' ? value.lastBackupAt : null,
     driveKeep: typeof value.driveKeep === 'number' && value.driveKeep >= 1 ? value.driveKeep : VAULT_DEFAULTS.driveKeep,
-    driveAutoBackup: ['off', 'daily', 'weekly'].includes(value.driveAutoBackup as string)
+    driveAutoBackup: (DRIVE_AUTO_BACKUP as readonly string[]).includes(value.driveAutoBackup as string)
       ? value.driveAutoBackup!
       : VAULT_DEFAULTS.driveAutoBackup,
     lastDriveBackupAt: typeof value.lastDriveBackupAt === 'string' ? value.lastDriveBackupAt : null,

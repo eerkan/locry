@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { TranslocoService } from '@jsverse/transloco';
 import { IDBFactory } from 'fake-indexeddb';
 import { BackupService } from '../backup/backup.service';
 import { randomBytes } from '../crypto/bytes';
@@ -8,6 +9,7 @@ import { LocryDb } from '../storage/locry-db';
 import { PasskeyClient } from '../vault/passkey';
 import { VaultService } from '../vault/vault.service';
 import { DriveApi } from './drive-api';
+import { AutoDriveBackupService } from './auto-drive-backup.service';
 import { DRIVE_FETCH, DriveService } from './drive.service';
 import { GoogleAuth } from './google-auth';
 import { FakeDrive, FakeGoogleAuth } from './fake-drive.testing';
@@ -51,6 +53,7 @@ describe('DriveService', () => {
       providers: [
         { provide: DRIVE_FETCH, useValue: fakeDrive.fetch },
         { provide: GoogleAuth, useValue: fakeAuth },
+        { provide: TranslocoService, useValue: { translate: (key: string) => key } },
         {
           provide: PasskeyClient,
           useValue: {
@@ -144,5 +147,29 @@ describe('DriveService', () => {
     expect(drive.autoBackupDue(Date.now() + 25 * 3600_000)).toBe(true);
     prefs.setDrive({ driveAutoBackup: 'weekly' });
     expect(drive.autoBackupDue(Date.now() + 25 * 3600_000)).toBe(false);
+    prefs.setDrive({ driveAutoBackup: '5m' });
+    expect(drive.autoBackupDue(Date.now() + 4 * 60_000)).toBe(false);
+    expect(drive.autoBackupDue(Date.now() + 6 * 60_000)).toBe(true);
+    prefs.setDrive({ driveAutoBackup: 'hourly' });
+    expect(drive.autoBackupDue(Date.now() + 30 * 60_000)).toBe(false);
+    expect(drive.autoBackupDue(Date.now() + 61 * 60_000)).toBe(true);
+  });
+
+  it('skips automatic backups when nothing changed since the last one', async () => {
+    const auto = TestBed.inject(AutoDriveBackupService);
+    const backups = () => fakeDrive.files.filter((f) => f.appProperties['locryVaultId']).length;
+    await drive.connect();
+    prefs.setDrive({ driveAutoBackup: '5m' });
+    await store.put('note', 'n1', { title: 'ilk' });
+
+    await auto.check();
+    expect(backups()).toBe(1);
+    // Due again, but the vault did not change.
+    await auto.check(Date.now() + 6 * 60_000);
+    expect(backups()).toBe(1);
+
+    await store.put('note', 'n1', { title: 'değişti' });
+    await auto.check(Date.now() + 6 * 60_000);
+    expect(backups()).toBe(2);
   });
 });
