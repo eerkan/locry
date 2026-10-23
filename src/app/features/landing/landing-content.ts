@@ -19,7 +19,7 @@ export interface Faq {
 /** Everything the landing page says, per language. Kept as data so the page and the structured data agree. */
 export interface LandingContent {
   lang: LandingLang;
-  path: '/' | '/en';
+  path: '/' | '/tr';
   locale: string;
   meta: { title: string; description: string; ogImageAlt: string };
   nav: {
@@ -33,6 +33,20 @@ export interface LandingContent {
     otherLangLabel: string;
     skip: string;
   };
+  /** Short section labels for the numbered headings. */
+  sections: {
+    overview: string;
+    features: string;
+    tasks: string;
+    security: string;
+    vaults: string;
+    sync: string;
+    search: string;
+    compare: string;
+    selfHost: string;
+    faq: string;
+  };
+  ui: { theme: string; light: string; dark: string; system: string; language: string; flow: string; terminal: string };
   hero: {
     eyebrow: string;
     title: string;
@@ -69,7 +83,7 @@ export interface LandingContent {
 
 const tr: LandingContent = {
   lang: 'tr',
-  path: '/',
+  path: '/tr',
   locale: 'tr_TR',
   meta: {
     title: 'Locry — Uçtan uca şifreli notlar ve görevler, passkey ile',
@@ -84,9 +98,30 @@ const tr: LandingContent = {
     selfHost: 'Kendi sunucunda',
     faq: 'SSS',
     open: 'Locry’yi aç',
-    otherLang: '/en',
+    otherLang: '/',
     otherLangLabel: 'English',
     skip: 'İçeriğe geç',
+  },
+  sections: {
+    overview: 'Genel bakış',
+    features: 'Özellikler',
+    tasks: 'Görevler',
+    security: 'Güvenlik',
+    vaults: 'Kasalar',
+    sync: 'Eşitleme',
+    search: 'Akıllı arama',
+    compare: 'Karşılaştırma',
+    selfHost: 'Kendi sunucunda',
+    faq: 'SSS',
+  },
+  ui: {
+    theme: 'Tema',
+    light: 'Aydınlık',
+    dark: 'Karanlık',
+    system: 'Sistem',
+    language: 'Dil',
+    flow: 'Kilit açma akışı',
+    terminal: 'Terminal',
   },
   hero: {
     eyebrow: 'Açık kaynak · Sunucusuz · Çevrimdışı çalışır',
@@ -351,7 +386,7 @@ const tr: LandingContent = {
 
 const en: LandingContent = {
   lang: 'en',
-  path: '/en',
+  path: '/',
   locale: 'en_US',
   meta: {
     title: 'Locry — End-to-end encrypted notes and tasks, unlocked with a passkey',
@@ -366,9 +401,30 @@ const en: LandingContent = {
     selfHost: 'Self-host',
     faq: 'FAQ',
     open: 'Open Locry',
-    otherLang: '/',
+    otherLang: '/tr',
     otherLangLabel: 'Türkçe',
     skip: 'Skip to content',
+  },
+  sections: {
+    overview: 'Overview',
+    features: 'Features',
+    tasks: 'Tasks',
+    security: 'Security',
+    vaults: 'Vaults',
+    sync: 'Sync',
+    search: 'Smart search',
+    compare: 'Comparison',
+    selfHost: 'Self-hosting',
+    faq: 'FAQ',
+  },
+  ui: {
+    theme: 'Theme',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+    language: 'Language',
+    flow: 'Unlock flow',
+    terminal: 'Terminal',
   },
   hero: {
     eyebrow: 'Open source · Serverless · Works offline',

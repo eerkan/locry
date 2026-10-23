@@ -35,7 +35,7 @@ yarn serve:prod
 ```
 
 İkisi de `http://localhost:4200` adresini kullanır; aynı adres olduğu için veriler ve passkey'ler ortaktır.
-Kök adres tanıtım sayfasıdır (`/`, İngilizcesi `/en`); uygulama `/app` adresinden açılır (kurulu PWA doğrudan oraya gider).
+Kök adres tanıtım sayfasıdır (`/` İngilizce, `/tr` Türkçe; tarayıcı dili Türkçe olan ziyaretçi `/tr`'ye yönlenir); uygulama `/app` adresinden açılır (kurulu PWA doğrudan oraya gider).
 Tarayıcı adres çubuğundaki "Yükle" simgesiyle Locry'yi masaüstü uygulaması olarak kurabilirsin.
 
 > Adres önemli: passkey'ler `localhost` alan adına, veriler ise `http://localhost:4200` kaynağına bağlıdır.
@@ -117,7 +117,13 @@ yoksa ayrı bir kasa olarak eklenir. Kasa silme yalnızca bu cihazdaki veriyi si
 
 ## Tanıtım sayfası ve SEO
 
-`/` (Türkçe) ve `/en` (İngilizce) derleme sırasında statik HTML olarak üretilir (Angular prerender + hydration).
+`/` (İngilizce, varsayılan) ve `/tr` (Türkçe) derleme sırasında statik HTML olarak üretilir (Angular prerender +
+hydration). `/` adresine gelen ziyaretçi, sayfada dil seçmediyse ve tarayıcısının dili Türkçe ise `/tr`'ye yönlenir;
+arama motorları iki sayfayı ayrı görür. Eski `/en` adresi `/`'ye kalıcı olarak yönlenir. Sayfada aydınlık / karanlık /
+sistem teması seçilebilir; ekran görüntüleri seçilen temaya uyar.
+
+Tasarım: Fraunces (başlıklar), Geist (metin) ve Geist Mono (teknik ayrıntılar), `@fontsource-variable`'dan uygulamayla
+birlikte sunulur (`/fonts`, CDN yok), yalnızca Latin ve Latin Extended; ilk ekranın yazı tipleri önceden yüklenir.
 Arama motorları ve yapay zekâ tarayıcıları içeriğin tamamını JavaScript çalıştırmadan okur; uygulamanın geri kalanı
 yalnızca tarayıcıda çalışır, sunucuda hiçbir kasa verisi bulunmaz.
 
@@ -126,7 +132,8 @@ yalnızca tarayıcıda çalışır, sunucuda hiçbir kasa verisi bulunmaz.
 - `robots.txt` (yapay zekâ tarayıcılarına da açık), `sitemap.xml`, `llms.txt`; uygulama sayfaları `noindex`
 - Adresler derlemede yer tutucudur; sunucu `LOCRY_SITE_URL` / `LOCRY_DOMAIN` ile doldurur, alan adı değişince yeniden
   derlemek gerekmez. Sunucu metinleri brotli/gzip ile sıkıştırır.
-- Lighthouse (yerel üretim sunucusu): masaüstünde 100/100/100/100, mobilde performans 92–94, diğerleri 100.
+- Lighthouse (yerel üretim sunucusu): masaüstünde performans 99, mobilde 83–88 (yavaş 4G simülasyonu); erişilebilirlik,
+  en iyi uygulamalar ve SEO 100; düzen kayması 0.
 
 Ekran görüntüleri gerçek uygulamadan, örnek verilerle ve sanal passkey ile alınır (Google Chrome, ImageMagick,
 `cwebp`, `avifenc` gerekir):

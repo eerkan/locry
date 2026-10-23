@@ -46,10 +46,30 @@ export class LandingSeo {
     for (const [attr, key, value] of tags) this.meta.updateTag({ [attr]: key, content: value }, `${attr}="${key}"`);
 
     this.link('canonical', 'canonical', url);
-    this.link('alternate-tr', 'alternate', `${site}/`, 'tr');
-    this.link('alternate-en', 'alternate', `${site}/en`, 'en');
+    this.link('alternate-en', 'alternate', `${site}/`, 'en');
+    this.link('alternate-tr', 'alternate', `${site}/tr`, 'tr');
     this.link('alternate-default', 'alternate', `${site}/`, 'x-default');
     this.jsonLd(structuredData(content, site));
+    // Fonts of the first screen, so the headline does not reflow when they arrive. Turkish
+    // text above the fold also needs Latin Extended (ş, ğ) in the body font.
+    const fonts = ['fraunces-latin-wght-normal', 'fraunces-latin-wght-italic', 'geist-latin-wght-normal'];
+    if (content.lang === 'tr') fonts.push('geist-latin-ext-wght-normal');
+    else this.document.head.querySelector('link[data-seo="font-3"]')?.remove();
+    fonts.forEach((font, i) => this.preload(`font-${i}`, `/fonts/${font}.woff2`));
+  }
+
+  private preload(id: string, href: string): void {
+    let link = this.document.head.querySelector<HTMLLinkElement>(`link[data-seo="${id}"]`);
+    if (!link) {
+      link = this.document.createElement('link');
+      link.setAttribute('data-seo', id);
+      link.setAttribute('rel', 'preload');
+      link.setAttribute('as', 'font');
+      link.setAttribute('type', 'font/woff2');
+      link.setAttribute('crossorigin', '');
+      this.document.head.appendChild(link);
+    }
+    link.setAttribute('href', href);
   }
 
   /**

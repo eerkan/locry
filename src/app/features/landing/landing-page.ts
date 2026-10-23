@@ -1,450 +1,575 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  afterNextRender,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, afterNextRender, computed, effect, inject, input, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArchive,
-  lucideArrowRight,
-  lucideCheck,
-  lucideChevronDown,
-  lucideCommand,
-  lucideFingerprint,
-  lucideKeyRound,
-  lucideLayers,
-  lucideListTodo,
-  lucideLock,
-  lucideNotebookPen,
-  lucideRefreshCw,
-  lucideServer,
-  lucideShieldCheck,
-  lucideSparkles,
-  lucideWifiOff,
-} from '@ng-icons/lucide';
+import { lucideArrowRight, lucideArrowUpRight, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
+import { PreferencesService, type Theme } from '../../core/preferences.service';
 import { GITHUB_URL } from '../../core/site';
 import { VaultService } from '../../core/vault/vault.service';
-import { Logo } from '../../shared/logo';
 import { LANDING_CONTENT, type LandingLang } from './landing-content';
 import { LandingSeo } from './landing-seo';
 import { LandingShot } from './landing-shot';
 
+/** Language the visitor picked on the landing page; wins over the browser's language. */
+const LANG_CHOICE_KEY = 'locry.landing-lang';
+
 /**
- * Public landing page (Turkish at /, English at /en). Prerendered to static HTML at build
- * time and hydrated in the browser; readable without JavaScript.
+ * Public landing page (English at /, Turkish at /tr). Prerendered to static HTML at build
+ * time and hydrated in the browser; readable without JavaScript. Visitors on / whose
+ * browser prefers Turkish (and who did not pick a language) are sent to /tr.
  */
 @Component({
   selector: 'app-landing-page',
-  imports: [LandingShot, Logo, NgIcon, RouterLink],
-  providers: [
-    provideIcons({
-      lucideArchive,
-      lucideArrowRight,
-      lucideCheck,
-      lucideChevronDown,
-      lucideCommand,
-      lucideFingerprint,
-      lucideKeyRound,
-      lucideLayers,
-      lucideListTodo,
-      lucideLock,
-      lucideNotebookPen,
-      lucideRefreshCw,
-      lucideServer,
-      lucideShieldCheck,
-      lucideSparkles,
-      lucideWifiOff,
-    }),
-  ],
+  imports: [LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
+  providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block min-h-svh bg-background text-foreground' },
+  host: { class: 'block' },
   styles: `
-    .glow {
-      background:
-        radial-gradient(60% 50% at 50% 0%, color-mix(in oklab, var(--color-violet-500) 22%, transparent), transparent 70%),
-        radial-gradient(40% 40% at 85% 20%, color-mix(in oklab, var(--color-sky-500) 16%, transparent), transparent 70%);
+    :host {
+      --paper: #f6f5f1;
+      --panel: #edebe4;
+      --ink: #16150f;
+      --soft: #57554c;
+      --rule: #dcd9cf;
+      --accent: #b03f0c;
+    }
+    :host-context(.dark) {
+      --paper: #0f0f0e;
+      --panel: #181816;
+      --ink: #ecebe5;
+      --soft: #aeaba1;
+      --rule: #2b2a25;
+      --accent: #f0894a;
+    }
+    summary::-webkit-details-marker {
+      display: none;
     }
   `,
   template: `
     @let t = content();
-    <a
-      href="#main"
-      class="bg-primary text-primary-foreground sr-only z-50 rounded-md px-3 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
-      >{{ t.nav.skip }}</a
-    >
+    <ng-template #themeSwitch let-display>
+    <div role="group" class="items-center rounded-md border border-[var(--rule)] p-0.5" [class]="display" [attr.aria-label]="t.ui.theme">
+      @for (option of themes; track option.value) {
+        <button
+          type="button"
+          class="flex size-7 items-center justify-center rounded-[5px] transition-colors hover:text-[var(--ink)]"
+          [class]="prefs.theme() === option.value ? 'bg-[var(--panel)]' : 'text-[var(--soft)]'"
+          [attr.aria-pressed]="prefs.theme() === option.value"
+          [attr.aria-label]="t.ui[option.value]"
+          [attr.title]="t.ui[option.value]"
+          (click)="prefs.setTheme(option.value)"
+        >
+          <ng-icon [name]="option.icon" class="text-[15px]" />
+        </button>
+      }
+    </div>
+    </ng-template>
+    <div class="font-text min-h-svh bg-[var(--paper)] text-[var(--ink)] antialiased">
+      <a
+        href="#main"
+        class="sr-only z-50 rounded bg-[var(--ink)] px-3 py-2 text-[var(--paper)] focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        >{{ t.nav.skip }}</a
+      >
 
-    <header class="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
-      <nav class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6" [attr.aria-label]="'Locry'">
-        <a [routerLink]="t.path" class="shrink-0" aria-label="Locry"><app-logo /></a>
-        <ul class="text-muted-foreground hidden items-center gap-5 text-sm md:flex">
-          <li><a href="#features" class="hover:text-foreground transition-colors">{{ t.nav.features }}</a></li>
-          <li><a href="#security" class="hover:text-foreground transition-colors">{{ t.nav.security }}</a></li>
-          <li><a href="#sync" class="hover:text-foreground transition-colors">{{ t.nav.sync }}</a></li>
-          <li><a href="#self-host" class="hover:text-foreground transition-colors">{{ t.nav.selfHost }}</a></li>
-          <li><a href="#faq" class="hover:text-foreground transition-colors">{{ t.nav.faq }}</a></li>
-        </ul>
-        <div class="ms-auto flex items-center gap-2">
-          <a
-            [routerLink]="t.nav.otherLang"
-            [attr.hreflang]="t.lang === 'tr' ? 'en' : 'tr'"
-            class="text-muted-foreground hover:text-foreground rounded-md px-2 py-1.5 text-sm transition-colors"
-            >{{ t.nav.otherLangLabel }}</a
+      <header class="sticky top-0 z-40 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur">
+        <div class="mx-auto flex h-14 max-w-[1200px] items-center gap-8 px-5 sm:px-6">
+          <a [routerLink]="t.path" class="font-display text-[22px] leading-none font-[560] tracking-[-0.02em]" aria-label="Locry"
+            >Locry<span class="text-[var(--accent)]">.</span></a
           >
-          <a
-            [href]="github"
-            rel="noopener"
-            class="text-muted-foreground hover:text-foreground hidden rounded-md p-2 transition-colors sm:inline-flex"
-            aria-label="GitHub"
-          >
-            <svg viewBox="0 0 24 24" class="size-5" fill="currentColor" aria-hidden="true"><path [attr.d]="githubPath" /></svg>
-          </a>
-          <a routerLink="/app" class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3.5 py-2 text-sm font-medium transition-colors">
-            {{ hasVault() ? t.hero.resume : t.nav.open }}
-          </a>
-        </div>
-      </nav>
-    </header>
-
-    <main id="main">
-      <!-- Hero -->
-      <section class="glow relative overflow-hidden" aria-labelledby="hero-title">
-        <div class="mx-auto max-w-6xl px-4 pt-16 pb-10 text-center sm:px-6 sm:pt-24">
-          <p class="text-muted-foreground mx-auto mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs sm:text-sm">
-            <ng-icon name="lucideShieldCheck" class="text-emerald-500" />
-            {{ t.hero.eyebrow }}
-          </p>
-          <h1 id="hero-title" class="mx-auto max-w-4xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-            {{ t.hero.title }}
-            <span class="bg-gradient-to-r from-violet-500 to-sky-500 bg-clip-text text-transparent">{{ t.hero.accent }}</span>
-          </h1>
-          <p class="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg text-pretty">{{ t.hero.lead }}</p>
-          <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a routerLink="/app" class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center gap-2 rounded-lg px-5 font-medium shadow-sm transition-colors">
-              {{ hasVault() ? t.hero.resume : t.hero.start }}
-              <ng-icon name="lucideArrowRight" />
+          <nav class="hidden lg:block" [attr.aria-label]="t.sections.overview">
+            <ul class="flex items-center gap-6 text-[13.5px] text-[var(--soft)]">
+              <li><a href="#features" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.features }}</a></li>
+              <li><a href="#security" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.security }}</a></li>
+              <li><a href="#sync" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.sync }}</a></li>
+              <li><a href="#self-host" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.selfHost }}</a></li>
+              <li><a href="#faq" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.faq }}</a></li>
+            </ul>
+          </nav>
+          <div class="ms-auto flex items-center gap-1.5 sm:gap-3">
+            <nav class="font-code flex items-center text-[12px] tracking-[0.08em]" [attr.aria-label]="t.ui.language">
+              <a
+                routerLink="/"
+                hreflang="en"
+                class="px-1.5 py-1"
+                [class]="t.lang === 'en' ? '' : 'text-[var(--soft)]'"
+                [attr.aria-current]="t.lang === 'en' ? 'page' : null"
+                (click)="remember('en')"
+                >EN</a
+              >
+              <span class="text-[var(--soft)]" aria-hidden="true">/</span>
+              <a
+                routerLink="/tr"
+                hreflang="tr"
+                class="px-1.5 py-1"
+                [class]="t.lang === 'tr' ? '' : 'text-[var(--soft)]'"
+                [attr.aria-current]="t.lang === 'tr' ? 'page' : null"
+                (click)="remember('tr')"
+                >TR</a
+              >
+            </nav>
+            <ng-container *ngTemplateOutlet="themeSwitch; context: { $implicit: 'hidden sm:flex' }" />
+            <a
+              [href]="github"
+              rel="noopener"
+              class="hidden size-8 items-center justify-center rounded-md text-[var(--soft)] transition-colors hover:text-[var(--ink)] sm:flex"
+              aria-label="GitHub"
+            >
+              <svg viewBox="0 0 24 24" class="size-[18px]" fill="currentColor" aria-hidden="true"><path [attr.d]="githubPath" /></svg>
             </a>
-            <a [href]="github" rel="noopener" class="bg-background hover:bg-accent inline-flex h-11 items-center gap-2 rounded-lg border px-5 font-medium transition-colors">
-              <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true"><path [attr.d]="githubPath" /></svg>
-              {{ t.hero.github }}
-            </a>
-          </div>
-          <ul class="text-muted-foreground mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-            @for (badge of t.hero.badges; track badge) {
-              <li class="inline-flex items-center gap-1.5"><ng-icon name="lucideCheck" class="text-emerald-500" />{{ badge }}</li>
-            }
-          </ul>
-        </div>
-        <div class="relative mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-          <div class="bg-card hidden overflow-hidden rounded-xl border shadow-2xl shadow-violet-500/10 sm:block">
-            <app-landing-shot [lang]="t.lang" name="hero" [width]="1440" [height]="900" [alt]="t.hero.screenshotAlt" eager />
-          </div>
-          <!-- On phones the phone screenshot replaces the desktop one; on larger screens it overlaps it. -->
-          <div
-            class="bg-card mx-auto w-3/4 max-w-72 overflow-hidden rounded-[1.75rem] border-4 border-zinc-900 shadow-2xl sm:absolute sm:right-8 sm:-bottom-2 sm:w-[22%] sm:max-w-60 dark:border-zinc-700"
-          >
-            <app-landing-shot [lang]="t.lang" name="phone" [width]="780" [height]="1688" [alt]="t.hero.phoneAlt" eager />
+            <a
+              routerLink="/app"
+              class="flex h-9 items-center rounded-md bg-[var(--ink)] px-3.5 text-[13.5px] font-medium text-[var(--paper)] transition-opacity hover:opacity-85"
+              >{{ hasVault() ? t.hero.resume : t.nav.open }}</a
+            >
           </div>
         </div>
-      </section>
+      </header>
 
-      <!-- Summary: a plain, quotable definition plus key facts -->
-      <section class="border-y bg-muted/30" aria-labelledby="summary-title">
-        <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1fr_1.2fr]">
-          <div>
-            <h2 id="summary-title" class="text-2xl font-semibold tracking-tight sm:text-3xl">{{ t.summary.title }}</h2>
-            <p class="text-muted-foreground mt-4 text-lg">{{ t.summary.text }}</p>
-          </div>
-          <dl class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-            @for (fact of t.summary.facts; track fact.term) {
-              <div class="bg-background rounded-lg border p-4">
-                <dt class="text-muted-foreground text-xs font-medium tracking-wide uppercase">{{ fact.term }}</dt>
-                <dd class="mt-1 text-sm font-medium">{{ fact.detail }}</dd>
+      <main id="main">
+        <!-- Hero -->
+        <section class="border-b border-[var(--rule)]" aria-labelledby="hero-title">
+          <div class="mx-auto grid max-w-[1200px] gap-10 px-5 pt-14 pb-12 sm:px-6 md:pt-24 lg:grid-cols-12">
+            <div class="lg:col-span-7">
+              <p class="font-code flex items-center gap-2.5 text-[12px] tracking-[0.12em] text-[var(--soft)] uppercase">
+                <span class="size-1.5 bg-[var(--accent)]" aria-hidden="true"></span>{{ t.hero.eyebrow }}
+              </p>
+              <h1
+                id="hero-title"
+                class="font-display mt-6 text-[44px] leading-[1.02] font-[440] tracking-[-0.025em] text-balance sm:text-[62px] lg:text-[74px]"
+              >
+                {{ t.hero.title }}
+                <em class="font-[380] text-[var(--accent)]">{{ t.hero.accent }}</em>
+              </h1>
+            </div>
+            <div class="flex flex-col justify-end gap-7 lg:col-span-5 lg:pb-2">
+              <p class="text-[17px] leading-[1.65] text-[var(--soft)]">{{ t.hero.lead }}</p>
+              <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+                <a
+                  routerLink="/app"
+                  class="group inline-flex h-11 items-center gap-2 rounded-md bg-[var(--ink)] px-5 text-[15px] font-medium text-[var(--paper)] transition-opacity hover:opacity-85"
+                >
+                  {{ hasVault() ? t.hero.resume : t.hero.start }}
+                  <ng-icon name="lucideArrowRight" class="transition-transform group-hover:translate-x-0.5" />
+                </a>
+                <a [href]="github" rel="noopener" [class]="textLink">
+                  {{ t.hero.github }}
+                  <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)]" />
+                </a>
               </div>
-            }
-          </dl>
-        </div>
-      </section>
-
-      <!-- Features -->
-      <section id="features" class="scroll-mt-20" aria-labelledby="features-title">
-        <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div class="mx-auto max-w-2xl text-center">
-            <h2 id="features-title" class="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">{{ t.features.title }}</h2>
-            <p class="text-muted-foreground mt-4 text-lg">{{ t.features.lead }}</p>
-          </div>
-          <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @for (feature of t.features.items; track feature.title) {
-              <li class="bg-card hover:border-foreground/20 rounded-xl border p-6 transition-colors">
-                <span class="bg-primary/5 text-primary flex size-10 items-center justify-center rounded-lg border">
-                  <ng-icon [name]="feature.icon" class="text-lg" />
-                </span>
-                <h3 class="mt-4 font-semibold">{{ feature.title }}</h3>
-                <p class="text-muted-foreground mt-2 text-sm leading-relaxed">{{ feature.text }}</p>
-              </li>
-            }
-          </ul>
-        </div>
-      </section>
-
-      <!-- Tasks -->
-      <section class="border-t" aria-labelledby="tasks-title">
-        <div class="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.4fr]">
-          <div>
-            <h2 id="tasks-title" class="text-3xl font-semibold tracking-tight">{{ t.tasks.title }}</h2>
-            <p class="text-muted-foreground mt-4 text-lg">{{ t.tasks.text }}</p>
-            <ul class="mt-6 flex flex-col gap-3">
-              @for (item of t.tasks.bullets; track item) {
-                <li class="flex gap-3"><ng-icon name="lucideCheck" class="mt-1 shrink-0 text-emerald-500" />{{ item }}</li>
-              }
-            </ul>
-          </div>
-          <div class="bg-card overflow-hidden rounded-xl border shadow-xl">
-            <app-landing-shot [lang]="t.lang" name="tasks" [width]="1440" [height]="900" [alt]="t.tasks.alt" sizes="(min-width: 1024px) 640px, 100vw" />
-          </div>
-        </div>
-      </section>
-
-      <!-- Security -->
-      <section id="security" class="scroll-mt-20 border-t bg-zinc-950 text-zinc-50" aria-labelledby="security-title">
-        <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div class="max-w-2xl">
-            <p class="inline-flex items-center gap-2 text-sm text-emerald-400"><ng-icon name="lucideLock" />AES-256-GCM · WebAuthn PRF · HKDF</p>
-            <h2 id="security-title" class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{{ t.security.title }}</h2>
-            <p class="mt-4 text-lg text-zinc-400">{{ t.security.lead }}</p>
-          </div>
-          <ol class="mt-12 grid gap-4 md:grid-cols-3">
-            @for (step of t.security.steps; track step.title; let i = $index) {
-              <li class="relative rounded-xl border border-zinc-800 bg-zinc-900/60 p-6">
-                <ng-icon [name]="securityIcons[i]" class="text-2xl text-violet-400" />
-                <h3 class="mt-4 font-semibold">{{ step.title }}</h3>
-                <p class="mt-2 text-sm leading-relaxed text-zinc-400">{{ step.text }}</p>
-              </li>
-            }
-          </ol>
-          <div class="mt-12 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-            <table class="w-full overflow-hidden rounded-xl border border-zinc-800 text-left text-sm">
-              <caption class="mb-3 text-left font-semibold">{{ t.security.tableTitle }}</caption>
-              <tbody class="divide-y divide-zinc-800">
-                @for (row of t.security.rows; track row[0]) {
-                  <tr>
-                    <th scope="row" class="w-40 bg-zinc-900/60 px-4 py-3 font-medium text-zinc-300">{{ row[0] }}</th>
-                    <td class="px-4 py-3 text-zinc-400">{{ row[1] }}</td>
-                  </tr>
+              <p class="font-code text-[12px] leading-relaxed text-[var(--soft)]">
+                @for (badge of t.hero.badges; track badge; let last = $last) {
+                  {{ badge }}
+                  @if (!last) {
+                    <span class="mx-1.5" aria-hidden="true">/</span>
+                  }
                 }
-              </tbody>
-            </table>
-            <aside class="flex flex-col justify-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-6">
-              <ng-icon name="lucideKeyRound" class="text-2xl text-amber-400" />
-              <p class="text-zinc-300">{{ t.security.note }}</p>
-            </aside>
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+          <div class="relative mx-auto max-w-[1200px] px-5 pb-16 sm:px-6 md:pb-24">
+            <figure class="hidden rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 sm:block md:p-2">
+              <div class="overflow-hidden rounded-[6px] border border-[var(--rule)]">
+                <app-landing-shot [lang]="t.lang" name="hero" [width]="1440" [height]="900" [alt]="t.hero.screenshotAlt" [theme]="shotTheme()" eager />
+              </div>
+            </figure>
+            <!-- On phones the phone screenshot replaces the desktop one; on larger screens it overlaps it. -->
+            <figure
+              class="mx-auto w-3/4 max-w-72 overflow-hidden rounded-[26px] border-[6px] border-[#1b1a16] bg-[#1b1a16] shadow-[0_0_0_1px_var(--rule),0_24px_48px_-24px_rgb(0_0_0/0.35)] sm:absolute sm:right-12 sm:bottom-6 sm:w-[21%] sm:max-w-60 md:bottom-12"
+            >
+              <app-landing-shot [lang]="t.lang" name="phone" [width]="780" [height]="1688" [alt]="t.hero.phoneAlt" [theme]="shotTheme()" eager />
+            </figure>
+          </div>
+        </section>
 
-      <!-- Vaults -->
-      <section class="border-t" aria-labelledby="vaults-title">
-        <div class="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1.2fr_1fr]">
-          <div class="bg-card order-2 overflow-hidden rounded-xl border shadow-xl lg:order-1">
-            <app-landing-shot [lang]="t.lang" name="vaults" [width]="1440" [height]="900" [alt]="t.vaults.alt" sizes="(min-width: 1024px) 600px, 100vw" />
-          </div>
-          <div class="order-1 lg:order-2">
-            <ng-icon name="lucideLayers" class="text-primary text-2xl" />
-            <h2 id="vaults-title" class="mt-3 text-3xl font-semibold tracking-tight">{{ t.vaults.title }}</h2>
-            <p class="text-muted-foreground mt-4 text-lg">{{ t.vaults.text }}</p>
-            <ul class="mt-6 flex flex-col gap-3">
-              @for (item of t.vaults.bullets; track item) {
-                <li class="flex gap-3"><ng-icon name="lucideCheck" class="mt-1 shrink-0 text-emerald-500" />{{ item }}</li>
-              }
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- Sync -->
-      <section id="sync" class="scroll-mt-20 border-t bg-muted/30" aria-labelledby="sync-title">
-        <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div class="mx-auto max-w-3xl text-center">
-            <ng-icon name="lucideRefreshCw" class="text-primary text-2xl" />
-            <h2 id="sync-title" class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{{ t.sync.title }}</h2>
-            <p class="text-muted-foreground mt-4 text-lg">{{ t.sync.lead }}</p>
-          </div>
-          <div class="mt-12 grid items-start gap-10 lg:grid-cols-2">
-            <div class="flex flex-col gap-8">
-              <ul class="flex flex-col gap-3">
-                @for (item of t.sync.bullets; track item) {
-                  <li class="flex gap-3"><ng-icon name="lucideCheck" class="mt-1 shrink-0 text-emerald-500" />{{ item }}</li>
+        <!-- 01 Overview -->
+        <section class="border-b border-[var(--rule)]" aria-labelledby="summary-title">
+          <div [class]="row">
+            <p [class]="label">01 — {{ t.sections.overview }}</p>
+            <div>
+              <h2 id="summary-title" [class]="h2">{{ t.summary.title }}</h2>
+              <p class="font-display mt-6 max-w-3xl text-[22px] leading-[1.45] font-[380] sm:text-[26px]">{{ t.summary.text }}</p>
+              <dl class="mt-12 grid gap-x-10 sm:grid-cols-2">
+                @for (fact of t.summary.facts; track fact.term) {
+                  <div class="grid grid-cols-[140px_1fr] gap-4 border-t border-[var(--rule)] py-3.5 text-[15px]">
+                    <dt class="font-code pt-0.5 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ fact.term }}</dt>
+                    <dd>{{ fact.detail }}</dd>
+                  </div>
                 }
-              </ul>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 Features -->
+        <section id="features" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="features-title">
+          <div [class]="row">
+            <p [class]="label">02 — {{ t.sections.features }}</p>
+            <div>
+              <h2 id="features-title" [class]="h2">{{ t.features.title }}</h2>
+              <p [class]="lead">{{ t.features.lead }}</p>
+              <ol class="mt-12 grid gap-px border border-[var(--rule)] bg-[var(--rule)] sm:grid-cols-2 lg:grid-cols-3">
+                @for (feature of t.features.items; track feature.title; let i = $index) {
+                  <li class="bg-[var(--paper)] p-6">
+                    <span class="font-code text-[12px] text-[var(--soft)]">2.{{ i + 1 }}</span>
+                    <h3 class="mt-3 text-[17px] font-medium tracking-[-0.01em]">{{ feature.title }}</h3>
+                    <p class="mt-2 text-[14.5px] leading-[1.6] text-[var(--soft)]">{{ feature.text }}</p>
+                  </li>
+                }
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- 03 Tasks -->
+        <section class="border-b border-[var(--rule)]" aria-labelledby="tasks-title">
+          <div [class]="row">
+            <p [class]="label">03 — {{ t.sections.tasks }}</p>
+            <div class="grid items-start gap-10 xl:grid-cols-[1fr_1.35fr]">
               <div>
-                <h3 class="font-semibold">{{ t.sync.stepsTitle }}</h3>
-                <ol class="mt-4 flex flex-col gap-3">
-                  @for (step of t.sync.steps; track step; let i = $index) {
-                    <li class="flex gap-3">
-                      <span class="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold">{{ i + 1 }}</span>
-                      <span class="text-muted-foreground">{{ step }}</span>
+                <h2 id="tasks-title" [class]="h2">{{ t.tasks.title }}</h2>
+                <p [class]="lead">{{ t.tasks.text }}</p>
+                <ul [class]="list">
+                  @for (item of t.tasks.bullets; track item) {
+                    <li [class]="listItem"><span [class]="dash" aria-hidden="true">—</span>{{ item }}</li>
+                  }
+                </ul>
+              </div>
+              <figure [class]="frame">
+                <app-landing-shot [lang]="t.lang" name="tasks" [width]="1440" [height]="900" [alt]="t.tasks.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- 04 Security -->
+        <section id="security" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="security-title">
+          <div [class]="row">
+            <p [class]="label">04 — {{ t.sections.security }}</p>
+            <div>
+              <h2 id="security-title" [class]="h2">{{ t.security.title }}</h2>
+              <p [class]="lead">{{ t.security.lead }}</p>
+
+              <figure class="mt-12 rounded-[8px] border border-[var(--rule)] bg-[var(--panel)] p-5 sm:p-7">
+                <figcaption class="font-code text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.ui.flow }}</figcaption>
+                <ol class="font-code mt-5 flex flex-wrap items-center gap-x-3 gap-y-3 text-[13px]">
+                  @for (stage of flow; track stage; let last = $last) {
+                    <li class="flex items-center gap-3">
+                      <span class="rounded-[5px] border bg-[var(--paper)] px-3 py-2" [class]="last ? 'border-[var(--accent)]' : 'border-[var(--rule)]'">{{
+                        stage
+                      }}</span>
+                      @if (!last) {
+                        <ng-icon name="lucideArrowRight" class="text-[var(--soft)]" aria-hidden="true" />
+                      }
                     </li>
                   }
                 </ol>
+              </figure>
+
+              <ol class="mt-10 grid gap-8 md:grid-cols-3">
+                @for (step of t.security.steps; track step.title) {
+                  <li class="border-t border-[var(--ink)] pt-4">
+                    <h3 class="text-[16px] font-medium">{{ step.title }}</h3>
+                    <p class="mt-2 text-[14.5px] leading-[1.6] text-[var(--soft)]">{{ step.text }}</p>
+                  </li>
+                }
+              </ol>
+
+              <div class="mt-14 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
+                <table class="w-full text-left text-[14.5px]">
+                  <caption class="font-code mb-3 text-left text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.security.tableTitle }}</caption>
+                  <tbody>
+                    @for (row of t.security.rows; track row[0]) {
+                      <tr class="border-t border-[var(--rule)]">
+                        <th scope="row" class="w-44 py-3 pr-4 align-top font-medium">{{ row[0] }}</th>
+                        <td class="py-3 text-[var(--soft)]">{{ row[1] }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+                <aside class="self-start border-l-2 border-[var(--accent)] py-1 pl-5 text-[16px] leading-[1.6]">
+                  {{ t.security.note }}
+                </aside>
               </div>
             </div>
-            <div class="bg-card overflow-hidden rounded-xl border shadow-xl">
-              <app-landing-shot [lang]="t.lang" name="sync" [width]="1440" [height]="900" [alt]="t.sync.alt" sizes="(min-width: 1024px) 540px, 100vw" />
-            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Smart search -->
-      <section class="border-t" aria-labelledby="search-title">
-        <div class="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.4fr]">
-          <div>
-            <ng-icon name="lucideSparkles" class="text-primary text-2xl" />
-            <h2 id="search-title" class="mt-3 text-3xl font-semibold tracking-tight">{{ t.search.title }}</h2>
-            <p class="text-muted-foreground mt-4 text-lg">{{ t.search.text }}</p>
-            <ul class="mt-6 flex flex-col gap-3">
-              @for (item of t.search.bullets; track item) {
-                <li class="flex gap-3"><ng-icon name="lucideCheck" class="mt-1 shrink-0 text-emerald-500" />{{ item }}</li>
-              }
-            </ul>
-          </div>
-          <div class="bg-card overflow-hidden rounded-xl border shadow-xl">
-            <app-landing-shot [lang]="t.lang" name="search" [width]="1440" [height]="900" [alt]="t.search.alt" sizes="(min-width: 1024px) 640px, 100vw" />
-          </div>
-        </div>
-      </section>
-
-      <!-- Comparison -->
-      <section class="border-t" aria-labelledby="compare-title">
-        <div class="mx-auto max-w-4xl px-4 py-20 sm:px-6">
-          <h2 id="compare-title" class="text-center text-3xl font-semibold tracking-tight">{{ t.compare.title }}</h2>
-          <p class="text-muted-foreground mx-auto mt-4 max-w-2xl text-center text-lg">{{ t.compare.lead }}</p>
-          <div class="mt-10 overflow-x-auto rounded-xl border">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-muted/50">
-                <tr>
-                  @for (header of t.compare.headers; track $index) {
-                    <th scope="col" class="px-4 py-3 font-semibold" [class.text-primary]="$last">{{ header }}</th>
+        <!-- 05 Vaults -->
+        <section class="border-b border-[var(--rule)]" aria-labelledby="vaults-title">
+          <div [class]="row">
+            <p [class]="label">05 — {{ t.sections.vaults }}</p>
+            <div class="grid items-start gap-10 xl:grid-cols-[1.35fr_1fr]">
+              <figure [class]="frame + ' order-2 xl:order-1'">
+                <app-landing-shot [lang]="t.lang" name="vaults" [width]="1440" [height]="900" [alt]="t.vaults.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+              </figure>
+              <div class="order-1 xl:order-2">
+                <h2 id="vaults-title" [class]="h2">{{ t.vaults.title }}</h2>
+                <p [class]="lead">{{ t.vaults.text }}</p>
+                <ul [class]="list">
+                  @for (item of t.vaults.bullets; track item) {
+                    <li [class]="listItem"><span [class]="dash" aria-hidden="true">—</span>{{ item }}</li>
                   }
-                </tr>
-              </thead>
-              <tbody class="divide-y">
-                @for (row of t.compare.rows; track row[0]) {
-                  <tr>
-                    <th scope="row" class="px-4 py-3 font-medium">{{ row[0] }}</th>
-                    <td class="text-muted-foreground px-4 py-3">{{ row[1] }}</td>
-                    <td class="px-4 py-3 font-medium">
-                      <span class="inline-flex items-center gap-1.5"><ng-icon name="lucideCheck" class="text-emerald-500" />{{ row[2] }}</span>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Self-hosting -->
-      <section id="self-host" class="scroll-mt-20 border-t bg-muted/30" aria-labelledby="self-host-title">
-        <div class="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2">
-          <div>
-            <ng-icon name="lucideServer" class="text-primary text-2xl" />
-            <h2 id="self-host-title" class="mt-3 text-3xl font-semibold tracking-tight">{{ t.selfHost.title }}</h2>
-            <p class="text-muted-foreground mt-4 text-lg">{{ t.selfHost.lead }}</p>
-            <ul class="mt-6 flex flex-col gap-3">
-              @for (note of t.selfHost.notes; track note) {
-                <li class="flex gap-3"><ng-icon name="lucideCheck" class="mt-1 shrink-0 text-emerald-500" />{{ note }}</li>
-              }
-            </ul>
-            <a [href]="github" rel="noopener" class="hover:bg-accent mt-8 inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-medium transition-colors">
-              <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true"><path [attr.d]="githubPath" /></svg>
-              {{ t.selfHost.github }}
-            </a>
-          </div>
-          <figure class="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl">
-            <div class="flex items-center gap-1.5 border-b border-zinc-800 px-4 py-3" aria-hidden="true">
-              <span class="size-3 rounded-full bg-zinc-700"></span>
-              <span class="size-3 rounded-full bg-zinc-700"></span>
-              <span class="size-3 rounded-full bg-zinc-700"></span>
+                </ul>
+              </div>
             </div>
-            <pre class="overflow-x-auto p-5 text-sm leading-relaxed text-zinc-100"><code>{{ t.selfHost.code }}</code></pre>
-          </figure>
-        </div>
-      </section>
-
-      <!-- FAQ -->
-      <section id="faq" class="scroll-mt-20 border-t" aria-labelledby="faq-title">
-        <div class="mx-auto max-w-3xl px-4 py-20 sm:px-6">
-          <h2 id="faq-title" class="text-center text-3xl font-semibold tracking-tight">{{ t.faq.title }}</h2>
-          <div class="mt-10 divide-y rounded-xl border">
-            @for (item of t.faq.items; track item.q; let first = $first) {
-              <details class="group px-5 py-4 [&_summary::-webkit-details-marker]:hidden" [open]="first">
-                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
-                  <h3>{{ item.q }}</h3>
-                  <ng-icon name="lucideChevronDown" class="text-muted-foreground shrink-0 transition-transform group-open:rotate-180" />
-                </summary>
-                <p class="text-muted-foreground mt-3 leading-relaxed">{{ item.a }}</p>
-              </details>
-            }
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Final call to action -->
-      <section class="glow border-t" aria-labelledby="cta-title">
-        <div class="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6">
-          <h2 id="cta-title" class="text-3xl font-semibold tracking-tight sm:text-5xl">{{ t.cta.title }}</h2>
-          <p class="text-muted-foreground mx-auto mt-4 max-w-xl text-lg">{{ t.cta.text }}</p>
-          <div class="mt-8 flex flex-wrap justify-center gap-3">
-            <a routerLink="/app" class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center gap-2 rounded-lg px-5 font-medium transition-colors">
-              {{ hasVault() ? t.hero.resume : t.cta.start }}
-              <ng-icon name="lucideArrowRight" />
-            </a>
-            <a [href]="github" rel="noopener" class="bg-background hover:bg-accent inline-flex h-11 items-center gap-2 rounded-lg border px-5 font-medium transition-colors">
-              {{ t.cta.github }}
-            </a>
+        <!-- 06 Sync -->
+        <section id="sync" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="sync-title">
+          <div [class]="row">
+            <p [class]="label">06 — {{ t.sections.sync }}</p>
+            <div>
+              <h2 id="sync-title" [class]="h2">{{ t.sync.title }}</h2>
+              <p [class]="lead">{{ t.sync.lead }}</p>
+              <div class="mt-12 grid items-start gap-12 xl:grid-cols-2">
+                <div class="flex flex-col gap-10">
+                  <ul class="flex flex-col gap-3">
+                    @for (item of t.sync.bullets; track item) {
+                      <li [class]="listItem"><span [class]="dash" aria-hidden="true">—</span>{{ item }}</li>
+                    }
+                  </ul>
+                  <div>
+                    <h3 class="font-code text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.sync.stepsTitle }}</h3>
+                    <ol class="mt-4">
+                      @for (step of t.sync.steps; track step; let i = $index) {
+                        <li class="grid grid-cols-[36px_1fr] border-t border-[var(--rule)] py-3 text-[15px]">
+                          <span class="font-code text-[13px] text-[var(--accent)]">0{{ i + 1 }}</span>
+                          <span>{{ step }}</span>
+                        </li>
+                      }
+                    </ol>
+                  </div>
+                </div>
+                <figure [class]="frame">
+                  <app-landing-shot [lang]="t.lang" name="sync" [width]="1440" [height]="900" [alt]="t.sync.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 520px, 100vw" />
+                </figure>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
 
-    <footer class="border-t">
-      <div class="text-muted-foreground mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div class="flex flex-col gap-2">
-          <app-logo />
-          <p>{{ t.footer.tagline }} {{ t.footer.madeWith }}</p>
+        <!-- 07 Smart search -->
+        <section class="border-b border-[var(--rule)]" aria-labelledby="search-title">
+          <div [class]="row">
+            <p [class]="label">07 — {{ t.sections.search }}</p>
+            <div class="grid items-start gap-10 xl:grid-cols-[1fr_1.35fr]">
+              <div>
+                <h2 id="search-title" [class]="h2">{{ t.search.title }}</h2>
+                <p [class]="lead">{{ t.search.text }}</p>
+                <ul [class]="list">
+                  @for (item of t.search.bullets; track item) {
+                    <li [class]="listItem"><span [class]="dash" aria-hidden="true">—</span>{{ item }}</li>
+                  }
+                </ul>
+              </div>
+              <figure [class]="frame">
+                <app-landing-shot [lang]="t.lang" name="search" [width]="1440" [height]="900" [alt]="t.search.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- 08 Comparison -->
+        <section class="border-b border-[var(--rule)]" aria-labelledby="compare-title">
+          <div [class]="row">
+            <p [class]="label">08 — {{ t.sections.compare }}</p>
+            <div>
+              <h2 id="compare-title" [class]="h2">{{ t.compare.title }}</h2>
+              <p [class]="lead">{{ t.compare.lead }}</p>
+              <div class="mt-12 overflow-x-auto">
+                <table class="w-full min-w-[560px] text-left text-[15px]">
+                  <thead>
+                    <tr class="font-code border-b border-[var(--ink)] text-[12px] tracking-[0.08em] uppercase">
+                      @for (header of t.compare.headers; track $index) {
+                        <th scope="col" class="py-3 pr-4 font-normal" [class]="$last ? 'text-[var(--accent)]' : 'text-[var(--soft)]'">{{ header }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of t.compare.rows; track row[0]) {
+                      <tr class="border-b border-[var(--rule)]">
+                        <th scope="row" class="py-3.5 pr-4 font-medium">{{ row[0] }}</th>
+                        <td class="py-3.5 pr-4 text-[var(--soft)]">{{ row[1] }}</td>
+                        <td class="py-3.5 font-medium">{{ row[2] }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 09 Self-hosting -->
+        <section id="self-host" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="self-host-title">
+          <div [class]="row">
+            <p [class]="label">09 — {{ t.sections.selfHost }}</p>
+            <div class="grid items-start gap-10 xl:grid-cols-2">
+              <div>
+                <h2 id="self-host-title" [class]="h2">{{ t.selfHost.title }}</h2>
+                <p [class]="lead">{{ t.selfHost.lead }}</p>
+                <ul [class]="list">
+                  @for (note of t.selfHost.notes; track note) {
+                    <li [class]="listItem"><span [class]="dash" aria-hidden="true">—</span>{{ note }}</li>
+                  }
+                </ul>
+                <a [href]="github" rel="noopener" [class]="textLink + ' mt-8'">
+                  {{ t.selfHost.github }}
+                  <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)]" />
+                </a>
+              </div>
+              <figure class="overflow-hidden rounded-[8px] border border-[var(--rule)] bg-[var(--panel)]">
+                <figcaption class="font-code border-b border-[var(--rule)] px-4 py-2.5 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">
+                  {{ t.ui.terminal }}
+                </figcaption>
+                <pre class="font-code overflow-x-auto p-5 text-[13.5px] leading-[1.9]"><code>@for (line of codeLines(); track $index) {<span class="text-[var(--soft)] select-none">$ </span>{{ line }}
+}</code></pre>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10 FAQ -->
+        <section id="faq" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="faq-title">
+          <div [class]="row">
+            <p [class]="label">10 — {{ t.sections.faq }}</p>
+            <div>
+              <h2 id="faq-title" [class]="h2">{{ t.faq.title }}</h2>
+              <div class="mt-10 border-b border-[var(--rule)]">
+                @for (item of t.faq.items; track item.q; let first = $first) {
+                  <details class="group border-t border-[var(--rule)]" [open]="first">
+                    <summary class="flex cursor-pointer list-none items-start justify-between gap-6 py-5">
+                      <h3 class="font-display text-[19px] leading-snug font-[460] sm:text-[21px]">{{ item.q }}</h3>
+                      <ng-icon name="lucidePlus" class="mt-1.5 shrink-0 text-[var(--soft)] transition-transform group-open:rotate-45" />
+                    </summary>
+                    <p class="max-w-3xl pb-6 text-[15.5px] leading-[1.7] text-[var(--soft)]">{{ item.a }}</p>
+                  </details>
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Closing call to action -->
+        <section aria-labelledby="cta-title">
+          <div class="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 py-24 sm:px-6 md:flex-row md:items-end md:justify-between md:py-32">
+            <div class="max-w-2xl">
+              <h2 id="cta-title" class="font-display text-[44px] leading-[1.02] font-[440] tracking-[-0.025em] sm:text-[60px]">{{ t.cta.title }}</h2>
+              <p class="mt-5 text-[17px] leading-[1.65] text-[var(--soft)]">{{ t.cta.text }}</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <a
+                routerLink="/app"
+                class="group inline-flex h-11 items-center gap-2 rounded-md bg-[var(--ink)] px-5 text-[15px] font-medium text-[var(--paper)] transition-opacity hover:opacity-85"
+              >
+                {{ hasVault() ? t.hero.resume : t.cta.start }}
+                <ng-icon name="lucideArrowRight" class="transition-transform group-hover:translate-x-0.5" />
+              </a>
+              <a [href]="github" rel="noopener" [class]="textLink">
+                {{ t.cta.github }}
+                <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)]" />
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="border-t border-[var(--rule)]">
+        <div class="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 py-10 text-[14px] text-[var(--soft)] sm:px-6 md:flex-row md:justify-between">
+          <div class="flex max-w-md flex-col gap-3">
+            <span class="font-display text-[20px] font-[560] tracking-[-0.02em] text-[var(--ink)]">Locry<span class="text-[var(--accent)]">.</span></span>
+            <p>{{ t.footer.tagline }} {{ t.footer.madeWith }}</p>
+            <ng-container *ngTemplateOutlet="themeSwitch; context: { $implicit: 'flex self-start' }" />
+          </div>
+          <nav [attr.aria-label]="t.footer.links" class="font-code flex flex-wrap gap-x-6 gap-y-2 text-[12px] tracking-[0.08em] uppercase">
+            <a href="#features" class="hover:text-[var(--ink)]">{{ t.nav.features }}</a>
+            <a href="#security" class="hover:text-[var(--ink)]">{{ t.nav.security }}</a>
+            <a href="#faq" class="hover:text-[var(--ink)]">{{ t.nav.faq }}</a>
+            <a [href]="github" rel="noopener" class="hover:text-[var(--ink)]">GitHub</a>
+            <a
+              [routerLink]="t.nav.otherLang"
+              [attr.hreflang]="t.lang === 'tr' ? 'en' : 'tr'"
+              class="hover:text-[var(--ink)]"
+              (click)="remember(t.lang === 'tr' ? 'en' : 'tr')"
+              >{{ t.nav.otherLangLabel }}</a
+            >
+          </nav>
         </div>
-        <nav [attr.aria-label]="t.footer.links" class="flex flex-wrap gap-x-5 gap-y-2">
-          <a href="#features" class="hover:text-foreground">{{ t.nav.features }}</a>
-          <a href="#faq" class="hover:text-foreground">{{ t.nav.faq }}</a>
-          <a [href]="github" rel="noopener" class="hover:text-foreground">GitHub · {{ t.footer.openSource }}</a>
-          <a [routerLink]="t.nav.otherLang" [attr.hreflang]="t.lang === 'tr' ? 'en' : 'tr'" class="hover:text-foreground">{{ t.nav.otherLangLabel }}</a>
-        </nav>
-      </div>
-    </footer>
+      </footer>
+    </div>
   `,
 })
 export class LandingPage {
-  /** From the route's data: `tr` at /, `en` at /en. */
+  /** From the route's data: `en` at /, `tr` at /tr. */
   readonly lang = input.required<LandingLang>();
   protected readonly content = computed(() => LANDING_CONTENT[this.lang()]);
+  protected readonly prefs = inject(PreferencesService);
+  private readonly router = inject(Router);
+  private readonly vault = inject(VaultService);
+
   protected readonly github = GITHUB_URL;
   protected readonly githubPath =
     'M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z';
-  protected readonly securityIcons = ['lucideFingerprint', 'lucideKeyRound', 'lucideLock'];
-
-  private readonly vault = inject(VaultService);
+  protected readonly themes: { value: Theme; icon: string }[] = [
+    { value: 'light', icon: 'lucideSun' },
+    { value: 'dark', icon: 'lucideMoon' },
+    { value: 'system', icon: 'lucideMonitor' },
+  ];
+  /** How a passkey becomes the key of each record (technical names, the same in every language). */
+  protected readonly flow = ['Passkey', 'WebAuthn PRF', 'HKDF-SHA-256', 'Vault key · 256 bit', 'AES-256-GCM'];
+  protected readonly codeLines = computed(() => this.content().selfHost.code.split('\n'));
+  /** Screenshots follow a theme picked here; with "system" they follow the OS. */
+  protected readonly shotTheme = computed(() => {
+    const theme = this.prefs.theme();
+    return theme === 'system' ? null : theme;
+  });
   /** Set in the browser only (after hydration), so the prerendered HTML stays the same for everyone. */
   protected readonly hasVault = signal(false);
+
+  // Shared class lists of the numbered sections.
+  protected readonly row = 'mx-auto grid max-w-[1200px] gap-6 px-5 py-16 sm:px-6 md:grid-cols-[190px_1fr] md:gap-10 md:py-24';
+  protected readonly label = 'font-code pt-2 text-[12px] tracking-[0.12em] text-[var(--soft)] uppercase';
+  protected readonly h2 = 'font-display max-w-3xl text-[34px] leading-[1.06] font-[440] tracking-[-0.02em] text-balance sm:text-[44px]';
+  protected readonly lead = 'mt-5 max-w-2xl text-[17px] leading-[1.65] text-[var(--soft)]';
+  protected readonly list = 'mt-8 flex flex-col gap-3';
+  protected readonly listItem = 'grid grid-cols-[22px_1fr] text-[15.5px] leading-[1.6]';
+  protected readonly dash = 'text-[var(--accent)]';
+  protected readonly frame = 'block rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 [&_img]:rounded-[6px]';
+  protected readonly textLink =
+    'inline-flex items-center gap-1 text-[15px] underline decoration-[var(--rule)] underline-offset-4 hover:decoration-[var(--ink)]';
 
   constructor() {
     const seo = inject(LandingSeo);
     effect(() => seo.apply(this.content()));
-    afterNextRender(() => this.hasVault.set(this.vault.vaults().length > 0));
+    afterNextRender(() => {
+      this.hasVault.set(this.vault.vaults().length > 0);
+      this.followBrowserLanguage();
+    });
+  }
+
+  /** Remembers a language picked on the page, for this page and the app. */
+  protected remember(lang: LandingLang): void {
+    try {
+      localStorage.setItem(LANG_CHOICE_KEY, lang);
+    } catch {
+      // Private mode: the choice just is not remembered.
+    }
+    this.prefs.setLang(lang);
+  }
+
+  /** On /, show Turkish to visitors whose browser prefers it, unless they picked a language. */
+  private followBrowserLanguage(): void {
+    if (this.lang() !== 'en') return;
+    let chosen: string | null = null;
+    try {
+      chosen = localStorage.getItem(LANG_CHOICE_KEY);
+    } catch {
+      chosen = null;
+    }
+    const browser = (navigator.languages?.length ? navigator.languages : [navigator.language])
+      .map((l) => l.toLowerCase().slice(0, 2))
+      .find((l) => l === 'en' || l === 'tr');
+    if ((chosen ?? browser) === 'tr') void this.router.navigateByUrl('/tr', { replaceUrl: true });
   }
 }

@@ -6,8 +6,8 @@ Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uc
 
 ## Pages
 
-- [Locry — English](https://locry.invalid/en): features, security model, sync, self-hosting, FAQ
-- [Locry — Türkçe](https://locry.invalid/): özellikler, güvenlik modeli, eşitleme, kendi sunucunda çalıştırma, SSS
+- [Locry — English](https://locry.invalid/): features, security model, sync, self-hosting, FAQ
+- [Locry — Türkçe](https://locry.invalid/tr): özellikler, güvenlik modeli, eşitleme, kendi sunucunda çalıştırma, SSS
 - [Source code on GitHub](https://github.com/emreerkangames/locry): README with setup, Docker and security details
 
 ## Key facts

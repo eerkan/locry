@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
 
 /**
- * A real screenshot of the app in AVIF with a WebP fallback, matching the visitor's light or
- * dark preference. Width and height are set so the layout does not shift while loading.
+ * A real screenshot of the app in AVIF with a WebP fallback. Follows the visitor's system
+ * light/dark preference, or the theme chosen on the page (`theme`). Width and height are set
+ * so the layout does not shift while loading.
  */
 @Component({
   selector: 'app-landing-shot',
@@ -10,13 +11,13 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
   host: { class: 'block' },
   template: `
     <picture>
-      <source type="image/avif" media="(prefers-color-scheme: dark)" [attr.srcset]="srcset('dark', 'avif')" [attr.sizes]="sizes()" />
-      <source type="image/webp" media="(prefers-color-scheme: dark)" [attr.srcset]="srcset('dark', 'webp')" [attr.sizes]="sizes()" />
-      <source type="image/avif" [attr.srcset]="srcset('light', 'avif')" [attr.sizes]="sizes()" />
+      <source type="image/avif" [attr.media]="darkMedia()" [attr.srcset]="srcset(darkSide(), 'avif')" [attr.sizes]="sizes()" />
+      <source type="image/webp" [attr.media]="darkMedia()" [attr.srcset]="srcset(darkSide(), 'webp')" [attr.sizes]="sizes()" />
+      <source type="image/avif" [attr.srcset]="srcset(lightSide(), 'avif')" [attr.sizes]="sizes()" />
       <img
         class="block h-auto w-full"
-        [attr.src]="base() + '-light.webp'"
-        [attr.srcset]="srcset('light', 'webp')"
+        [attr.src]="base() + '-' + lightSide() + '.webp'"
+        [attr.srcset]="srcset(lightSide(), 'webp')"
         [attr.sizes]="sizes()"
         [attr.width]="width()"
         [attr.height]="height()"
@@ -38,7 +39,14 @@ export class LandingShot {
   readonly eager = input(false, { transform: booleanAttribute });
   /** Rendered width, for picking the 1080 px or the full-size file. */
   readonly sizes = input('(min-width: 1152px) 1100px, 100vw');
+  /** A theme chosen on the page; null follows the system preference. */
+  readonly theme = input<'light' | 'dark' | null>(null);
+
   protected readonly base = computed(() => `/landing/${this.lang()}/${this.name()}`);
+  /** With a chosen theme, every source shows that theme; otherwise the media query picks. */
+  protected readonly darkMedia = computed(() => (this.theme() ? null : '(prefers-color-scheme: dark)'));
+  protected readonly darkSide = computed(() => this.theme() ?? 'dark');
+  protected readonly lightSide = computed(() => this.theme() ?? 'light');
 
   /** Desktop screenshots also come in a half-size variant; the phone one is small already. */
   protected srcset(theme: 'light' | 'dark', format: 'avif' | 'webp'): string {

@@ -2,18 +2,20 @@ import type { Routes } from '@angular/router';
 import { vaultStatusGuard } from './core/vault/vault.guard';
 
 export const routes: Routes = [
-  // Public, prerendered landing pages (Turkish at /, English at /en).
+  // Public, prerendered landing pages: English at /, Turkish at /tr.
   {
     path: '',
     pathMatch: 'full',
-    data: { lang: 'tr', ownTitle: true },
-    loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
-  },
-  {
-    path: 'en',
     data: { lang: 'en', ownTitle: true },
     loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
   },
+  {
+    path: 'tr',
+    data: { lang: 'tr', ownTitle: true },
+    loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
+  },
+  // English used to live at /en.
+  { path: 'en', pathMatch: 'full', redirectTo: '' },
   {
     path: '',
     loadComponent: () => import('./layout/auth-layout').then((m) => m.AuthLayout),

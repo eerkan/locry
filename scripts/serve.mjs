@@ -25,6 +25,7 @@ const types = {
   '.png': 'image/png',
   '.webp': 'image/webp',
   '.avif': 'image/avif',
+  '.woff2': 'font/woff2',
   '.xml': 'application/xml; charset=utf-8',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8',
@@ -35,7 +36,9 @@ const types = {
 const SITE_PLACEHOLDER = 'https://locry.invalid';
 const WITH_SITE_URL = new Set(['.html', '.txt', '.xml']);
 /** Prerendered public pages; every other extensionless path is an app route. */
-const PAGES = { '/': 'index.html', '/en': 'en/index.html', '/en/': 'en/index.html' };
+const PAGES = { '/': 'index.html', '/tr': 'tr/index.html', '/tr/': 'tr/index.html' };
+/** Old addresses of public pages. */
+const MOVED = { '/en': '/', '/en/': '/' };
 /** Text worth compressing (images, fonts and wasm are already compressed or not worth it). */
 const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.webmanifest', '.svg', '.txt', '.xml', '.wasm']);
 const compressed = new Map();
@@ -123,6 +126,10 @@ createServer((req, res) => {
     res.end(JSON.stringify(runtimeConfig()));
     return;
   }
+  if (MOVED[urlPath]) {
+    res.writeHead(301, { Location: MOVED[urlPath] }).end();
+    return;
+  }
   // Public pages are prerendered; other routes without a file extension get the app shell.
   const page = PAGES[urlPath];
   const file = page ? join(root, page) : (fileFor(urlPath) ?? (extname(urlPath) ? null : join(root, 'index.csr.html')));
@@ -133,7 +140,11 @@ createServer((req, res) => {
   const ext = extname(file);
   const headers = {
     'Content-Type': types[ext] ?? 'application/octet-stream',
-    'Cache-Control': HASHED.test(file) ? 'public, max-age=31536000, immutable' : 'no-cache',
+    'Cache-Control': HASHED.test(file)
+      ? 'public, max-age=31536000, immutable'
+      : file.includes(`${sep}fonts${sep}`)
+        ? 'public, max-age=2592000'
+        : 'no-cache',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
     Vary: 'Accept-Encoding',

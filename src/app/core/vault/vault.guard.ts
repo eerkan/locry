@@ -9,7 +9,7 @@ const HOME: Record<Exclude<VaultStatus, 'loading'>, string> = {
 };
 
 /** Auth screens and public pages: never a destination after unlocking. */
-const AUTH_PATHS = ['/setup', '/unlock', '/recover', '/restore', '/app', '/en'];
+const AUTH_PATHS = ['/setup', '/unlock', '/recover', '/restore', '/app', '/en', '/tr'];
 
 /**
  * Matches the route only in the given vault states; otherwise redirects to the state's home.

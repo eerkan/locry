@@ -203,6 +203,15 @@ gerçek ekran görüntüleri.
 - ✅ Testler: telefon yedeğinin birleştirilmesi ve korunması, silmenin taşınması, eski yedeğin yeni düzenlemeyi
   ezmemesi, değişiklik yokken yabancı yedek için otomatik yedek, birleştirme kuralları.
 
+### Faz 12 — Landing yeniden tasarımı ✅ tamamlandı
+- ✅ Editoryal tasarım: Fraunces başlıklar, Geist metin, Geist Mono teknik etiketler; numaralı bölümler, ince
+  çizgiler, tek sıcak vurgu rengi; gradyan, parıltı ve kart ızgarası yok. Şifreleme bölümünde gerçek akış şeması.
+- ✅ Aydınlık / karanlık / sistem teması (başlıkta ve alt bilgide); ekran görüntüleri seçilen temaya uyar.
+- ✅ Varsayılan dil İngilizce (`/`), Türkçe `/tr`; tarayıcı dili Türkçe olan ziyaretçi yönlenir, sayfada seçilen dil
+  hatırlanır ve uygulamanın diline de uygulanır. `/en` → `/` kalıcı yönlendirme; hreflang, sitemap, llms.txt güncel.
+- ✅ Yazı tipleri `/fonts` altında, yalnızca Latin + Latin Extended, ilk ekrandakiler önceden yüklenir (CLS 0).
+- Lighthouse: masaüstü performans 99; mobil 83–88 (önceki sistem yazı tipli tasarım 92–94); diğer kategoriler 100.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`
