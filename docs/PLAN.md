@@ -226,7 +226,8 @@ gerçek ekran görüntüleri.
   llms.txt, JSON-LD çeviri ilişkileri güncel.
 - ✅ Yazı tipleri: Rusça için Geist Kiril; Çince, Japonca ve Arapça sistem yazı tiplerini kullanır (önceden yükleme yok,
   eğik vurgu ve harf aralığı kapalı, Japonca başlıklar söz öbeği sınırında kırılır).
-- ✅ Ekran görüntüleri ve OG görselleri yalnızca İngilizce ve Türkçe; diğer diller İngilizceleri gösterir.
+- ✅ Ekran görüntüleri her dilde yeniden alındı (o dilin örnek notları, görevleri ve arama sorgusuyla; Arapçada
+  sağdan sola uygulama). OG kartları Chrome'da HTML olarak çiziliyor, Arapça ve CJK başlıklar düzgün diziliyor.
 - ✅ Yol üstünde: tanıtım sayfasından uygulamaya geçince sayfanın dili/yönü uygulamanın diline geri dönüyor; dar ekranda
   karşılaştırma tablosu sayfayı taşırmıyor (Arapçada fark edildi).
 - ⚠️ Çeviriler yapay zekâ ile yapıldı; ana dili konuşanların gözden geçirmesi önerilir.

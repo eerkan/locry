@@ -7,7 +7,7 @@ import { PreferencesService, type Theme } from '../../core/preferences.service';
 import { GITHUB_URL } from '../../core/site';
 import { VaultService } from '../../core/vault/vault.service';
 import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, detectLang, direction, isLang, type Lang } from '../../core/languages';
-import { imageLang, landingPath, type LandingContent } from './landing-content';
+import { landingPath, type LandingContent } from './landing-content';
 import { LandingSeo } from './landing-seo';
 import { LandingShot } from './landing-shot';
 
@@ -195,14 +195,14 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
           <div class="relative mx-auto max-w-[1200px] px-5 pb-16 sm:px-6 md:pb-24">
             <figure class="hidden rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 sm:block md:p-2">
               <div class="overflow-hidden rounded-[6px] border border-[var(--rule)]">
-                <app-landing-shot [lang]="shotLang()" name="hero" [width]="1440" [height]="900" [alt]="t.hero.screenshotAlt" [theme]="shotTheme()" eager />
+                <app-landing-shot [lang]="t.lang" name="hero" [width]="1440" [height]="900" [alt]="t.hero.screenshotAlt" [theme]="shotTheme()" eager />
               </div>
             </figure>
             <!-- On phones the phone screenshot replaces the desktop one; on larger screens it overlaps it. -->
             <figure
               class="mx-auto w-3/4 max-w-72 overflow-hidden rounded-[26px] border-[6px] border-[#1b1a16] bg-[#1b1a16] shadow-[0_0_0_1px_var(--rule),0_24px_48px_-24px_rgb(0_0_0/0.35)] sm:absolute sm:end-12 sm:bottom-6 sm:w-[21%] sm:max-w-60 md:bottom-12"
             >
-              <app-landing-shot [lang]="shotLang()" name="phone" [width]="780" [height]="1688" [alt]="t.hero.phoneAlt" [theme]="shotTheme()" eager />
+              <app-landing-shot [lang]="t.lang" name="phone" [width]="780" [height]="1688" [alt]="t.hero.phoneAlt" [theme]="shotTheme()" eager />
             </figure>
           </div>
         </section>
@@ -261,7 +261,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 </ul>
               </div>
               <figure [class]="frame">
-                <app-landing-shot [lang]="shotLang()" name="tasks" [width]="1440" [height]="900" [alt]="t.tasks.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+                <app-landing-shot [lang]="t.lang" name="tasks" [width]="1440" [height]="900" [alt]="t.tasks.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
               </figure>
             </div>
           </div>
@@ -326,7 +326,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             <p [class]="label">05 — {{ t.sections.vaults }}</p>
             <div class="grid items-start gap-10 xl:grid-cols-[1.35fr_1fr]">
               <figure [class]="frame + ' order-2 xl:order-1'">
-                <app-landing-shot [lang]="shotLang()" name="vaults" [width]="1440" [height]="900" [alt]="t.vaults.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+                <app-landing-shot [lang]="t.lang" name="vaults" [width]="1440" [height]="900" [alt]="t.vaults.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
               </figure>
               <div class="order-1 xl:order-2">
                 <h2 id="vaults-title" [class]="h2">{{ t.vaults.title }}</h2>
@@ -368,7 +368,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                   </div>
                 </div>
                 <figure [class]="frame">
-                  <app-landing-shot [lang]="shotLang()" name="sync" [width]="1440" [height]="900" [alt]="t.sync.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 520px, 100vw" />
+                  <app-landing-shot [lang]="t.lang" name="sync" [width]="1440" [height]="900" [alt]="t.sync.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 520px, 100vw" />
                 </figure>
               </div>
             </div>
@@ -390,7 +390,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 </ul>
               </div>
               <figure [class]="frame">
-                <app-landing-shot [lang]="shotLang()" name="search" [width]="1440" [height]="900" [alt]="t.search.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+                <app-landing-shot [lang]="t.lang" name="search" [width]="1440" [height]="900" [alt]="t.search.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
               </figure>
             </div>
           </div>
@@ -549,7 +549,6 @@ export class LandingPage {
   protected readonly tags = LANGUAGE_TAGS;
   protected readonly path = landingPath;
   protected readonly dir = computed(() => direction(this.content().lang));
-  protected readonly shotLang = computed(() => imageLang(this.content().lang));
   protected readonly github = GITHUB_URL;
   protected readonly githubPath =
     'M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z';

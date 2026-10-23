@@ -138,16 +138,16 @@ yalnızca tarayıcıda çalışır, sunucuda hiçbir kasa verisi bulunmaz.
 - Lighthouse (yerel üretim sunucusu): masaüstünde performans 99, mobilde 83–88 (yavaş 4G simülasyonu); erişilebilirlik,
   en iyi uygulamalar ve SEO 100; düzen kayması 0.
 
-Ekran görüntüleri gerçek uygulamadan, örnek verilerle ve sanal passkey ile alınır (Google Chrome, ImageMagick,
-`cwebp`, `avifenc` gerekir):
+Ekran görüntüleri gerçek uygulamadan, her dil için o dilin örnek verileriyle (`scripts/screenshot-samples.mjs`) ve
+sanal passkey ile alınır; düğmeler uygulamanın kendi çevirileriyle bulunur. OG kartları aynı ekran görüntüsünden,
+Chrome'da HTML olarak çizilir (Arapça ve CJK yazılar düzgün dizilsin diye). Google Chrome, ImageMagick, `cwebp` ve
+`avifenc` gerekir; her dil arama modelini (~200 MB) bir kez indirir:
 
 ```bash
-npx ng serve --port 4320 &
-node scripts/screenshots.mjs   # public/landing/<dil>/*.avif|webp, açık ve koyu
+npx ng serve --host 127.0.0.1 --port 4320 &
+node scripts/screenshots.mjs   # public/landing/<dil>/*.avif|webp, açık ve koyu (LANGS=ja,ar ile bazı diller)
 node scripts/og-images.mjs     # public/landing/og-<dil>.jpg
 ```
-
-Ekran görüntüleri ve OG görselleri İngilizce ve Türkçe alınır; diğer diller İngilizceleri kullanır.
 
 Metinler `src/app/features/landing/content/<dil>.ts` içinde (tüm diller aynı yapıda olmalı, test kontrol eder),
 uygulamanın metinleri `src/i18n/<dil>.ts` içinde (anahtarlar ve yer tutucular testle denetlenir). Dil listesi

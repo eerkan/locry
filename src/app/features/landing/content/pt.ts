@@ -181,7 +181,7 @@ export const pt: LandingContent = {
   search: {
     title: 'IA que busca pelo sentido e preserva sua privacidade',
     text:
-      'Busque “planos de férias” e encontre também sua nota “Reserva de hotel em Lisboa”. O modelo padrão é o EmbeddingGemma do Google, e as Configurações oferecem cinco modelos multilíngues. O modelo é baixado uma vez e roda inteiramente no seu navegador.',
+      'Busque “planos de férias” e encontre também sua nota “Reserva de hotel em Florianópolis”. O modelo padrão é o EmbeddingGemma do Google, e as Configurações oferecem cinco modelos multilíngues. O modelo é baixado uma vez e roda inteiramente no seu navegador.',
     bullets: [
       'Busca por palavras e por sentido juntas, em qualquer idioma do app',
       'Os vetores são guardados criptografados e ficam fora de backups e da sincronização',

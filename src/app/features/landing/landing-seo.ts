@@ -3,7 +3,7 @@ import { DOCUMENT, Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { GITHUB_URL, SITE_URL_PLACEHOLDER } from '../../core/site';
 import { DEFAULT_LANG, LANGS, LANGUAGE_TAGS, OG_LOCALES, direction, type Lang } from '../../core/languages';
-import { imageLang, landingPath, type LandingContent } from './landing-content';
+import { landingPath, type LandingContent } from './landing-content';
 
 /** First-screen fonts per script; CJK and Arabic headlines use system fonts, so nothing to preload. */
 function firstScreenFonts(lang: Lang): string[] {
@@ -37,7 +37,7 @@ export class LandingSeo {
   apply(content: LandingContent): void {
     const site = this.siteOrigin();
     const url = `${site}${landingPath(content.lang)}`;
-    const image = `${site}/landing/og-${imageLang(content.lang)}.jpg`;
+    const image = `${site}/landing/og-${content.lang}.jpg`;
     this.document.documentElement.lang = LANGUAGE_TAGS[content.lang];
     this.document.documentElement.dir = direction(content.lang);
     this.title.setTitle(content.meta.title);
@@ -129,7 +129,7 @@ export class LandingSeo {
 
 function structuredData(content: LandingContent, site: string): object {
   const url = `${site}${landingPath(content.lang)}`;
-  const image = `${site}/landing/og-${imageLang(content.lang)}.jpg`;
+  const image = `${site}/landing/og-${content.lang}.jpg`;
   const languages = LANGS.map((lang) => LANGUAGE_TAGS[lang]);
   return {
     '@context': 'https://schema.org',
@@ -169,7 +169,7 @@ function structuredData(content: LandingContent, site: string): object {
         isAccessibleForFree: true,
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
         featureList: content.features.items.map((f) => `${f.title}: ${f.text}`),
-        screenshot: `${site}/landing/${imageLang(content.lang)}/hero-light.webp`,
+        screenshot: `${site}/landing/${content.lang}/hero-light.webp`,
         image,
         sameAs: [GITHUB_URL],
       },

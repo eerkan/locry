@@ -82,13 +82,6 @@ export function landingPath(lang: Lang): string {
   return lang === DEFAULT_LANG ? '/' : `/${lang}`;
 }
 
-/** Languages with their own screenshots and Open Graph image; the rest show the English ones. */
-const OWN_IMAGES: ReadonlySet<Lang> = new Set(['en', 'tr']);
-
-export function imageLang(lang: Lang): Lang {
-  return OWN_IMAGES.has(lang) ? lang : DEFAULT_LANG;
-}
-
 /** One chunk per language, so a page only downloads its own text. */
 export function loadLandingContent(lang: Lang): Promise<LandingContent> {
   switch (lang) {
