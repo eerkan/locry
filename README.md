@@ -11,7 +11,9 @@ cihazlarınla eşitlenir.
 - Sıkıştırılmış ve şifreli `.locry` yedekleri; Google Drive'a yedekleme
 - Telefon ve bilgisayar arasında Google Drive üzerinden uçtan uca şifreli eşitleme
 - Tarayıcı içi yapay zekâ ile anlamsal arama (isteğe bağlı), ⌘K komut paleti
-- Kurulabilir PWA, çevrimdışı çalışma, TR/EN arayüz, açık/koyu tema
+- Kurulabilir PWA, çevrimdışı çalışma, açık/koyu tema
+- 11 dilde arayüz: İngilizce, Türkçe, Çince, İspanyolca, Arapça (sağdan sola), Portekizce, Endonezce, Fransızca,
+  Japonca, Rusça, Almanca; ilk açılışta tarayıcının dili
 
 ## Çalıştırma
 
@@ -35,7 +37,7 @@ yarn serve:prod
 ```
 
 İkisi de `http://localhost:4200` adresini kullanır; aynı adres olduğu için veriler ve passkey'ler ortaktır.
-Kök adres tanıtım sayfasıdır (`/` İngilizce, `/tr` Türkçe; tarayıcı dili Türkçe olan ziyaretçi `/tr`'ye yönlenir); uygulama `/app` adresinden açılır (kurulu PWA doğrudan oraya gider).
+Kök adres tanıtım sayfasıdır (`/` İngilizce, diğer diller `/tr`, `/ja` gibi kendi kodlarıyla; ziyaretçi tarayıcısının diline yönlenir); uygulama `/app` adresinden açılır (kurulu PWA doğrudan oraya gider).
 Tarayıcı adres çubuğundaki "Yükle" simgesiyle Locry'yi masaüstü uygulaması olarak kurabilirsin.
 
 > Adres önemli: passkey'ler `localhost` alan adına, veriler ise `http://localhost:4200` kaynağına bağlıdır.
@@ -117,17 +119,18 @@ yoksa ayrı bir kasa olarak eklenir. Kasa silme yalnızca bu cihazdaki veriyi si
 
 ## Tanıtım sayfası ve SEO
 
-`/` (İngilizce, varsayılan) ve `/tr` (Türkçe) derleme sırasında statik HTML olarak üretilir (Angular prerender +
-hydration). `/` adresine gelen ziyaretçi, sayfada dil seçmediyse ve tarayıcısının dili Türkçe ise `/tr`'ye yönlenir;
-arama motorları iki sayfayı ayrı görür. Eski `/en` adresi `/`'ye kalıcı olarak yönlenir. Sayfada aydınlık / karanlık /
+Tanıtım sayfası 11 dilde derleme sırasında statik HTML olarak üretilir (Angular prerender + hydration): `/`
+(İngilizce, varsayılan), `/tr`, `/zh`, `/es`, `/ar` (sağdan sola), `/pt`, `/id`, `/fr`, `/ja`, `/ru`, `/de`. `/` adresine
+gelen ziyaretçi, sayfada dil seçmediyse tarayıcısının diline yönlenir; arama motorları her dili ayrı sayfa olarak görür. Eski `/en` adresi `/`'ye kalıcı olarak yönlenir. Sayfada aydınlık / karanlık /
 sistem teması seçilebilir; ekran görüntüleri seçilen temaya uyar.
 
 Tasarım: Fraunces (başlıklar), Geist (metin) ve Geist Mono (teknik ayrıntılar), `@fontsource-variable`'dan uygulamayla
-birlikte sunulur (`/fonts`, CDN yok), yalnızca Latin ve Latin Extended; ilk ekranın yazı tipleri önceden yüklenir.
+birlikte sunulur (`/fonts`, CDN yok): Latin, Latin Extended ve (metin için) Kiril. Çince, Japonca ve Arapça sistem
+yazı tiplerini kullanır. İlk ekranın yazı tipleri önceden yüklenir.
 Arama motorları ve yapay zekâ tarayıcıları içeriğin tamamını JavaScript çalıştırmadan okur; uygulamanın geri kalanı
 yalnızca tarayıcıda çalışır, sunucuda hiçbir kasa verisi bulunmaz.
 
-- Başlık, açıklama, canonical, `hreflang` (tr / en / x-default), Open Graph ve Twitter kartları (`/landing/og-*.jpg`)
+- Başlık, açıklama, canonical, `hreflang` (11 dil + x-default), Open Graph ve Twitter kartları (`/landing/og-*.jpg`)
 - JSON-LD: `SoftwareApplication`, `SoftwareSourceCode`, `WebSite`, `WebPage`, `FAQPage`, `HowTo`
 - `robots.txt` (yapay zekâ tarayıcılarına da açık), `sitemap.xml`, `llms.txt`; uygulama sayfaları `noindex`
 - Adresler derlemede yer tutucudur; sunucu `LOCRY_SITE_URL` / `LOCRY_DOMAIN` ile doldurur, alan adı değişince yeniden
@@ -144,7 +147,11 @@ node scripts/screenshots.mjs   # public/landing/<dil>/*.avif|webp, açık ve koy
 node scripts/og-images.mjs     # public/landing/og-<dil>.jpg
 ```
 
-Metinler `src/app/features/landing/landing-content.ts` içinde (iki dil aynı yapıda olmalı, test kontrol eder);
+Ekran görüntüleri ve OG görselleri İngilizce ve Türkçe alınır; diğer diller İngilizceleri kullanır.
+
+Metinler `src/app/features/landing/content/<dil>.ts` içinde (tüm diller aynı yapıda olmalı, test kontrol eder),
+uygulamanın metinleri `src/i18n/<dil>.ts` içinde (anahtarlar ve yer tutucular testle denetlenir). Dil listesi
+`src/app/core/languages.ts`;
 GitHub adresi `src/app/core/site.ts` içinde.
 
 ## Güvenlik modeli

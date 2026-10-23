@@ -47,10 +47,6 @@ export const en: Translation = {
     dark: 'Dark',
     system: 'System',
   },
-  lang: {
-    tr: 'Türkçe',
-    en: 'English',
-  },
   setup: {
     title: 'Welcome to Locry',
     description:

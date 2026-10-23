@@ -1,13 +1,22 @@
 # Locry
 
-> Locry is a free, open-source, end-to-end encrypted notes and to-do app that runs entirely in the web browser. There is no server, no account and no password: a vault is unlocked with a passkey (WebAuthn PRF), and every note and task is encrypted on the device with AES-256-GCM. Optional backups and sync between phone and computer go through the user's own Google Drive, still encrypted. Available in English and Turkish.
+> Locry is a free, open-source, end-to-end encrypted notes and to-do app that runs entirely in the web browser. There is no server, no account and no password: a vault is unlocked with a passkey (WebAuthn PRF), and every note and task is encrypted on the device with AES-256-GCM. Optional backups and sync between phone and computer go through the user's own Google Drive, still encrypted. Available in English, Turkish, Chinese (Simplified), Spanish, Arabic, Portuguese (Brazil), Indonesian, French, Japanese, Russian and German.
 
 Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uca şifreli not ve görev uygulaması. Sunucu, hesap ve parola yok; kasa passkey ile açılır.
 
 ## Pages
 
 - [Locry — English](https://locry.invalid/): features, security model, sync, self-hosting, FAQ
-- [Locry — Türkçe](https://locry.invalid/tr): özellikler, güvenlik modeli, eşitleme, kendi sunucunda çalıştırma, SSS
+- [Locry — Türkçe](https://locry.invalid/tr)
+- [Locry — 简体中文](https://locry.invalid/zh)
+- [Locry — Español](https://locry.invalid/es)
+- [Locry — العربية](https://locry.invalid/ar)
+- [Locry — Português (Brasil)](https://locry.invalid/pt)
+- [Locry — Bahasa Indonesia](https://locry.invalid/id)
+- [Locry — Français](https://locry.invalid/fr)
+- [Locry — 日本語](https://locry.invalid/ja)
+- [Locry — Русский](https://locry.invalid/ru)
+- [Locry — Deutsch](https://locry.invalid/de)
 - [Source code on GitHub](https://github.com/emreerkangames/locry): README with setup, Docker and security details
 
 ## Key facts

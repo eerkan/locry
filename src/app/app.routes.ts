@@ -1,19 +1,19 @@
-import type { Routes } from '@angular/router';
+import type { Route, Routes } from '@angular/router';
+import { DEFAULT_LANG, LANGS } from './core/languages';
+import { loadLandingContent } from './features/landing/landing-content';
 import { vaultStatusGuard } from './core/vault/vault.guard';
 
 export const routes: Routes = [
-  // Public, prerendered landing pages: English at /, Turkish at /tr.
-  {
-    path: '',
-    pathMatch: 'full',
-    data: { lang: 'en', ownTitle: true },
-    loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
-  },
-  {
-    path: 'tr',
-    data: { lang: 'tr', ownTitle: true },
-    loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
-  },
+  // Public, prerendered landing pages: English at /, every other language at /<code>.
+  ...LANGS.map(
+    (lang): Route => ({
+      path: lang === DEFAULT_LANG ? '' : lang,
+      pathMatch: 'full',
+      data: { lang, ownTitle: true },
+      resolve: { content: () => loadLandingContent(lang) },
+      loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
+    }),
+  ),
   // English used to live at /en.
   { path: 'en', pathMatch: 'full', redirectTo: '' },
   {

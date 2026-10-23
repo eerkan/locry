@@ -14,6 +14,7 @@ import { provideSpartanHlm } from '@spartan-ng/helm/utils';
 import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
 import { InlineTranslocoLoader } from './core/i18n';
+import { DEFAULT_LANG, LANGS } from './core/languages';
 import { LocryTitleStrategy } from './core/title-strategy';
 import { PreferencesService } from './core/preferences.service';
 import { RuntimeConfigService } from './core/runtime-config.service';
@@ -32,9 +33,9 @@ export const appConfig: ApplicationConfig = {
     provideSpartanHlm(),
     provideTransloco({
       config: {
-        availableLangs: ['tr', 'en'],
-        defaultLang: 'tr',
-        fallbackLang: 'tr',
+        availableLangs: [...LANGS],
+        defaultLang: DEFAULT_LANG,
+        fallbackLang: DEFAULT_LANG,
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
       },

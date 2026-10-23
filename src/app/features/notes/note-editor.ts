@@ -134,7 +134,7 @@ const TOOLBAR: ToolbarItem[][] = [
     @if (note(); as note) {
       <header class="flex items-center gap-1 border-b px-3 py-2">
         <a hlmBtn variant="ghost" size="icon-sm" routerLink="/notes" class="md:hidden" [attr.aria-label]="'pages.notes.back' | transloco">
-          <ng-icon name="lucideArrowLeft" />
+          <ng-icon name="lucideArrowLeft" class="rtl:-scale-x-100" />
         </a>
         <hlm-toggle-group type="single" size="sm" [value]="mode()" (valueChange)="setMode($event)">
           @for (m of modes; track m.value) {

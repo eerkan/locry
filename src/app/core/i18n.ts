@@ -9,8 +9,31 @@ import { VaultError } from './vault/vault.service';
 @Injectable({ providedIn: 'root' })
 export class InlineTranslocoLoader implements TranslocoLoader {
   async getTranslation(lang: string): Promise<TranslocoTranslation> {
-    if (lang === 'en') return (await import('../../i18n/en')).en;
-    return (await import('../../i18n/tr')).tr;
+    // One lazy chunk per language: only the active one is downloaded.
+    switch (lang) {
+      case 'tr':
+        return (await import('../../i18n/tr')).tr;
+      case 'zh':
+        return (await import('../../i18n/zh')).zh;
+      case 'es':
+        return (await import('../../i18n/es')).es;
+      case 'ar':
+        return (await import('../../i18n/ar')).ar;
+      case 'pt':
+        return (await import('../../i18n/pt')).pt;
+      case 'id':
+        return (await import('../../i18n/id')).id;
+      case 'fr':
+        return (await import('../../i18n/fr')).fr;
+      case 'ja':
+        return (await import('../../i18n/ja')).ja;
+      case 'ru':
+        return (await import('../../i18n/ru')).ru;
+      case 'de':
+        return (await import('../../i18n/de')).de;
+      default:
+        return (await import('../../i18n/en')).en;
+    }
   }
 }
 

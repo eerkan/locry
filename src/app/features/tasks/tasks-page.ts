@@ -239,7 +239,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
                 [attr.aria-expanded]="showCompleted()"
                 (click)="showCompleted.set(!showCompleted())"
               >
-                <ng-icon [name]="showCompleted() ? 'lucideChevronDown' : 'lucideChevronRight'" />
+                <ng-icon [name]="showCompleted() ? 'lucideChevronDown' : 'lucideChevronRight'" class="rtl:-scale-x-100" />
                 {{ 'pages.tasks.completedSection' | transloco: { count: completedTasks().length } }}
               </button>
             }
@@ -254,7 +254,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
     </section>
 
     <!-- Task details -->
-    <hlm-sheet side="right" [state]="selectedId() ? 'open' : 'closed'" (stateChanged)="$event === 'closed' && closeDetail()">
+    <hlm-sheet [side]="prefs.startSide() === 'left' ? 'right' : 'left'" [state]="selectedId() ? 'open' : 'closed'" (stateChanged)="$event === 'closed' && closeDetail()">
       <hlm-sheet-content *hlmSheetPortal="let ctx" class="w-full p-0 sm:max-w-md">
         @if (selectedId(); as id) {
           <app-task-detail [taskId]="id" (dismissed)="closeDetail()" />
@@ -286,7 +286,7 @@ export class TasksPage {
 
   protected readonly store = inject(TasksStore);
   private readonly router = inject(Router);
-  private readonly prefs = inject(PreferencesService);
+  protected readonly prefs = inject(PreferencesService);
   private readonly transloco = inject(TranslocoService);
 
   protected readonly smartViews = SMART_VIEWS;

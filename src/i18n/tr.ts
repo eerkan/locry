@@ -45,10 +45,6 @@ export const tr = {
     dark: 'Koyu',
     system: 'Sistem',
   },
-  lang: {
-    tr: 'Türkçe',
-    en: 'English',
-  },
   setup: {
     title: "Locry'ye hoş geldin",
     description:

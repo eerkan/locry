@@ -6,10 +6,11 @@ import {
   LEGACY_EMBEDDING_MODEL,
   isEmbeddingModelId,
 } from './ai/embedding-protocol';
+import { type Lang, LANGUAGE_TAGS, detectLang, direction, isLang } from './languages';
 import { LEGACY_DB_NAME } from './storage/locry-db';
 import { VaultService } from './vault/vault.service';
 
-export type Lang = 'tr' | 'en';
+export type { Lang } from './languages';
 export type Theme = 'light' | 'dark' | 'system';
 export const DRIVE_AUTO_BACKUP = ['off', '5m', '15m', '30m', 'hourly', 'daily', 'weekly'] as const;
 export type DriveAutoBackup = (typeof DRIVE_AUTO_BACKUP)[number];
@@ -77,6 +78,8 @@ export class PreferencesService {
   });
 
   readonly lang = () => this.prefs().lang;
+  /** Which side the sidebar and drawers open on: the start of the reading direction. */
+  readonly startSide = (): 'left' | 'right' => (direction(this.prefs().lang) === 'rtl' ? 'right' : 'left');
   readonly theme = () => this.prefs().theme;
   readonly autoLockMinutes = () => this.prefs().autoLockMinutes;
   readonly driveClientId = () => this.prefs().driveClientId;
@@ -112,7 +115,7 @@ export class PreferencesService {
     effect(() => {
       const prefs = this.prefs();
       if (!this.browser) return;
-      this.document.documentElement.lang = prefs.lang;
+      this.applyDocumentLanguage();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
     });
     // Drop the settings of vaults that were deleted.
@@ -127,6 +130,14 @@ export class PreferencesService {
         }));
       }
     });
+  }
+
+  /** Puts the interface language and direction on <html>; landing pages set their own while open. */
+  applyDocumentLanguage(): void {
+    if (!this.browser) return;
+    const lang = untracked(() => this.prefs().lang);
+    this.document.documentElement.lang = LANGUAGE_TAGS[lang];
+    this.document.documentElement.dir = direction(lang);
   }
 
   setLang(lang: Lang): void {
@@ -175,7 +186,7 @@ export class PreferencesService {
 
   private load(): Stored {
     const defaults: Stored = {
-      lang: !this.browser || navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en',
+      lang: this.browser ? detectLang(navigator.languages?.length ? navigator.languages : [navigator.language]) : 'en',
       theme: 'system',
       autoLockMinutes: 10,
       driveClientId: '',
@@ -189,7 +200,7 @@ export class PreferencesService {
       for (const [id, value] of Object.entries(stored.vaults ?? {})) vaults[id] = parseVaultPreferences(value);
       const hasLegacy = stored.vaults === undefined && ('semanticSearch' in stored || 'driveAutoBackup' in stored || 'lastBackupAt' in stored);
       return {
-        lang: stored.lang === 'tr' || stored.lang === 'en' ? stored.lang : defaults.lang,
+        lang: isLang(stored.lang) ? stored.lang : defaults.lang,
         theme: ['light', 'dark', 'system'].includes(stored.theme as string) ? stored.theme! : defaults.theme,
         autoLockMinutes:
           typeof stored.autoLockMinutes === 'number' && stored.autoLockMinutes >= 0

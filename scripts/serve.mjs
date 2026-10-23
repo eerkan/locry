@@ -35,8 +35,12 @@ const types = {
 // real address when served, so one build works on any domain (see src/app/core/site.ts).
 const SITE_PLACEHOLDER = 'https://locry.invalid';
 const WITH_SITE_URL = new Set(['.html', '.txt', '.xml']);
-/** Prerendered public pages; every other extensionless path is an app route. */
-const PAGES = { '/': 'index.html', '/tr': 'tr/index.html', '/tr/': 'tr/index.html' };
+/** Prerendered public pages, one per language; every other extensionless path is an app route. */
+const LANDING_LANGS = ['tr', 'zh', 'es', 'ar', 'pt', 'id', 'fr', 'ja', 'ru', 'de'];
+const PAGES = {
+  '/': 'index.html',
+  ...Object.fromEntries(LANDING_LANGS.flatMap((lang) => [`/${lang}`, `/${lang}/`].map((path) => [path, `${lang}/index.html`]))),
+};
 /** Old addresses of public pages. */
 const MOVED = { '/en': '/', '/en/': '/' };
 /** Text worth compressing (images, fonts and wasm are already compressed or not worth it). */

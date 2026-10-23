@@ -37,12 +37,12 @@
                 "output": "fonts"
               },
               {
-                "glob": "geist-latin{,-ext}-wght-normal.woff2",
+                "glob": "geist-{latin,latin-ext,cyrillic}-wght-normal.woff2",
                 "input": "node_modules/@fontsource-variable/geist/files",
                 "output": "fonts"
               },
               {
-                "glob": "geist-mono-latin{,-ext}-wght-normal.woff2",
+                "glob": "geist-mono-{latin,latin-ext,cyrillic}-wght-normal.woff2",
                 "input": "node_modules/@fontsource-variable/geist-mono/files",
                 "output": "fonts"
               }

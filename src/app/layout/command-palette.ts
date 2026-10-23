@@ -87,7 +87,7 @@ const RESULT_LIMIT = 6;
               (mousemove)="active.set(i)"
               (click)="execute(item)"
             >
-              <ng-icon [name]="item.icon" class="text-muted-foreground mt-0.5 shrink-0" />
+              <ng-icon [name]="item.icon" class="text-muted-foreground mt-0.5 shrink-0" [class.rtl:-scale-x-100]="item.icon === 'lucideArrowRight'" />
               <span class="flex min-w-0 flex-1 flex-col">
                 <span class="truncate">
                   @if (item.translate) {

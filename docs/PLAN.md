@@ -212,6 +212,25 @@ gerçek ekran görüntüleri.
 - ✅ Yazı tipleri `/fonts` altında, yalnızca Latin + Latin Extended, ilk ekrandakiler önceden yüklenir (CLS 0).
 - Lighthouse: masaüstü performans 99; mobil 83–88 (önceki sistem yazı tipli tasarım 92–94); diğer kategoriler 100.
 
+### Faz 13 — 11 dil ✅ tamamlandı
+- ✅ Arayüz dilleri: İngilizce (varsayılan), Türkçe ve internette en çok kullanılan diğer dokuz dil — Çince
+  (basitleştirilmiş), İspanyolca, Arapça, Portekizce (Brezilya), Endonezce, Fransızca, Japonca, Rusça, Almanca.
+  Dil listesi tek yerde (`core/languages.ts`): adlar, BCP 47 etiketleri, Open Graph yerelleri, yön.
+- ✅ İlk açılışta tarayıcının dili seçilir (destekleniyorsa), yoksa İngilizce. Ayarlar ve menüde dil adları kendi dillerinde.
+- ✅ Arapça tam sağdan sola: `<html dir="rtl">`, kenar çubuğu ve görev ayrıntısı paneli taraf değiştirir, yön bildiren
+  oklar aynalanır; Spartan bileşenlerindeki fiziksel kenar boşlukları mantıksal sınıflara çevrildi.
+- ✅ Çeviri testleri: her dil İngilizceyle aynı anahtarları ve aynı `{{yer tutucuları}}` taşır, hiçbiri boş değildir.
+- ✅ Tanıtım sayfası 11 dilde, her biri ayrı prerender edilmiş statik HTML (`/`, `/tr`, `/zh`, `/es`, `/ar`, `/pt`,
+  `/id`, `/fr`, `/ja`, `/ru`, `/de`); metinler dil başına ayrı parça olarak yüklenir. Başlıkta dil menüsü, alt bilgide
+  tüm diller; `/` adresine gelen ziyaretçi tarayıcısının diline yönlenir. hreflang (11 dil + x-default), sitemap,
+  llms.txt, JSON-LD çeviri ilişkileri güncel.
+- ✅ Yazı tipleri: Rusça için Geist Kiril; Çince, Japonca ve Arapça sistem yazı tiplerini kullanır (önceden yükleme yok,
+  eğik vurgu ve harf aralığı kapalı, Japonca başlıklar söz öbeği sınırında kırılır).
+- ✅ Ekran görüntüleri ve OG görselleri yalnızca İngilizce ve Türkçe; diğer diller İngilizceleri gösterir.
+- ✅ Yol üstünde: tanıtım sayfasından uygulamaya geçince sayfanın dili/yönü uygulamanın diline geri dönüyor; dar ekranda
+  karşılaştırma tablosu sayfayı taşırmıyor (Arapçada fark edildi).
+- ⚠️ Çeviriler yapay zekâ ile yapıldı; ana dili konuşanların gözden geçirmesi önerilir.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`

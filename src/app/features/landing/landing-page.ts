@@ -1,12 +1,13 @@
-import { ChangeDetectionStrategy, Component, afterNextRender, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, effect, inject, input, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideArrowUpRight, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideArrowUpRight, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
 import { PreferencesService, type Theme } from '../../core/preferences.service';
 import { GITHUB_URL } from '../../core/site';
 import { VaultService } from '../../core/vault/vault.service';
-import { LANDING_CONTENT, type LandingLang } from './landing-content';
+import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, detectLang, direction, isLang, type Lang } from '../../core/languages';
+import { imageLang, landingPath, type LandingContent } from './landing-content';
 import { LandingSeo } from './landing-seo';
 import { LandingShot } from './landing-shot';
 
@@ -14,14 +15,15 @@ import { LandingShot } from './landing-shot';
 const LANG_CHOICE_KEY = 'locry.landing-lang';
 
 /**
- * Public landing page (English at /, Turkish at /tr). Prerendered to static HTML at build
- * time and hydrated in the browser; readable without JavaScript. Visitors on / whose
- * browser prefers Turkish (and who did not pick a language) are sent to /tr.
+ * Public landing page, in every interface language (English at /, the others at /<code>).
+ * Prerendered to static HTML at build time and hydrated in the browser; readable without
+ * JavaScript. Visitors on / whose browser prefers another supported language (and who did not
+ * pick one) are sent to that language's page.
  */
 @Component({
   selector: 'app-landing-page',
   imports: [LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
-  providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
+  providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   styles: `
@@ -44,6 +46,25 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
     summary::-webkit-details-marker {
       display: none;
     }
+    /* Scripts without italics or with joined letters: no slanted accent, no tracking. */
+    [lang='zh-Hans'] em,
+    [lang='ja'] em,
+    [lang='ar'] em {
+      font-style: normal;
+    }
+    [lang='ar'] * {
+      letter-spacing: normal !important;
+    }
+    /* Break Japanese headings between phrases rather than inside words. */
+    [lang='ja'] :is(h1, h2, h3) {
+      word-break: auto-phrase;
+    }
+    /* Geist Mono has no glyphs for these scripts; fall back to the system sans, not a monospace. */
+    [lang='zh-Hans'] .font-code,
+    [lang='ja'] .font-code,
+    [lang='ar'] .font-code {
+      font-family: 'Geist Mono Variable', ui-sans-serif, system-ui, sans-serif;
+    }
   `,
   template: `
     @let t = content();
@@ -64,16 +85,16 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
       }
     </div>
     </ng-template>
-    <div class="font-text min-h-svh bg-[var(--paper)] text-[var(--ink)] antialiased">
+    <div class="font-text min-h-svh bg-[var(--paper)] text-[var(--ink)] antialiased" [attr.lang]="tags[t.lang]" [attr.dir]="dir()">
       <a
         href="#main"
-        class="sr-only z-50 rounded bg-[var(--ink)] px-3 py-2 text-[var(--paper)] focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        class="sr-only z-50 rounded bg-[var(--ink)] px-3 py-2 text-[var(--paper)] focus:not-sr-only focus:fixed focus:start-3 focus:top-3"
         >{{ t.nav.skip }}</a
       >
 
       <header class="sticky top-0 z-40 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur">
         <div class="mx-auto flex h-14 max-w-[1200px] items-center gap-8 px-5 sm:px-6">
-          <a [routerLink]="t.path" class="font-display text-[22px] leading-none font-[560] tracking-[-0.02em]" aria-label="Locry"
+          <a [routerLink]="path(t.lang)" class="font-display text-[22px] leading-none font-[560] tracking-[-0.02em]" aria-label="Locry"
             >Locry<span class="text-[var(--accent)]">.</span></a
           >
           <nav class="hidden lg:block" [attr.aria-label]="t.sections.overview">
@@ -86,27 +107,32 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             </ul>
           </nav>
           <div class="ms-auto flex items-center gap-1.5 sm:gap-3">
-            <nav class="font-code flex items-center text-[12px] tracking-[0.08em]" [attr.aria-label]="t.ui.language">
-              <a
-                routerLink="/"
-                hreflang="en"
-                class="px-1.5 py-1"
-                [class]="t.lang === 'en' ? '' : 'text-[var(--soft)]'"
-                [attr.aria-current]="t.lang === 'en' ? 'page' : null"
-                (click)="remember('en')"
-                >EN</a
+            <details #langMenu class="relative">
+              <summary
+                class="font-code flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md px-2 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase transition-colors hover:text-[var(--ink)]"
+                [attr.aria-label]="t.ui.language + ': ' + names[t.lang]"
               >
-              <span class="text-[var(--soft)]" aria-hidden="true">/</span>
-              <a
-                routerLink="/tr"
-                hreflang="tr"
-                class="px-1.5 py-1"
-                [class]="t.lang === 'tr' ? '' : 'text-[var(--soft)]'"
-                [attr.aria-current]="t.lang === 'tr' ? 'page' : null"
-                (click)="remember('tr')"
-                >TR</a
+                <ng-icon name="lucideLanguages" class="text-[15px]" aria-hidden="true" />{{ t.lang }}
+              </summary>
+              <ul
+                class="absolute end-0 top-full z-50 mt-2 max-h-[70svh] w-56 overflow-y-auto rounded-md border border-[var(--rule)] bg-[var(--paper)] p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.3)]"
               >
-            </nav>
+                @for (lang of langs; track lang) {
+                  <li>
+                    <a
+                      [routerLink]="path(lang)"
+                      [attr.hreflang]="tags[lang]"
+                      [attr.lang]="tags[lang]"
+                      class="flex items-center justify-between gap-3 rounded-[5px] px-3 py-2 text-[14px] transition-colors hover:bg-[var(--panel)]"
+                      [class]="t.lang === lang ? 'font-medium' : 'text-[var(--soft)]'"
+                      [attr.aria-current]="t.lang === lang ? 'page' : null"
+                      (click)="remember(lang); langMenu.open = false"
+                      >{{ names[lang] }}<span class="font-code text-[11px] text-[var(--soft)] uppercase" aria-hidden="true">{{ lang }}</span></a
+                    >
+                  </li>
+                }
+              </ul>
+            </details>
             <ng-container *ngTemplateOutlet="themeSwitch; context: { $implicit: 'hidden sm:flex' }" />
             <a
               [href]="github"
@@ -149,11 +175,11 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                   class="group inline-flex h-11 items-center gap-2 rounded-md bg-[var(--ink)] px-5 text-[15px] font-medium text-[var(--paper)] transition-opacity hover:opacity-85"
                 >
                   {{ hasVault() ? t.hero.resume : t.hero.start }}
-                  <ng-icon name="lucideArrowRight" class="transition-transform group-hover:translate-x-0.5" />
+                  <ng-icon name="lucideArrowRight" class="transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
                 </a>
                 <a [href]="github" rel="noopener" [class]="textLink">
                   {{ t.hero.github }}
-                  <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)]" />
+                  <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)] rtl:-scale-x-100" />
                 </a>
               </div>
               <p class="font-code text-[12px] leading-relaxed text-[var(--soft)]">
@@ -169,14 +195,14 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
           <div class="relative mx-auto max-w-[1200px] px-5 pb-16 sm:px-6 md:pb-24">
             <figure class="hidden rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 sm:block md:p-2">
               <div class="overflow-hidden rounded-[6px] border border-[var(--rule)]">
-                <app-landing-shot [lang]="t.lang" name="hero" [width]="1440" [height]="900" [alt]="t.hero.screenshotAlt" [theme]="shotTheme()" eager />
+                <app-landing-shot [lang]="shotLang()" name="hero" [width]="1440" [height]="900" [alt]="t.hero.screenshotAlt" [theme]="shotTheme()" eager />
               </div>
             </figure>
             <!-- On phones the phone screenshot replaces the desktop one; on larger screens it overlaps it. -->
             <figure
-              class="mx-auto w-3/4 max-w-72 overflow-hidden rounded-[26px] border-[6px] border-[#1b1a16] bg-[#1b1a16] shadow-[0_0_0_1px_var(--rule),0_24px_48px_-24px_rgb(0_0_0/0.35)] sm:absolute sm:right-12 sm:bottom-6 sm:w-[21%] sm:max-w-60 md:bottom-12"
+              class="mx-auto w-3/4 max-w-72 overflow-hidden rounded-[26px] border-[6px] border-[#1b1a16] bg-[#1b1a16] shadow-[0_0_0_1px_var(--rule),0_24px_48px_-24px_rgb(0_0_0/0.35)] sm:absolute sm:end-12 sm:bottom-6 sm:w-[21%] sm:max-w-60 md:bottom-12"
             >
-              <app-landing-shot [lang]="t.lang" name="phone" [width]="780" [height]="1688" [alt]="t.hero.phoneAlt" [theme]="shotTheme()" eager />
+              <app-landing-shot [lang]="shotLang()" name="phone" [width]="780" [height]="1688" [alt]="t.hero.phoneAlt" [theme]="shotTheme()" eager />
             </figure>
           </div>
         </section>
@@ -235,7 +261,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 </ul>
               </div>
               <figure [class]="frame">
-                <app-landing-shot [lang]="t.lang" name="tasks" [width]="1440" [height]="900" [alt]="t.tasks.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+                <app-landing-shot [lang]="shotLang()" name="tasks" [width]="1440" [height]="900" [alt]="t.tasks.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
               </figure>
             </div>
           </div>
@@ -258,7 +284,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                         stage
                       }}</span>
                       @if (!last) {
-                        <ng-icon name="lucideArrowRight" class="text-[var(--soft)]" aria-hidden="true" />
+                        <ng-icon name="lucideArrowRight" class="text-[var(--soft)] rtl:-scale-x-100" aria-hidden="true" />
                       }
                     </li>
                   }
@@ -275,18 +301,18 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
               </ol>
 
               <div class="mt-14 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
-                <table class="w-full text-left text-[14.5px]">
-                  <caption class="font-code mb-3 text-left text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.security.tableTitle }}</caption>
+                <table class="w-full text-start text-[14.5px]">
+                  <caption class="font-code mb-3 text-start text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.security.tableTitle }}</caption>
                   <tbody>
                     @for (row of t.security.rows; track row[0]) {
                       <tr class="border-t border-[var(--rule)]">
-                        <th scope="row" class="w-44 py-3 pr-4 align-top font-medium">{{ row[0] }}</th>
+                        <th scope="row" class="w-44 py-3 pe-4 align-top font-medium">{{ row[0] }}</th>
                         <td class="py-3 text-[var(--soft)]">{{ row[1] }}</td>
                       </tr>
                     }
                   </tbody>
                 </table>
-                <aside class="self-start border-l-2 border-[var(--accent)] py-1 pl-5 text-[16px] leading-[1.6]">
+                <aside class="self-start border-s-2 border-[var(--accent)] py-1 ps-5 text-[16px] leading-[1.6]">
                   {{ t.security.note }}
                 </aside>
               </div>
@@ -300,7 +326,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             <p [class]="label">05 — {{ t.sections.vaults }}</p>
             <div class="grid items-start gap-10 xl:grid-cols-[1.35fr_1fr]">
               <figure [class]="frame + ' order-2 xl:order-1'">
-                <app-landing-shot [lang]="t.lang" name="vaults" [width]="1440" [height]="900" [alt]="t.vaults.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+                <app-landing-shot [lang]="shotLang()" name="vaults" [width]="1440" [height]="900" [alt]="t.vaults.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
               </figure>
               <div class="order-1 xl:order-2">
                 <h2 id="vaults-title" [class]="h2">{{ t.vaults.title }}</h2>
@@ -342,7 +368,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                   </div>
                 </div>
                 <figure [class]="frame">
-                  <app-landing-shot [lang]="t.lang" name="sync" [width]="1440" [height]="900" [alt]="t.sync.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 520px, 100vw" />
+                  <app-landing-shot [lang]="shotLang()" name="sync" [width]="1440" [height]="900" [alt]="t.sync.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 520px, 100vw" />
                 </figure>
               </div>
             </div>
@@ -364,7 +390,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 </ul>
               </div>
               <figure [class]="frame">
-                <app-landing-shot [lang]="t.lang" name="search" [width]="1440" [height]="900" [alt]="t.search.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
+                <app-landing-shot [lang]="shotLang()" name="search" [width]="1440" [height]="900" [alt]="t.search.alt" [theme]="shotTheme()" sizes="(min-width: 1280px) 620px, 100vw" />
               </figure>
             </div>
           </div>
@@ -378,19 +404,19 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
               <h2 id="compare-title" [class]="h2">{{ t.compare.title }}</h2>
               <p [class]="lead">{{ t.compare.lead }}</p>
               <div class="mt-12 overflow-x-auto">
-                <table class="w-full min-w-[560px] text-left text-[15px]">
+                <table class="w-full min-w-[560px] text-start text-[15px]">
                   <thead>
                     <tr class="font-code border-b border-[var(--ink)] text-[12px] tracking-[0.08em] uppercase">
                       @for (header of t.compare.headers; track $index) {
-                        <th scope="col" class="py-3 pr-4 font-normal" [class]="$last ? 'text-[var(--accent)]' : 'text-[var(--soft)]'">{{ header }}</th>
+                        <th scope="col" class="py-3 pe-4 font-normal" [class]="$last ? 'text-[var(--accent)]' : 'text-[var(--soft)]'">{{ header }}</th>
                       }
                     </tr>
                   </thead>
                   <tbody>
                     @for (row of t.compare.rows; track row[0]) {
                       <tr class="border-b border-[var(--rule)]">
-                        <th scope="row" class="py-3.5 pr-4 font-medium">{{ row[0] }}</th>
-                        <td class="py-3.5 pr-4 text-[var(--soft)]">{{ row[1] }}</td>
+                        <th scope="row" class="py-3.5 pe-4 font-medium">{{ row[0] }}</th>
+                        <td class="py-3.5 pe-4 text-[var(--soft)]">{{ row[1] }}</td>
                         <td class="py-3.5 font-medium">{{ row[2] }}</td>
                       </tr>
                     }
@@ -416,14 +442,14 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 </ul>
                 <a [href]="github" rel="noopener" [class]="textLink + ' mt-8'">
                   {{ t.selfHost.github }}
-                  <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)]" />
+                  <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)] rtl:-scale-x-100" />
                 </a>
               </div>
               <figure class="overflow-hidden rounded-[8px] border border-[var(--rule)] bg-[var(--panel)]">
                 <figcaption class="font-code border-b border-[var(--rule)] px-4 py-2.5 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">
                   {{ t.ui.terminal }}
                 </figcaption>
-                <pre class="font-code overflow-x-auto p-5 text-[13.5px] leading-[1.9]"><code>@for (line of codeLines(); track $index) {<span class="text-[var(--soft)] select-none">$ </span>{{ line }}
+                <pre dir="ltr" class="font-code overflow-x-auto p-5 text-[13.5px] leading-[1.9]"><code>@for (line of codeLines(); track $index) {<span class="text-[var(--soft)] select-none">$ </span>{{ line }}
 }</code></pre>
               </figure>
             </div>
@@ -464,11 +490,11 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 class="group inline-flex h-11 items-center gap-2 rounded-md bg-[var(--ink)] px-5 text-[15px] font-medium text-[var(--paper)] transition-opacity hover:opacity-85"
               >
                 {{ hasVault() ? t.hero.resume : t.cta.start }}
-                <ng-icon name="lucideArrowRight" class="transition-transform group-hover:translate-x-0.5" />
+                <ng-icon name="lucideArrowRight" class="transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
               </a>
               <a [href]="github" rel="noopener" [class]="textLink">
                 {{ t.cta.github }}
-                <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)]" />
+                <ng-icon name="lucideArrowUpRight" class="text-[var(--soft)] rtl:-scale-x-100" />
               </a>
             </div>
           </div>
@@ -487,27 +513,43 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             <a href="#security" class="hover:text-[var(--ink)]">{{ t.nav.security }}</a>
             <a href="#faq" class="hover:text-[var(--ink)]">{{ t.nav.faq }}</a>
             <a [href]="github" rel="noopener" class="hover:text-[var(--ink)]">GitHub</a>
-            <a
-              [routerLink]="t.nav.otherLang"
-              [attr.hreflang]="t.lang === 'tr' ? 'en' : 'tr'"
-              class="hover:text-[var(--ink)]"
-              (click)="remember(t.lang === 'tr' ? 'en' : 'tr')"
-              >{{ t.nav.otherLangLabel }}</a
-            >
           </nav>
         </div>
+        <nav
+          class="mx-auto flex max-w-[1200px] flex-wrap gap-x-5 gap-y-2 border-t border-[var(--rule)] px-5 py-6 text-[13.5px] text-[var(--soft)] sm:px-6"
+          [attr.aria-label]="t.ui.language"
+        >
+          @for (lang of langs; track lang) {
+            <a
+              [routerLink]="path(lang)"
+              [attr.hreflang]="tags[lang]"
+              [attr.lang]="tags[lang]"
+              [class]="t.lang === lang ? 'text-[var(--ink)]' : 'hover:text-[var(--ink)]'"
+              [attr.aria-current]="t.lang === lang ? 'page' : null"
+              (click)="remember(lang)"
+              >{{ names[lang] }}</a
+            >
+          }
+        </nav>
       </footer>
     </div>
   `,
 })
 export class LandingPage {
-  /** From the route's data: `en` at /, `tr` at /tr. */
-  readonly lang = input.required<LandingLang>();
-  protected readonly content = computed(() => LANDING_CONTENT[this.lang()]);
+  /** From the route's data: `en` at /, the others at /<code>. */
+  readonly lang = input.required<Lang>();
+  /** Resolved by the route, so each page only loads its own language. */
+  readonly content = input.required<LandingContent>();
   protected readonly prefs = inject(PreferencesService);
   private readonly router = inject(Router);
   private readonly vault = inject(VaultService);
 
+  protected readonly langs = LANGS;
+  protected readonly names = LANGUAGE_NAMES;
+  protected readonly tags = LANGUAGE_TAGS;
+  protected readonly path = landingPath;
+  protected readonly dir = computed(() => direction(this.content().lang));
+  protected readonly shotLang = computed(() => imageLang(this.content().lang));
   protected readonly github = GITHUB_URL;
   protected readonly githubPath =
     'M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z';
@@ -528,7 +570,7 @@ export class LandingPage {
   protected readonly hasVault = signal(false);
 
   // Shared class lists of the numbered sections.
-  protected readonly row = 'mx-auto grid max-w-[1200px] gap-6 px-5 py-16 sm:px-6 md:grid-cols-[190px_1fr] md:gap-10 md:py-24';
+  protected readonly row = 'mx-auto grid max-w-[1200px] gap-6 px-5 py-16 sm:px-6 md:grid-cols-[190px_1fr] md:gap-10 md:py-24 [&>*]:min-w-0';
   protected readonly label = 'font-code pt-2 text-[12px] tracking-[0.12em] text-[var(--soft)] uppercase';
   protected readonly h2 = 'font-display max-w-3xl text-[34px] leading-[1.06] font-[440] tracking-[-0.02em] text-balance sm:text-[44px]';
   protected readonly lead = 'mt-5 max-w-2xl text-[17px] leading-[1.65] text-[var(--soft)]';
@@ -542,6 +584,8 @@ export class LandingPage {
   constructor() {
     const seo = inject(LandingSeo);
     effect(() => seo.apply(this.content()));
+    // The app beyond this page speaks the interface language again.
+    inject(DestroyRef).onDestroy(() => this.prefs.applyDocumentLanguage());
     afterNextRender(() => {
       this.hasVault.set(this.vault.vaults().length > 0);
       this.followBrowserLanguage();
@@ -549,7 +593,7 @@ export class LandingPage {
   }
 
   /** Remembers a language picked on the page, for this page and the app. */
-  protected remember(lang: LandingLang): void {
+  protected remember(lang: Lang): void {
     try {
       localStorage.setItem(LANG_CHOICE_KEY, lang);
     } catch {
@@ -558,7 +602,7 @@ export class LandingPage {
     this.prefs.setLang(lang);
   }
 
-  /** On /, show Turkish to visitors whose browser prefers it, unless they picked a language. */
+  /** On /, show the browser's language when we have it, unless the visitor picked one. */
   private followBrowserLanguage(): void {
     if (this.lang() !== 'en') return;
     let chosen: string | null = null;
@@ -567,9 +611,7 @@ export class LandingPage {
     } catch {
       chosen = null;
     }
-    const browser = (navigator.languages?.length ? navigator.languages : [navigator.language])
-      .map((l) => l.toLowerCase().slice(0, 2))
-      .find((l) => l === 'en' || l === 'tr');
-    if ((chosen ?? browser) === 'tr') void this.router.navigateByUrl('/tr', { replaceUrl: true });
+    const lang = isLang(chosen) ? chosen : detectLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
+    if (lang !== 'en') void this.router.navigateByUrl(landingPath(lang), { replaceUrl: true });
   }
 }

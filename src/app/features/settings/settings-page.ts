@@ -6,6 +6,7 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmSeparator } from '@spartan-ng/helm/separator';
+import { LANGS, LANGUAGE_NAMES } from '../../core/languages';
 import { type Lang, PreferencesService, type Theme } from '../../core/preferences.service';
 import { StorageHealthService } from '../../core/storage/storage-health.service';
 import { VaultService } from '../../core/vault/vault.service';
@@ -49,7 +50,7 @@ import { VaultCard } from './vault-card';
             <label hlmFieldLabel for="lang">{{ 'common.language' | transloco }}</label>
             <select id="lang" [class]="selectClass" (change)="setLang($event)">
               @for (lang of langs; track lang) {
-                <option [value]="lang" [selected]="prefs.lang() === lang">{{ 'lang.' + lang | transloco }}</option>
+                <option [value]="lang" [selected]="prefs.lang() === lang">{{ languageNames[lang] }}</option>
               }
             </select>
           </div>
@@ -133,7 +134,8 @@ export class SettingsPage {
   protected readonly vault = inject(VaultService);
   protected readonly storage = inject(StorageHealthService);
 
-  protected readonly langs: Lang[] = ['tr', 'en'];
+  protected readonly langs = LANGS;
+  protected readonly languageNames = LANGUAGE_NAMES;
   protected readonly themes: Theme[] = ['light', 'dark', 'system'];
   protected readonly autoLockOptions = [1, 5, 10, 15, 30, 60, 0];
   protected readonly selectClass =

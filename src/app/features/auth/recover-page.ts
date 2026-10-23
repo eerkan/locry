@@ -63,7 +63,7 @@ import { AddSitePasskey } from '../../shared/add-site-passkey';
       </div>
       <div hlmCardFooter class="gap-2">
         <a hlmBtn variant="ghost" routerLink="/unlock" [queryParams]="{ next: next() }">
-          <ng-icon name="lucideArrowLeft" />
+          <ng-icon name="lucideArrowLeft" class="rtl:-scale-x-100" />
           {{ 'common.back' | transloco }}
         </a>
         <button hlmBtn class="flex-1" [disabled]="busy() || !input().trim()" (click)="unlock()">

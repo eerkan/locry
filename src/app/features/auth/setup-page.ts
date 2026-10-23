@@ -113,7 +113,7 @@ import { ColorPicker } from '../../shared/vault-ui';
           <p class="text-muted-foreground text-center text-xs">{{ 'setup.restoreInsteadHint' | transloco }}</p>
           @if (hasVaults()) {
             <a hlmBtn variant="ghost" class="self-start" routerLink="/unlock">
-              <ng-icon name="lucideArrowLeft" />
+              <ng-icon name="lucideArrowLeft" class="rtl:-scale-x-100" />
               {{ 'common.back' | transloco }}
             </a>
           }

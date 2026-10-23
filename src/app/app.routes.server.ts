@@ -1,4 +1,5 @@
 import { RenderMode, type ServerRoute } from '@angular/ssr';
+import { DEFAULT_LANG, LANGS } from './core/languages';
 
 /**
  * Only the public pages are prerendered at build time (for search engines and AI crawlers).
@@ -6,7 +7,6 @@ import { RenderMode, type ServerRoute } from '@angular/ssr';
  * and nothing about a vault ever exists outside the user's browser.
  */
 export const serverRoutes: ServerRoute[] = [
-  { path: '', renderMode: RenderMode.Prerender },
-  { path: 'tr', renderMode: RenderMode.Prerender },
+  ...LANGS.map((lang) => ({ path: lang === DEFAULT_LANG ? '' : lang, renderMode: RenderMode.Prerender as const })),
   { path: '**', renderMode: RenderMode.Client },
 ];

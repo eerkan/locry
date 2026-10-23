@@ -1,4 +1,4 @@
-# Locry. Search engines and AI assistants are welcome to read the public pages (/ and /tr).
+# Locry. Search engines and AI assistants are welcome to read the public pages (/ and one page per language, such as /tr or /ja).
 # App pages (lock screen, notes) carry a noindex tag; they hold no content without a vault.
 User-agent: *
 Allow: /

@@ -33,6 +33,7 @@ import { PreferencesMenu } from '../shared/preferences-menu';
 import { VaultLabel } from '../shared/vault-ui';
 import { SyncStatusLabel, announceSync, syncStatusLabel } from '../shared/sync-status';
 import { SyncService } from '../core/sync/sync.service';
+import { PreferencesService } from '../core/preferences.service';
 
 interface NavItem {
   path: string;
@@ -80,7 +81,7 @@ interface NavItem {
   host: { '(document:keydown)': 'onShortcut($event)' },
   template: `
     <div hlmSidebarWrapper>
-      <hlm-sidebar collapsible="icon">
+      <hlm-sidebar collapsible="icon" [side]="prefs.startSide()">
         <hlm-sidebar-header class="px-3 py-3">
           <app-logo class="group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
           @if (vault.activeVault(); as active) {
@@ -232,6 +233,7 @@ interface NavItem {
 export class AppShell {
   protected readonly vault = inject(VaultService);
   protected readonly ui = inject(ShellUi);
+  protected readonly prefs = inject(PreferencesService);
   private readonly notes = inject(NotesStore);
   private pendingG?: ReturnType<typeof setTimeout>;
   protected readonly isMac = /Mac|iPhone|iPad/.test(navigator.platform);

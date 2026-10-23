@@ -128,7 +128,7 @@ import { ReAuthPrompt } from '../../shared/reauth';
       </div>
       <div hlmCardFooter>
         <a hlmBtn variant="ghost" [routerLink]="vault.vaults().length ? '/unlock' : '/setup'">
-          <ng-icon name="lucideArrowLeft" />
+          <ng-icon name="lucideArrowLeft" class="rtl:-scale-x-100" />
           {{ 'common.back' | transloco }}
         </a>
       </div>

@@ -4,7 +4,8 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLanguages, lucideMonitor, lucideMoon, lucideSun } from '@ng-icons/lucide';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
-import { type Lang, PreferencesService, type Theme } from '../core/preferences.service';
+import { LANGS, LANGUAGE_NAMES } from '../core/languages';
+import { PreferencesService, type Theme } from '../core/preferences.service';
 
 /** Language and theme picker, available on the lock screens and in the app shell. */
 @Component({
@@ -30,7 +31,7 @@ import { type Lang, PreferencesService, type Theme } from '../core/preferences.s
           @for (lang of langs; track lang) {
             <button hlmDropdownMenuRadio [checked]="prefs.lang() === lang" (triggered)="prefs.setLang(lang)">
               <hlm-dropdown-menu-radio-indicator />
-              {{ 'lang.' + lang | transloco }}
+              {{ languageNames[lang] }}
             </button>
           }
         </hlm-dropdown-menu-group>
@@ -50,7 +51,8 @@ import { type Lang, PreferencesService, type Theme } from '../core/preferences.s
 })
 export class PreferencesMenu {
   protected readonly prefs = inject(PreferencesService);
-  protected readonly langs: Lang[] = ['tr', 'en'];
+  protected readonly langs = LANGS;
+  protected readonly languageNames = LANGUAGE_NAMES;
   protected readonly themes: Theme[] = ['light', 'dark', 'system'];
 
   protected themeIcon(): string {
