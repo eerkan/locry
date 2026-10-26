@@ -205,7 +205,7 @@ export const tr: LandingContent = {
     title: 'Kendi sunucunda çalıştır',
     lead:
       'Locry açık kaynaktır ve yalnızca statik dosyalardan oluşur. Tek komutla Docker’da çalışır; istersen otomatik HTTPS ile kendi alan adında yayınlarsın.',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       'Konteynerde veri yoktur: notlar tarayıcıda şifreli durur, konteyneri silmek veriyi etkilemez.',
       'Root olmayan kullanıcı, salt okunur dosya sistemi, düşürülmüş yetkiler.',

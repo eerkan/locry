@@ -205,7 +205,7 @@ export const ja: LandingContent = {
     title: '自分のサーバーで動かす',
     lead:
       'Locry はオープンソースで、静的ファイルだけで構成されています。Docker でコマンドひとつで起動でき、自動 HTTPS で独自ドメインでも公開できます。',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       'コンテナーにデータはありません。メモはブラウザー内で暗号化されたままなので、コンテナーを削除しても影響はありません。',
       '非 root ユーザー、読み取り専用ファイルシステム、権限の削減。',

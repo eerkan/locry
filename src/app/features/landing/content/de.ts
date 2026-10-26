@@ -205,7 +205,7 @@ export const de: LandingContent = {
     title: 'Auf deinem eigenen Server betreiben',
     lead:
       'Locry ist Open Source und besteht nur aus statischen Dateien. Es läuft mit einem Befehl in Docker und kann deine eigene Domain mit automatischem HTTPS bedienen.',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       'Der Container enthält keine Daten: Notizen bleiben verschlüsselt im Browser, das Entfernen des Containers ändert nichts.',
       'Nicht-Root-Benutzer, schreibgeschütztes Dateisystem, entzogene Berechtigungen.',

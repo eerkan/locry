@@ -205,7 +205,7 @@ export const pt: LandingContent = {
     title: 'Rode no seu próprio servidor',
     lead:
       'O Locry é de código aberto e tem apenas arquivos estáticos. Roda no Docker com um comando e pode servir seu próprio domínio com HTTPS automático.',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       'O contêiner não guarda dados: as notas ficam criptografadas no navegador; remover o contêiner não muda nada.',
       'Usuário sem root, sistema de arquivos somente leitura, privilégios removidos.',

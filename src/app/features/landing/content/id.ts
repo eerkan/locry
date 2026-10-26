@@ -205,7 +205,7 @@ export const id: LandingContent = {
     title: 'Jalankan di server Anda sendiri',
     lead:
       'Locry bersumber terbuka dan hanya terdiri dari file statis. Berjalan di Docker dengan satu perintah dan bisa melayani domain Anda sendiri dengan HTTPS otomatis.',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       'Kontainer tidak menyimpan data: catatan tetap terenkripsi di browser, jadi menghapus kontainer tidak mengubah apa pun.',
       'Pengguna non-root, sistem file baca-saja, hak istimewa dicabut.',

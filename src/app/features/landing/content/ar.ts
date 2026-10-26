@@ -205,7 +205,7 @@ export const ar: LandingContent = {
     title: 'شغّله على خادمك الخاص',
     lead:
       'Locry مفتوح المصدر ويتكوّن من ملفات ثابتة فقط. يعمل في Docker بأمر واحد، ويمكنه خدمة نطاقك الخاص مع HTTPS تلقائي.',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       'لا يحوي الحاوي أي بيانات: تبقى الملاحظات مشفّرة في المتصفح، فحذف الحاوي لا يغيّر شيئًا.',
       'مستخدم غير جذري، ونظام ملفات للقراءة فقط، وصلاحيات مُسقطة.',

@@ -203,7 +203,7 @@ export const zh: LandingContent = {
   selfHost: {
     title: '在你自己的服务器上运行',
     lead: 'Locry 是开源的，只由静态文件组成。一条命令即可在 Docker 中运行，还能用自动 HTTPS 部署到你自己的域名。',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       '容器中没有数据：笔记始终加密保存在浏览器里，删除容器不会有任何影响。',
       '非 root 用户、只读文件系统、移除多余权限。',

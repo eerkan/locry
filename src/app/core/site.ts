@@ -5,4 +5,4 @@
  */
 export const SITE_URL_PLACEHOLDER = 'https://locry.invalid';
 
-export const GITHUB_URL = 'https://github.com/emreerkangames/locry';
+export const GITHUB_URL = 'https://github.com/eerkan/locry';

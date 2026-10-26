@@ -205,7 +205,7 @@ export const ru: LandingContent = {
     title: 'Запустите на своём сервере',
     lead:
       'Locry — открытый проект, состоящий только из статических файлов. Он запускается в Docker одной командой и может обслуживать ваш домен с автоматическим HTTPS.',
-    code: 'git clone https://github.com/emreerkangames/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
+    code: 'git clone https://github.com/eerkan/locry.git\ncd locry\ncp .env.example .env\ndocker compose up -d --build',
     notes: [
       'В контейнере нет данных: заметки остаются зашифрованными в браузере, удаление контейнера ничего не меняет.',
       'Пользователь без root, файловая система только для чтения, урезанные привилегии.',
