@@ -4,6 +4,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowRight,
+  lucideMessageCircleQuestion,
   lucideFileText,
   lucideListTodo,
   lucideLock,
@@ -51,6 +52,7 @@ const RESULT_LIMIT = 6;
       lucideFileText,
       lucideSquareCheck,
       lucideArrowRight,
+      lucideMessageCircleQuestion,
       lucideKeyboard,
     }),
   ],
@@ -127,6 +129,7 @@ export class CommandPalette {
     { id: 'go-notes', icon: 'lucideNotebookPen', label: 'palette.goNotes', translate: true, run: () => this.go(['/notes']) },
     { id: 'go-tasks', icon: 'lucideListTodo', label: 'palette.goTasks', translate: true, run: () => this.go(['/tasks']) },
     { id: 'go-search', icon: 'lucideSearch', label: 'palette.goSearch', translate: true, run: () => this.go(['/search']) },
+    { id: 'go-ask', icon: 'lucideMessageCircleQuestion', label: 'palette.goAsk', translate: true, run: () => this.go(['/ask']) },
     { id: 'go-settings', icon: 'lucideSettings', label: 'palette.goSettings', translate: true, run: () => this.go(['/settings']) },
     { id: 'new-note', icon: 'lucidePlus', label: 'palette.newNote', translate: true, run: () => this.newNote() },
     { id: 'lock', icon: 'lucideLock', label: 'palette.lock', translate: true, run: () => this.vault.lock() },

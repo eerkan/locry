@@ -232,6 +232,25 @@ gerçek ekran görüntüleri.
   karşılaştırma tablosu sayfayı taşırmıyor (Arapçada fark edildi).
 - ⚠️ Çeviriler yapay zekâ ile yapıldı; ana dili konuşanların gözden geçirmesi önerilir.
 
+### Faz 14 — Notlarına sor ✅ tamamlandı
+- ✅ Sorulara kendi notlarından ve görevlerinden cevap: hibrit arama (kelime + anlam) ilgili belgeleri bulur, en iyi
+  sonucun %60'ının altındakiler elenir, kalanlar numaralı kaynaklar olarak küçük bir dil modeline verilir; cevap
+  akış hâlinde yazılır, `[n]` atıfları not/görev bağlantısına dönüşür, kaynak olmayan numaralar atılır.
+- ✅ Üç model, cihaz başına seçim, ilk kullanımda bir kez indirme: Qwen3 0.6B (varsayılan, düşünme modu kapalı),
+  Apertus 0.5B (deneysel), Gemma 3 1B. Transformers.js + WebGPU, ayrı Web Worker; `shader-f16` yoksa `q4`.
+  WebGPU yoksa özellik açıklamayla devre dışı.
+- ✅ Gündem soruları dilden bağımsız tanınır: soru, 11 dildeki gündem cümlelerine bulunan notlardan daha yakınsa
+  (aynı gömme modeliyle, belge ölçeğinde) bir hafta içinde vadesi gelen açık görevler kaynak olur. Akıllı arama
+  kapalıyken yalnızca hiçbir şey bulunamadığında.
+- ✅ Kaynak yoksa model çağrılmaz ("bulamadım"); tekrar döngüleri kesilir; Markdown cevaplar düz metne çevrilir.
+- ✅ Gizlilik: sohbet yalnızca bellekte, kasa kilitlenince model durdurulur ve sohbet silinir. Model dosyalarının
+  temizliği gömme ve dil modelleri arasında ortak (`model-cache.ts`), biri diğerinin dosyalarını silmez.
+- ✅ 11 dilde arayüz metinleri; kenar çubuğunda **Sor**, `G` `A` kısayolu, komut paletinde giriş, Ayarlar'da kart.
+- ✅ Testler: istem (kaynak numaraları, görev durumu, bütçe, geçmiş), atıflar, düşünme bloğu, döngü kesme, kaynak
+  yokken model çağrılmaması, zayıf sonuçların elenmesi, gündem, kilitte sohbetin silinmesi.
+- Denemeler: Qwen3 ve Gemma 1–5 sn'de doğru kaynaklarla cevapladı; Apertus 0.5B tekrar edip konu dışına çıktı
+  (doğru sohbet şablonu ve örneklemeyle de), bu yüzden "deneysel" olarak işaretli.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`

@@ -11,6 +11,7 @@ import {
   chunkDoc, chunksHash, decodeVector, docKey, encodeVector, markdownToText } from './documents';
 import { EMBEDDING_MODELS, type EmbeddingModelId } from './embedding-protocol';
 import { EMBEDDER, EmbeddingService } from './embedding.service';
+import { pruneModelCache } from './model-cache';
 
 /** Stored (encrypted) vectors for one document. */
 export interface EmbeddingRecord {
@@ -121,8 +122,7 @@ export class SemanticIndexService {
 
   private async pruneModelCache(): Promise<void> {
     if (!(this.embedder instanceof EmbeddingService)) return;
-    const inUse = [...this.prefs.embeddingModelsInUse()].map((id) => EMBEDDING_MODELS[id].repo);
-    await this.embedder.pruneCache(inUse).catch((error) => console.error(error));
+    await pruneModelCache(this.prefs.modelReposInUse()).catch((error) => console.error(error));
   }
 
   /** Drops all vectors and embeds everything again. */

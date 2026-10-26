@@ -11,6 +11,7 @@ import { type Lang, PreferencesService, type Theme } from '../../core/preference
 import { StorageHealthService } from '../../core/storage/storage-health.service';
 import { VaultService } from '../../core/vault/vault.service';
 import { AiCard } from './ai-card';
+import { AskCard } from './ask-card';
 import { BackupCard } from './backup-card';
 import { DriveCard } from './drive-card';
 import { PasskeysCard } from './passkeys-card';
@@ -22,6 +23,7 @@ import { VaultCard } from './vault-card';
   selector: 'app-settings-page',
   imports: [
     AiCard,
+    AskCard,
     BackupCard,
     DriveCard,
     HlmButton,
@@ -126,6 +128,7 @@ import { VaultCard } from './vault-card';
       <app-sync-card />
       <app-drive-card />
       <app-ai-card />
+      <app-ask-card />
     </div>
   `,
 })

@@ -81,6 +81,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/search/search-page').then((m) => m.SearchPage),
       },
       {
+        path: 'ask',
+        title: 'nav.ask',
+        loadComponent: () => import('./features/ask/ask-page').then((m) => m.AskPage),
+      },
+      {
         path: 'settings',
         title: 'nav.settings',
         loadComponent: () => import('./features/settings/settings-page').then((m) => m.SettingsPage),

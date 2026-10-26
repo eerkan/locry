@@ -12,6 +12,7 @@ import {
   lucidePlus,
   lucideSearch,
   lucideSettings,
+  lucideMessageCircleQuestion,
 } from '@ng-icons/lucide';
 import { toast } from '@spartan-ng/brain/sonner';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
@@ -66,6 +67,7 @@ interface NavItem {
       lucideNotebookPen,
       lucideListTodo,
       lucideSearch,
+      lucideMessageCircleQuestion,
       lucideSettings,
       lucideLock,
       lucideChevronsUpDown,
@@ -247,6 +249,7 @@ export class AppShell {
     { path: '/notes', label: 'nav.notes', icon: 'lucideNotebookPen' },
     { path: '/tasks', label: 'nav.tasks', icon: 'lucideListTodo' },
     { path: '/search', label: 'nav.search', icon: 'lucideSearch' },
+    { path: '/ask', label: 'nav.ask', icon: 'lucideMessageCircleQuestion' },
   ];
 
   protected readonly title = toSignal(
@@ -319,7 +322,7 @@ export class AppShell {
     if (this.pendingG) {
       clearTimeout(this.pendingG);
       this.pendingG = undefined;
-      const target = { n: '/notes', t: '/tasks', s: '/settings' }[key];
+      const target = { n: '/notes', t: '/tasks', a: '/ask', s: '/settings' }[key];
       if (target) {
         event.preventDefault();
         void this.router.navigateByUrl(target);

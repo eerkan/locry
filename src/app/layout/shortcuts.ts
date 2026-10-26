@@ -28,6 +28,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     items: [
       { keys: ['G', 'N'], label: 'shortcuts.goNotes' },
       { keys: ['G', 'T'], label: 'shortcuts.goTasks' },
+      { keys: ['G', 'A'], label: 'shortcuts.goAsk' },
       { keys: ['G', 'S'], label: 'shortcuts.goSettings' },
     ],
   },

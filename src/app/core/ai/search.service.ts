@@ -107,6 +107,35 @@ export class SearchService {
     return results.sort((a, b) => b.score - a.score).slice(0, options.limit ?? 50);
   }
 
+  /** Vectors of texts compared against (see {@link closerToTexts}), per model. */
+  private readonly textVectors = new Map<string, Float32Array>();
+
+  /**
+   * Whether the query is closer in meaning to one of `texts` than to every given result.
+   * The texts are embedded like documents, so both sides are on the same scale whatever the
+   * model. Null when the model is not ready.
+   */
+  async closerToTexts(query: string, texts: string[], results: SearchResult[]): Promise<boolean | null> {
+    if (!this.index.ready()) return null;
+    const repo = this.index.spec().repo;
+    const missing = texts.filter((t) => !this.textVectors.has(`${repo}\n${t}`));
+    if (missing.length) {
+      const vectors = await this.embedder.embed(missing, 'passage');
+      missing.forEach((t, i) => this.textVectors.set(`${repo}\n${t}`, vectors[i]));
+    }
+    const [queryVector] = await this.embedder.embed([query], 'query');
+    const toTexts = Math.max(...texts.map((t) => similarity(queryVector, this.textVectors.get(`${repo}\n${t}`)!)));
+    const vectors = this.index.vectors();
+    const toResults = Math.max(
+      -1,
+      ...results.flatMap((r) => {
+        const chunks = vectors.get(docKey(r.doc));
+        return chunks?.length ? [bestSimilarity(queryVector, chunks)] : [];
+      }),
+    );
+    return toTexts > toResults;
+  }
+
   /** Notes most similar in meaning to the given one (needs the model's vectors). */
   similarNotes(noteId: string, limit = 3): SearchResult[] {
     const vectors = this.index.vectors();

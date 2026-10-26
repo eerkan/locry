@@ -22,6 +22,21 @@ export const LANGUAGE_NAMES: Record<Lang, string> = {
   de: 'Deutsch',
 };
 
+/** English names, for instructions to language models (which follow English best). */
+export const LANGUAGE_ENGLISH_NAMES: Record<Lang, string> = {
+  en: 'English',
+  tr: 'Turkish',
+  zh: 'Simplified Chinese',
+  es: 'Spanish',
+  ar: 'Arabic',
+  pt: 'Brazilian Portuguese',
+  id: 'Indonesian',
+  fr: 'French',
+  ja: 'Japanese',
+  ru: 'Russian',
+  de: 'German',
+};
+
 /** BCP 47 tags for `<html lang>`, hreflang and date/number formatting. */
 export const LANGUAGE_TAGS: Record<Lang, string> = {
   en: 'en',

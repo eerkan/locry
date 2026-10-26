@@ -1,7 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import { DOCUMENT, Injectable, PLATFORM_ID, computed, effect, inject, signal, untracked } from '@angular/core';
+import { type ChatModelId, CHAT_MODELS, DEFAULT_CHAT_MODEL, isChatModelId } from './ai/chat-protocol';
 import {
   DEFAULT_EMBEDDING_MODEL,
+  EMBEDDING_MODELS,
   type EmbeddingModelId,
   LEGACY_EMBEDDING_MODEL,
   isEmbeddingModelId,
@@ -24,6 +26,9 @@ interface Preferences {
   autoLockMinutes: number;
   /** OAuth client ID of the user's own Google Cloud project (public, not a secret). */
   driveClientId: string;
+  /** "Ask your notes": opt-in, the language model is downloaded once per device. */
+  askEnabled: boolean;
+  askModel: ChatModelId;
 }
 
 /** Settings that belong to one vault. */
@@ -83,6 +88,8 @@ export class PreferencesService {
   readonly theme = () => this.prefs().theme;
   readonly autoLockMinutes = () => this.prefs().autoLockMinutes;
   readonly driveClientId = () => this.prefs().driveClientId;
+  readonly askEnabled = () => this.prefs().askEnabled;
+  readonly askModel = () => this.prefs().askModel;
   readonly lastBackupAt = () => this.vaultPrefs().lastBackupAt;
   readonly driveKeep = () => this.vaultPrefs().driveKeep;
   readonly driveAutoBackup = () => this.vaultPrefs().driveAutoBackup;
@@ -97,6 +104,12 @@ export class PreferencesService {
     const all = [...Object.values(vaults), ...(legacy ? [legacy] : [])];
     return new Set(all.filter((v) => v.semanticSearch).map((v) => v.embeddingModel));
   });
+
+  /** Hugging Face repositories whose downloaded files must stay: embedding and language models in use. */
+  readonly modelReposInUse = computed(() => [
+    ...[...this.embeddingModelsInUse()].map((id) => EMBEDDING_MODELS[id].repo),
+    ...(this.prefs().askEnabled ? [CHAT_MODELS[this.prefs().askModel].repo] : []),
+  ]);
 
   constructor() {
     const view = this.document.defaultView;
@@ -152,6 +165,10 @@ export class PreferencesService {
     this.prefs.update((p) => ({ ...p, autoLockMinutes }));
   }
 
+  setAsk(patch: Partial<Pick<Preferences, 'askEnabled' | 'askModel'>>): void {
+    this.prefs.update((p) => ({ ...p, ...patch }));
+  }
+
   setLastBackupAt(lastBackupAt: string): void {
     this.updateVault({ lastBackupAt });
   }
@@ -190,6 +207,8 @@ export class PreferencesService {
       theme: 'system',
       autoLockMinutes: 10,
       driveClientId: '',
+      askEnabled: false,
+      askModel: DEFAULT_CHAT_MODEL,
       vaults: {},
       legacy: null,
     };
@@ -207,6 +226,8 @@ export class PreferencesService {
             ? stored.autoLockMinutes
             : defaults.autoLockMinutes,
         driveClientId: typeof stored.driveClientId === 'string' ? stored.driveClientId : '',
+        askEnabled: stored.askEnabled === true,
+        askModel: isChatModelId(stored.askModel) ? stored.askModel : defaults.askModel,
         vaults,
         legacy: stored.legacy ? parseVaultPreferences(stored.legacy) : hasLegacy ? parseVaultPreferences(stored) : null,
       };

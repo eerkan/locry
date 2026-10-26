@@ -24,8 +24,6 @@ export const EMBEDDER = new InjectionToken<Embedder>('EMBEDDER', {
 });
 
 const BATCH_SIZE = 8;
-/** Cache Storage name Transformers.js keeps downloaded model files in. */
-const MODEL_CACHE = 'transformers-cache';
 
 /** Runs the embedding model in a Web Worker so the UI never blocks on inference. */
 @Injectable({ providedIn: 'root' })
@@ -112,21 +110,6 @@ export class EmbeddingService implements Embedder {
     this.pending.clear();
     this.loaded = null;
     this._status.set('off');
-  }
-
-  /**
-   * Deletes downloaded model files that no vault on this device uses any more (models are
-   * 100-600 MB each). Files of the given repositories are kept.
-   */
-  async pruneCache(keepRepos: Iterable<string>): Promise<void> {
-    if (typeof caches === 'undefined') return;
-    const keep = [...keepRepos];
-    const cache = await caches.open(MODEL_CACHE);
-    for (const request of await cache.keys()) {
-      const { hostname, pathname } = new URL(request.url);
-      if (!hostname.endsWith('huggingface.co') && !hostname.endsWith('hf.co')) continue;
-      if (!keep.some((repo) => pathname.startsWith(`/${repo}/`))) await cache.delete(request);
-    }
   }
 
   async embed(texts: string[], kind: EmbeddingKind): Promise<Float32Array[]> {

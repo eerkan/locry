@@ -11,6 +11,8 @@ cihazlarınla eşitlenir.
 - Sıkıştırılmış ve şifreli `.locry` yedekleri; Google Drive'a yedekleme
 - Telefon ve bilgisayar arasında Google Drive üzerinden uçtan uca şifreli eşitleme
 - Tarayıcı içi yapay zekâ ile anlamsal arama (isteğe bağlı), ⌘K komut paleti
+- **Notlarına sor:** sorulara kendi notların ve görevlerinden, tarayıcıda WebGPU ile çalışan küçük bir dil modeliyle
+  kaynak gösteren cevaplar (isteğe bağlı)
 - Kurulabilir PWA, çevrimdışı çalışma, açık/koyu tema
 - 11 dilde arayüz: İngilizce, Türkçe, Çince, İspanyolca, Arapça (sağdan sola), Portekizce, Endonezce, Fransızca,
   Japonca, Rusça, Almanca; ilk açılışta tarayıcının dili
@@ -256,6 +258,30 @@ planda yeni modelle yeniden vektörlenir, eski vektörler yenileriyle değişir.
 devam eder. Eski modelin dosyaları, bu cihazda onu kullanan başka bir kasa yoksa tarayıcıdan silinir. Notlara,
 yedeklere ve eşitlemeye dokunulmaz; model seçimi cihaza özeldir (telefonda daha hafif bir model seçilebilir).
 Akıllı aramayı bu sürümden önce açmış kasalar E5 Small'da kalır.
+
+## Notlarına sor
+
+Kenar çubuğundaki **Sor** sayfasından (`G` `A`) açılır. Soru önce hibrit aramayla ilgili notlarda ve görevlerde
+aranır; bulunanlar numaralandırılıp küçük bir dil modeline verilir, model cevabı bunlardan yazar ve kaynakları `[1]`
+gibi gösterir (tıklanınca not ya da görev açılır). "Bugün ne yapmam gerekiyor?" gibi gündem soruları anlamca
+tanınır (11 dilde birer gündem cümlesine, bulunan notlardan daha yakınsa) ve cevap bir hafta içinde vadesi gelen açık
+görevlerden yazılır. Hiçbir şey bulunamazsa model çağrılmaz, uydurmaması için "bulamadım" denir.
+
+Model isteğe bağlıdır, cihaza özeldir ve ilk açılışta bir kez indirilir; WebGPU gerekir (Chrome/Edge 113+,
+Safari 26+). Ekran kartı 16 bit hesap yapabiliyorsa `q4f16`, yapamıyorsa daha büyük `q4` ağırlıkları kullanılır.
+Sohbet yalnızca bellekte tutulur; kasa kilitlenince model durdurulur ve sohbet silinir. Notlar ve sorular cihazdan
+çıkmaz. Model değiştirilince ya da özellik kapatılınca eski modelin dosyaları silinir (Ayarlar → Notlarına sor).
+
+| Model | İndirme (q4f16 / q4) | Lisans | Not |
+|---|---|---|---|
+| **Qwen3 0.6B** (varsayılan) | 570 / 919 MB | Apache 2.0 | Hızlı; 11 dilin hepsinde talimatlara en iyi uyan |
+| Gemma 3 1B | 764 / 859 MB | Gemma şartları | İngilizcede güçlü; Türkçe cevapları da iyi ama zaman zaman İngilizceye kayıyor |
+| Apertus 0.5B | 517 / 811 MB | Apache 2.0 | Deneysel: denemelerimizde cevaplar çoğu zaman konu dışı ve yavaş |
+
+Denemeler (M serisi Mac, Chrome, örnek Türkçe kasa, akıllı arama açık): Qwen3 ve Gemma cevabı 1–5 saniyede yazdı,
+otel tarihleri ve bugünkü görevler gibi sorularda doğru kaynakları buldu; tek tük yanlış ayrıntılar oldu (küçük
+modellerin sınırı, sayfada "kaynakları kontrol et" uyarısı var). Apertus 0.5B aynı sorularda kendini tekrarladı ve
+15–40 saniye sürdü; tekrar döngüleri artık kesiliyor ama cevap kalitesi düşük.
 
 ## Klavye kısayolları
 
