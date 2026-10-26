@@ -1,346 +1,360 @@
 # Locry
 
-Tamamen tarayıcıda, sunucusuz çalışan **şifreli not ve görev** uygulaması. Veriler cihazında, geçiş anahtarına
-(passkey) bağlı bir anahtarla şifrelenmiş olarak durur; istersen Google Drive üzerinden şifreli olarak diğer
-cihazlarınla eşitlenir.
+An **encrypted notes and tasks** app that runs entirely in the browser, with no server. Your data stays on your
+device, encrypted with a key bound to a passkey; if you want, it syncs with your other devices through Google
+Drive, still encrypted.
 
-- Markdown notlar (bölünmüş önizleme, etiketler, sabitleme, arşiv)
-- Görevler (akıllı görünümler, listeler, alt görevler, öncelik, bitiş tarihi, sürükle-bırak)
-- Passkey ile giriş, kurtarma anahtarı, otomatik kilit
-- Birden fazla bağımsız kasa (ör. Kişisel ve İş), her biri kendi passkey'i ve kurtarma anahtarıyla
-- Sıkıştırılmış ve şifreli `.locry` yedekleri; Google Drive'a yedekleme
-- Telefon ve bilgisayar arasında Google Drive üzerinden uçtan uca şifreli eşitleme
-- Tarayıcı içi yapay zekâ ile anlamsal arama (isteğe bağlı), ⌘K komut paleti
-- **Notlarına sor:** sorulara kendi notların ve görevlerinden, tarayıcıda WebGPU ile çalışan küçük bir dil modeliyle
-  kaynak gösteren cevaplar (isteğe bağlı)
-- Kurulabilir PWA, çevrimdışı çalışma, açık/koyu tema
-- 11 dilde arayüz: İngilizce, Türkçe, Çince, İspanyolca, Arapça (sağdan sola), Portekizce, Endonezce, Fransızca,
-  Japonca, Rusça, Almanca; ilk açılışta tarayıcının dili
+- Markdown notes (split preview, tags, pinning, archive)
+- Tasks (smart views, lists, subtasks, priorities, due dates, drag and drop)
+- Passkey sign-in, recovery key, auto-lock
+- Multiple independent vaults (e.g. Personal and Work), each with its own passkeys and recovery key
+- Compressed, encrypted `.locry` backups; backups to Google Drive
+- End-to-end encrypted sync between phone and computer through Google Drive
+- Semantic search with in-browser AI (optional), ⌘K command palette
+- **Ask your notes:** answers to your questions from your own notes and tasks, with sources, written by a small
+  language model running on WebGPU in the browser (optional)
+- Installable PWA, works offline, light/dark theme
+- Interface in 11 languages: English, Turkish, Chinese, Spanish, Arabic (right to left), Portuguese, Indonesian,
+  French, Japanese, Russian, German; the browser's language on first run
 
-## Çalıştırma
+## Running
 
-Node 24 gerekir.
+Requires Node 24.
 
 ```bash
 nvm use
 yarn install
 ```
 
-**Geliştirme** (anında yenileme, service worker yok):
+**Development** (live reload, no service worker):
 
 ```bash
 yarn start
 ```
 
-**Günlük kullanım** (production derlemesi, çevrimdışı çalışır, kurulabilir):
+**Everyday use** (production build, works offline, installable):
 
 ```bash
 yarn serve:prod
 ```
 
-İkisi de `http://localhost:4200` adresini kullanır; aynı adres olduğu için veriler ve passkey'ler ortaktır.
-Kök adres tanıtım sayfasıdır (`/` İngilizce, diğer diller `/tr`, `/ja` gibi kendi kodlarıyla; ziyaretçi tarayıcısının diline yönlenir); uygulama `/app` adresinden açılır (kurulu PWA doğrudan oraya gider).
-Tarayıcı adres çubuğundaki "Yükle" simgesiyle Locry'yi masaüstü uygulaması olarak kurabilirsin.
+Both use `http://localhost:4200`; since the address is the same, they share data and passkeys. The root address is
+the landing page (`/` in English, other languages under their code such as `/tr` or `/ja`; visitors are sent to
+their browser's language); the app opens at `/app` (an installed PWA goes straight there). Use the "Install" icon
+in the browser's address bar to install Locry as a desktop app.
 
-> Adres önemli: passkey'ler `localhost` alan adına, veriler ise `http://localhost:4200` kaynağına bağlıdır.
-> Başka bir portta açarsan boş bir kasa görürsün. Passkey'ler IP adresinde çalışmadığından `127.0.0.1` (ör. Docker
-> Desktop'taki bağlantı) otomatik olarak `localhost`'a yönlendirilir.
+> The address matters: passkeys are bound to the `localhost` domain and data to the `http://localhost:4200` origin.
+> Open it on another port and you get an empty vault. Passkeys do not work on IP addresses, so `127.0.0.1` (e.g. the
+> link in Docker Desktop) is redirected to `localhost` automatically.
 
 ### Docker
 
-Node kurmadan, bir konteynerde çalıştırmak için:
+To run it in a container without installing Node:
 
 ```bash
 docker compose up -d --build
 ```
 
-Uygulama varsayılan olarak `http://localhost:4200` adresinde açılır. Durdurmak için `docker compose down`.
+The app opens at `http://localhost:4200` by default. Stop it with `docker compose down`.
 
-Port ve dinlenecek adres `.env` dosyasından okunur (yoksa varsayılanlar kullanılır):
+The port and the listening address are read from `.env` (defaults apply when it is missing):
 
 ```bash
 cp .env.example .env
 ```
 
-| Değişken | Varsayılan | Açıklama |
+| Variable | Default | Description |
 |---|---|---|
-| `LOCRY_PORT` | `4200` | Host tarafındaki port → `http://localhost:<port>` |
-| `LOCRY_BIND_ADDRESS` | `127.0.0.1` | Portun açılacağı arayüz; yalnızca bu makine |
-| `LOCRY_GOOGLE_CLIENT_ID` | boş | Gömülü Google Client ID; kullanıcılar sadece "Google ile bağlan"a basar |
-| `COMPOSE_PROFILES` | boş | `https` yazınca Caddy (otomatik HTTPS) da başlar |
-| `LOCRY_DOMAIN` | boş | Caddy'nin yayınlayacağı alan adı, ör. `locry.ornek.com` |
-| `LOCRY_SITE_URL` | boş | Tanıtım sayfasının canonical adresi; boşsa `https://<LOCRY_DOMAIN>`, o da yoksa açılan adres |
+| `LOCRY_PORT` | `4200` | Host port → `http://localhost:<port>` |
+| `LOCRY_BIND_ADDRESS` | `127.0.0.1` | Interface the port is published on; this machine only |
+| `LOCRY_GOOGLE_CLIENT_ID` | empty | Built-in Google Client ID; users just press "Connect with Google" |
+| `COMPOSE_PROFILES` | empty | Set to `https` to also start Caddy (automatic HTTPS) |
+| `LOCRY_DOMAIN` | empty | Domain Caddy serves, e.g. `locry.example.com` |
+| `LOCRY_SITE_URL` | empty | Canonical address of the landing pages; defaults to `https://<LOCRY_DOMAIN>`, else the address you open |
+| `LOCRY_DONATE_*` | empty | Donation links, see [Donations](#donations) |
 
-- İmaj çok aşamalıdır: derleme Node 24 ile yapılır, son imajda yalnızca derlenmiş uygulama ve bağımlılıksız
-  küçük bir sunucu bulunur. Konteyner root olmayan kullanıcıyla, salt okunur dosya sistemiyle ve yetkileri
-  düşürülmüş olarak çalışır.
-- Port varsayılan olarak yalnızca bu makinenin `127.0.0.1` adresine açılır; ağdaki başka cihazlar erişemez.
-  `0.0.0.0` kullanma: passkey'ler ve service worker güvenli bağlam ister, diğer cihazlar bunu yalnızca HTTPS ile alır.
-- **Konteynerde veri yoktur.** Notlar, görevler ve anahtarlar tarayıcıda şifreli durur; konteyneri silmek ya da
-  yeniden oluşturmak veriyi etkilemez, bu yüzden volume gerekmez. Yedek için uygulamadaki yedekleme özelliklerini kullan.
-- `LOCRY_PORT`'u değiştirirsen tarayıcı bunu ayrı bir site sayar: yeni adreste boş bir kasa görürsün (passkey'ler
-  porttan bağımsız çalışır; eski verileri yedekle taşıyabilirsin). Google Drive kullanıyorsan yeni adresi OAuth
-  istemcisinin "Authorized JavaScript origins" listesine ekle.
-- Varsayılan portta `yarn start` ile konteyner aynı portu kullanır; ikisini aynı anda çalıştırma.
+- The image is multi-stage: the build runs on Node 24, and the final image holds only the compiled app and a small
+  dependency-free server. The container runs as a non-root user, with a read-only file system and dropped
+  capabilities.
+- By default the port is published on this machine's `127.0.0.1` only; other devices on the network cannot reach
+  it. Do not use `0.0.0.0`: passkeys and the service worker need a secure context, which other devices only get
+  over HTTPS.
+- **The container holds no data.** Notes, tasks and keys stay encrypted in the browser; removing or recreating the
+  container does not affect them, so no volume is needed. Use the app's backup features for backups.
+- If you change `LOCRY_PORT`, the browser treats it as a different site: you get an empty vault at the new address
+  (passkeys work regardless of the port; move old data with a backup). If you use Google Drive, add the new address
+  to the OAuth client's "Authorized JavaScript origins".
+- On the default port, `yarn start` and the container use the same port; do not run both at once.
 
-### Alan adında (HTTPS) yayınlama
+### Serving on a domain (HTTPS)
 
-Locry'yi bir alan adında da çalıştırabilirsin; localdeki kullanım bununla birlikte çalışmaya devam eder.
-Passkey'ler, service worker ve tarayıcı şifrelemesi güvenli bağlam ister, yani alan adında **HTTPS şarttır**.
-Compose dosyasındaki isteğe bağlı Caddy servisi sertifikayı otomatik alır ve yeniler. `.env`:
+You can also serve Locry on a domain; local use keeps working alongside it. Passkeys, the service worker and
+in-browser encryption need a secure context, so a domain **requires HTTPS**. The optional Caddy service in the
+Compose file gets and renews the certificate automatically. In `.env`:
 
 ```bash
 COMPOSE_PROFILES=https
-LOCRY_DOMAIN=locry.ornek.com
+LOCRY_DOMAIN=locry.example.com
 ```
 
 ```bash
 docker compose up -d --build
 ```
 
-Alan adının DNS kaydı bu sunucuyu göstermeli ve 80/443 portları dışarıdan erişilebilir olmalı.
+The domain's DNS record must point to this server, and ports 80/443 must be reachable from outside.
 
-**Her adres ayrı bir kasadır.** Passkey'ler oluşturuldukları adrese (`localhost`, `locry.ornek.com`), tarayıcı
-verileri de adrese bağlıdır. Verileri taşımak için:
+**Each address is a separate vault.** Passkeys are bound to the address they were created on (`localhost`,
+`locry.example.com`), and so is browser data. To move your data:
 
-1. Bir adreste yedek al (dosya ya da Google Drive).
-2. Diğer adreste **Yedekten geri yükle**. Yedeğin passkey'leri o adreste çalışmadığı için Locry doğrudan
-   **kurtarma anahtarını** ister.
-3. Geri yüklemeden hemen sonra o adres için yeni bir passkey oluştur (Locry bunu önerir).
+1. Make a backup on one address (file or Google Drive).
+2. On the other address, use **Restore from backup**. The backup's passkeys do not work there, so Locry asks for
+   the **recovery key** right away.
+3. Right after restoring, create a new passkey for that address (Locry suggests it).
 
-Ayarlar'daki passkey listesi her passkey'in hangi adrese ait olduğunu gösterir. Google Drive kullanıyorsan alan
-adını da OAuth istemcisinin *Authorized JavaScript origins* listesine ekle.
+The passkey list in Settings shows which address each passkey belongs to. If you use Google Drive, add the domain
+to the OAuth client's *Authorized JavaScript origins* as well.
 
-## GitHub Pages'te ücretsiz yayın
+## Free hosting on GitHub Pages
 
-Locry'nin sunucuya ihtiyacı yok, bu yüzden GitHub Pages'te ücretsiz çalışır (depo herkese açık olmalı). Her
-`main` push'unda `.github/workflows/pages.yml` testleri çalıştırır, uygulamayı derler ve yayınlar; adres
-`https://<kullanıcı>.github.io/<depo>/` olur (özel alan adı bağlanırsa kök).
+Locry needs no server, so it runs on GitHub Pages for free (the repository must be public). On every push to `main`,
+`.github/workflows/pages.yml` runs the tests, builds the app and publishes it at
+`https://<user>.github.io/<repository>/` (or at the root of a custom domain).
 
-Bir kerelik ayar (depoda **Settings**):
+One-time setup (repository **Settings**):
 
 1. **Pages → Build and deployment → Source:** `GitHub Actions`.
-2. İsteğe bağlı, **Secrets and variables → Actions → Variables** (gizli değil, herkese açık değerler):
-   `LOCRY_GOOGLE_CLIENT_ID` ve bağış hesapları (`LOCRY_DONATE_*`, bkz. `.env.example`).
-3. Drive kullanılacaksa Google Cloud'daki OAuth istemcisinin "Yetkili JavaScript kaynakları"na
-   `https://<kullanıcı>.github.io` ekle.
+2. Optional, **Secrets and variables → Actions → Variables** (public values, not secrets):
+   `LOCRY_GOOGLE_CLIENT_ID` and donation accounts (`LOCRY_DONATE_*`, see `.env.example`).
+3. If Drive is used, add `https://<user>.github.io` to the "Authorized JavaScript origins" of the Google Cloud
+   OAuth client.
 
-Pages yalnızca dosya sunar; `scripts/serve.mjs`'in istek başına yaptığı işleri derlemeden sonra
-`scripts/pages.mjs` dosyalar üzerinde bir kez yapar: site adresini sayfalara, `sitemap.xml` ve `llms.txt`'ye yazar,
-her dil sayfasını `/tr` gibi yönlendirmesiz açılsın diye `tr.html` olarak da koyar, uygulama adresleri (`/notes`)
-açılsın diye `404.html` olarak uygulama kabuğunu koyar, `/en` için yönlendirme sayfası ekler ve service worker
-manifestini (alt yol dahil) yeniden üretir. `config.json` derlemeden önce depo değişkenlerinden yazılır.
+Pages only serves files, so what `scripts/serve.mjs` does per request, `scripts/pages.mjs` does once on the files
+after the build: it writes the site address into the pages, `sitemap.xml` and `llms.txt`; adds each language page
+as `tr.html` too, so `/tr` opens without a redirect; adds the app shell as `404.html`, so app addresses such as
+`/notes` open; adds a redirect page for `/en`; and rebuilds the service worker manifest (with the base path).
+`config.json` is written from the repository variables before the build.
 
-Yerelde aynısını denemek için:
+To try the same locally:
 
 ```bash
 npx ng build --base-href /locry/ && SITE_URL=http://localhost:4332/locry node scripts/pages.mjs
 ```
 
-Notlar: Pages özel HTTP başlıkları göndermez (güvenlik politikası zaten sayfadaki meta etiketinde); kasalar ve
-passkey'ler adrese bağlıdır, Pages'teki kasa `localhost`'takinden ayrıdır (taşımak için yedek + kurtarma anahtarı).
-Uygulama kök (`/`) yerine alt yolda da çalışır: yazı tipleri, görseller ve sayfa içi bağlantılar göreli adres kullanır.
+Notes: Pages sends no custom HTTP headers (the Content Security Policy is in a meta tag already). Vaults and
+passkeys are bound to the address, so a vault on Pages is separate from the one on `localhost` (move data with a
+backup and the recovery key). The app also works under a subpath instead of the root: fonts, images and in-page
+links use relative addresses.
 
-## Kasalar
+## Vaults
 
-Birden fazla kasa kullanabilirsin: kenar çubuğundaki kasa adına tıkla → **Yeni kasa**. Her kasanın kendi
-passkey'i, kurtarma anahtarı, veritabanı, yedekleri ve ayarları vardır; aynı anda yalnızca biri açıktır.
-Kasa değiştirmek açık kasayı kilitler. Kasa adları kilit ekranında görünebilmesi için şifrelenmez, bu yüzden
-içerik hakkında bilgi vermeyen adlar seç. Yedekten geri yüklerken kasa bu cihazda varsa yedek ona birleştirilir,
-yoksa ayrı bir kasa olarak eklenir. Kasa silme yalnızca bu cihazdaki veriyi siler; yedeklere dokunmaz.
+You can use more than one vault: click the vault name in the sidebar → **New vault**. Each vault has its own
+passkeys, recovery key, database, backups and settings; only one is open at a time. Switching vaults locks the open
+one. Vault names are not encrypted so they can be shown on the lock screen, so choose names that reveal nothing
+about the content. When restoring a backup, it is merged into the vault if that vault is on this device, otherwise
+it is added as a separate vault. Deleting a vault only deletes the data on this device; backups are untouched.
 
-## Tanıtım sayfası ve SEO
+## Landing page and SEO
 
-Tanıtım sayfası 11 dilde derleme sırasında statik HTML olarak üretilir (Angular prerender + hydration): `/`
-(İngilizce, varsayılan), `/tr`, `/zh`, `/es`, `/ar` (sağdan sola), `/pt`, `/id`, `/fr`, `/ja`, `/ru`, `/de`. `/` adresine
-gelen ziyaretçi, sayfada dil seçmediyse tarayıcısının diline yönlenir; arama motorları her dili ayrı sayfa olarak görür. Eski `/en` adresi `/`'ye kalıcı olarak yönlenir. Sayfada aydınlık / karanlık /
-sistem teması seçilebilir; ekran görüntüleri seçilen temaya uyar.
+The landing page is generated as static HTML in 11 languages at build time (Angular prerendering + hydration):
+`/` (English, default), `/tr`, `/zh`, `/es`, `/ar` (right to left), `/pt`, `/id`, `/fr`, `/ja`, `/ru`, `/de`.
+Visitors to `/` who did not pick a language on the page are sent to their browser's language; search engines see
+each language as a separate page. The old `/en` address redirects permanently to `/`. The page offers a light /
+dark / system theme; the screenshots follow the chosen theme.
 
-Tasarım: Fraunces (başlıklar), Geist (metin) ve Geist Mono (teknik ayrıntılar), `@fontsource-variable`'dan uygulamayla
-birlikte sunulur (`/fonts`, CDN yok): Latin, Latin Extended ve (metin için) Kiril. Çince, Japonca ve Arapça sistem
-yazı tiplerini kullanır. İlk ekranın yazı tipleri önceden yüklenir.
-Arama motorları ve yapay zekâ tarayıcıları içeriğin tamamını JavaScript çalıştırmadan okur; uygulamanın geri kalanı
-yalnızca tarayıcıda çalışır, sunucuda hiçbir kasa verisi bulunmaz.
+Design: Fraunces (headings), Geist (text) and Geist Mono (technical details), served with the app from
+`@fontsource-variable` (`fonts/`, no CDN): Latin, Latin Extended and (for text) Cyrillic. Chinese, Japanese and
+Arabic use system fonts. The fonts of the first screen are preloaded. Search engines and AI crawlers read all of the
+content without running JavaScript; the rest of the app runs only in the browser, and no vault data ever exists on
+a server.
 
-- Başlık, açıklama, canonical, `hreflang` (11 dil + x-default), Open Graph ve Twitter kartları (`/landing/og-*.jpg`)
+- Title, description, canonical, `hreflang` (11 languages + x-default), Open Graph and Twitter cards
+  (`landing/og-*.jpg`)
 - JSON-LD: `SoftwareApplication`, `SoftwareSourceCode`, `WebSite`, `WebPage`, `FAQPage`, `HowTo`
-- `robots.txt` (yapay zekâ tarayıcılarına da açık), `sitemap.xml`, `llms.txt`; uygulama sayfaları `noindex`
-- Adresler derlemede yer tutucudur; sunucu `LOCRY_SITE_URL` / `LOCRY_DOMAIN` ile doldurur, alan adı değişince yeniden
-  derlemek gerekmez. Sunucu metinleri brotli/gzip ile sıkıştırır.
-- Lighthouse (yerel üretim sunucusu): masaüstünde performans 99, mobilde 83–88 (yavaş 4G simülasyonu); erişilebilirlik,
-  en iyi uygulamalar ve SEO 100; düzen kayması 0.
+- `robots.txt` (open to AI crawlers too), `sitemap.xml`, `llms.txt`; app pages are `noindex`
+- Addresses are placeholders in the build; the server fills them in from `LOCRY_SITE_URL` / `LOCRY_DOMAIN`, so a
+  domain change needs no rebuild. The server compresses text with brotli/gzip.
+- Lighthouse (local production server): performance 99 on desktop, 83–88 on mobile (slow 4G simulation);
+  accessibility, best practices and SEO 100; layout shift 0.
 
-Ekran görüntüleri gerçek uygulamadan, her dil için o dilin örnek verileriyle (`scripts/screenshot-samples.mjs`) ve
-sanal passkey ile alınır; düğmeler uygulamanın kendi çevirileriyle bulunur. OG kartları aynı ekran görüntüsünden,
-Chrome'da HTML olarak çizilir (Arapça ve CJK yazılar düzgün dizilsin diye). Google Chrome, ImageMagick, `cwebp` ve
-`avifenc` gerekir; her dil arama modelini (~200 MB) bir kez indirir:
+Screenshots are taken from the real app, with sample data in each language (`scripts/screenshot-samples.mjs`) and
+a virtual passkey; buttons are found through the app's own translations. The Open Graph cards are drawn from the
+same screenshot as HTML in Chrome (so Arabic and CJK text is set properly). Requires Google Chrome, ImageMagick,
+`cwebp` and `avifenc`; each language downloads the search model (~200 MB) once:
 
 ```bash
 npx ng serve --host 127.0.0.1 --port 4320 &
-node scripts/screenshots.mjs   # public/landing/<dil>/*.avif|webp, açık ve koyu (LANGS=ja,ar ile bazı diller)
-node scripts/og-images.mjs     # public/landing/og-<dil>.jpg
+node scripts/screenshots.mjs   # public/landing/<lang>/*.avif|webp, light and dark (LANGS=ja,ar for some languages)
+node scripts/og-images.mjs     # public/landing/og-<lang>.jpg
 ```
 
-Metinler `src/app/features/landing/content/<dil>.ts` içinde (tüm diller aynı yapıda olmalı, test kontrol eder),
-uygulamanın metinleri `src/i18n/<dil>.ts` içinde (anahtarlar ve yer tutucular testle denetlenir). Dil listesi
-`src/app/core/languages.ts`;
-GitHub adresi `src/app/core/site.ts` içinde.
+The landing text lives in `src/app/features/landing/content/<lang>.ts` (all languages must have the same shape; a
+test checks it), the app's text in `src/i18n/<lang>.ts` (keys and placeholders are checked by a test). The list of
+languages is in `src/app/core/languages.ts`; the GitHub address in `src/app/core/site.ts`.
 
-## Güvenlik modeli
+## Security model
 
-| Konu | Uygulama |
+| Topic | Implementation |
 |---|---|
-| Kasa anahtarı | Rastgele 256 bit, yalnızca bellekte ve dışa aktarılamaz `CryptoKey` olarak |
-| Passkey ile açma | WebAuthn **PRF** uzantısı → HKDF-SHA-256 → kasa anahtarını açan anahtar |
-| Kurtarma | 256 bit kurtarma anahtarı (Base32, sağlama toplamlı) ayrı bir anahtar yuvasında |
-| Veri | Her kayıt ayrı AES-256-GCM; kayıt türü ve kimliği AAD ile bağlı |
-| Yedek | `gzip` → AES-256-GCM; başlık AAD ile bağlı, anahtar yuvaları başlıkta |
-| Önizleme | DOMPurify; dış görseller yüklenmez; ek olarak İçerik Güvenliği Politikası (CSP) |
-| Depolama | Tarayıcıdan kalıcı depolama istenir; durum Ayarlar'da görünür |
+| Vault key | Random 256 bits, only in memory, as a non-extractable `CryptoKey` |
+| Unlocking with a passkey | WebAuthn **PRF** extension → HKDF-SHA-256 → key that unwraps the vault key |
+| Recovery | 256-bit recovery key (Base32, with checksum) in a separate key slot |
+| Data | Each record separately with AES-256-GCM; record type and id bound through AAD |
+| Backups | `gzip` → AES-256-GCM; header bound through AAD, key slots in the header |
+| Preview | DOMPurify; remote images are not loaded; plus a Content Security Policy (CSP) |
+| Storage | Persistent storage is requested from the browser; its state is shown in Settings |
 
-Dışarıya yalnızca senin açtığın özellikler bağlanır: Google Drive yedeği ve eşitlemesi (`www.googleapis.com`) ve
-anlamsal arama modelinin ilk indirmesi (`huggingface.co`). Notların cihazdan yalnızca şifreli olarak çıkar.
+Only the features you turn on connect anywhere: Google Drive backups and sync (`www.googleapis.com`), and the
+one-time downloads of the semantic search model and the "Ask your notes" language model (`huggingface.co`). Your
+notes leave the device only encrypted.
 
-Passkey PRF desteği: Chrome/Edge 118+, Safari 18+; iCloud Anahtar Zinciri, Google Parola Yöneticisi,
-1Password veya bir donanım güvenlik anahtarı.
+Passkey PRF support: Chrome/Edge 118+, Safari 18+; iCloud Keychain, Google Password Manager, 1Password or a
+hardware security key.
 
-## Google Drive yedeği
+## Google Drive backups
 
-Kullanıcı için: **Ayarlar → Google Drive → Google ile bağlan**. Yedekler Drive'da yalnızca Locry'nin erişebildiği
-gizli uygulama klasörüne (`appDataFolder`) şifreli olarak yazılır.
+For users: **Settings → Google Drive → Connect with Google**. Backups are written encrypted to a hidden app folder
+in Drive (`appDataFolder`) that only Locry can access.
 
-Bunun için kurulumu çalıştıran kişinin **bir kez** bir Google OAuth Client ID alıp `.env`'deki
-`LOCRY_GOOGLE_CLIENT_ID` değişkenine yazması gerekir (gizli değildir, client secret gerekmez):
+For this, whoever runs the installation has to get a Google OAuth Client ID **once** and put it in
+`LOCRY_GOOGLE_CLIENT_ID` in `.env` (it is not a secret; no client secret is needed):
 
-1. [console.cloud.google.com](https://console.cloud.google.com) adresinde bir proje oluştur, **Google Drive API**'yi etkinleştir.
-2. **OAuth consent screen**: External; uygulama adı, destek e-postası ve gizlilik politikası bağlantısı.
+1. Create a project at [console.cloud.google.com](https://console.cloud.google.com) and enable the **Google Drive API**.
+2. **OAuth consent screen**: External; app name, support email and a privacy policy link.
 3. **Credentials → Create credentials → OAuth client ID** → *Web application*;
-   **Authorized JavaScript origins**: `http://localhost:4200` (kullanılan diğer portlar da).
-4. Uygulamayı yayınla (*In production*). Locry yalnızca `drive.appdata` iznini ister; Google bunu hassas olmayan
-   (non-sensitive) izin olarak sınıflandırır, güvenlik incelemesi gerekmez. *Testing* durumunda yalnızca eklenen
-   test kullanıcıları bağlanabilir.
+   **Authorized JavaScript origins**: `http://localhost:4200` (plus any other ports you use).
+4. Publish the app (*In production*). Locry only asks for the `drive.appdata` scope, which Google classifies as
+   non-sensitive, so no security review is needed. In *Testing*, only the listed test users can connect.
 
-**Birden fazla cihazdan yedekleme:** Her yedek, onu alan cihazla etiketlenir (listede "iPhone · Safari" gibi
-görünür). Bir cihaz Drive'a yedek almadan önce aynı kasanın başka cihazlardan gelen, henüz birleştirmediği en yeni
-yedeklerini indirip birleştirir; eşitlemedeki kurallar geçerlidir: eski bir kopya yeni düzenlemeyi ezmez, düzenleme
-silmeyi yener, iki tarafta değişen notun eski sürümü "(çakışma)" kopyası olarak kalır. Böylece bilgisayarın yedeği
-telefonda yapılan değişiklikleri de içerir. "Son N yedek" budaması yalnızca o cihazın kendi yedeklerini siler.
-Otomatik yedek, bu cihazda değişiklik olmasa da başka bir cihaz yeni yedek aldıysa çalışır.
+**Backups from several devices:** each backup is tagged with the device that made it (shown as e.g. "iPhone ·
+Safari"). Before backing up to Drive, a device downloads and merges the newest backups of the same vault from other
+devices that it has not merged yet, with the same rules as sync: a stale copy never overwrites a newer edit, an edit
+beats a delete, and when a note changed on both sides the older version is kept as a "(conflict)" copy. So the
+computer's backup also contains the changes made on the phone. Pruning to the "last N backups" only deletes the
+device's own backups. Auto backup also runs when nothing changed on this device but another device made a new
+backup.
 
-Değer çalışma anında `/config.json` olarak okunur: Docker'da `.env`'i değiştirip `docker compose up -d` yeterlidir,
-`yarn start` ve `yarn serve:prod` de `.env`'i okur. `LOCRY_GOOGLE_CLIENT_ID` boşsa her kullanıcı Ayarlar'da kendi
-Client ID'sini girebilir; bu seçenek gömülü bir ID varken de **Gelişmiş** olarak durur.
+The value is read at runtime as `/config.json`: in Docker, change `.env` and run `docker compose up -d`; `yarn start`
+and `yarn serve:prod` read `.env` too. When `LOCRY_GOOGLE_CLIENT_ID` is empty, each user can enter their own Client ID
+in Settings; that option also stays available under **Advanced** when a built-in ID is set.
 
-## Cihazlar arası eşitleme (telefon + bilgisayar)
+## Sync across devices (phone + computer)
 
-Bir kasayı birden fazla cihazda kullanmak için Google Drive aracı olarak kullanılır; sunucu yoktur.
+Google Drive is the go-between for using one vault on several devices; there is no server.
 
-**Kurulum**
+**Setup**
 
-1. Locry'yi bir alan adında HTTPS ile yayınla ([Alan adında yayınlama](#alan-adında-https-yayınlama)). Telefon
-   bilgisayardaki `localhost`'a ulaşamaz; passkey'ler de adrese bağlıdır, bu yüzden iki cihazda da aynı adresi
-   (`https://locry.ornek.com`) kullanmak en kolayıdır.
-2. Google Cloud'daki OAuth istemcisinin *Authorized JavaScript origins* listesine `https://locry.ornek.com` ekle.
-   Uygulama *Testing* durumundaysa Google hesabını *Test users* listesine ekle ya da uygulamayı yayınla.
-3. Bilgisayarda: **Ayarlar → Cihazlar arası eşitleme → Eşitlemeyi aç**.
-4. Telefonda: adresi aç (iPhone'da Safari → Paylaş → *Ana Ekrana Ekle*; Android'de Chrome → *Uygulamayı yükle*),
-   **Yedekten geri yükle → Google Drive'dan geri yükle**, *Eşitlenen kasalar* altından kasayı seç ve aç:
-   - passkey'lerin iCloud Anahtar Zinciri / Google Parola Yöneticisi ile eşitleniyorsa aynı passkey çalışır;
-   - çalışmıyorsa (başka adres ya da başka ekosistem) kurtarma anahtarıyla aç; Locry bu cihaz için passkey önerir.
-   Kasa eklenir ve eşitlemesi kendiliğinden açılır.
+1. Serve Locry on a domain with HTTPS ([Serving on a domain](#serving-on-a-domain-https)). The phone cannot reach
+   `localhost` on the computer, and passkeys are bound to the address, so using the same address on both devices
+   (`https://locry.example.com`) is easiest.
+2. Add `https://locry.example.com` to the *Authorized JavaScript origins* of the OAuth client in Google Cloud. If the
+   app is in *Testing*, add your Google account to *Test users* or publish the app.
+3. On the computer: **Settings → Sync across devices → Turn on sync**.
+4. On the phone: open the address (iPhone: Safari → Share → *Add to Home Screen*; Android: Chrome → *Install app*),
+   choose **Restore from backup → Restore from Google Drive**, pick the vault under *Synced vaults* and open it:
+   - if your passkeys sync through iCloud Keychain / Google Password Manager, the same passkey works;
+   - if not (another address or another ecosystem), open it with the recovery key; Locry suggests a passkey for
+     this device.
+   The vault is added and its sync turns on by itself.
 
-**Nasıl çalışır**
+**How it works**
 
-- Her cihaz Drive'daki gizli uygulama klasörüne kasanın kendi şifreli kopyasını yazar ve diğer cihazlarınkini
-  okuyup birleştirir. Her dosyaya yalnızca bir cihaz yazdığından cihazlar birbirinin yazdığını ezemez. Google
-  yalnızca dosya adını, boyutunu, zamanını ve cihaz türünü (ör. "iPhone · Safari") görür.
-- Silmeler silme kaydı olarak taşınır (90 gün tutulur). Bir cihazda silinen, diğerinde düzenlenen kayıtta
-  düzenleme kazanır.
-- Aynı not iki cihazda değiştirildiyse yeni sürüm kalır, eskisi "(çakışma)" adlı ayrı bir not olarak saklanır.
-  Görev ve listelerde son değişiklik kazanır.
-- Kasada eklenen/kaldırılan passkey'ler, yenilenen kurtarma anahtarı, kasa adı ve rengi de eşitlenir.
-  Akıllı arama vektörleri eşitlenmez; her cihaz kendisi hesaplar.
-- Eşitleme yalnızca Locry açıkken çalışır: kilidi açınca, sekmeye dönünce, değişiklikten ~30 sn sonra ve 5 dakikada
-  bir. Google erişim izni yaklaşık 1 saat geçerlidir ve kilitlenince silinir; süresi dolunca kenar çubuğunda
-  **Eşitlemek için Google'a bağlan** görünür, tek tıkla devam eder.
+- Each device writes its own encrypted copy of the vault to the hidden app folder in Drive and reads and merges the
+  other devices' copies. Each file is written by one device only, so devices cannot overwrite each other. Google
+  only sees file names, sizes, times and the device type (e.g. "iPhone · Safari").
+- Deletions are carried as deletion records (kept for 90 days). When a record was deleted on one device and edited
+  on another, the edit wins.
+- When the same note was changed on two devices, the newer version stays and the older one is kept as a separate
+  note named "(conflict)". For tasks and lists, the last change wins.
+- Added/removed passkeys, a renewed recovery key, and the vault's name and color sync too. Smart search vectors do
+  not sync; each device computes its own.
+- Sync only runs while Locry is open: on unlock, when you return to the tab, ~30 s after a change, and every 5
+  minutes. Google access lasts about an hour and is dropped on lock; when it expires, the sidebar shows **Connect to
+  Google to sync**, which continues with one click.
 
-## Anlamsal arama
+## Semantic search
 
-**Ara** sayfasından ya da **Ayarlar → Akıllı arama**'dan açılır. Seçilen model bir kez indirilir, tarayıcıda
-önbelleğe alınır ve bir Web Worker içinde (WASM) çalışır. Vektörler şifreli saklanır; yedeklere ve eşitlemeye girmez.
+Turn it on from the **Search** page or **Settings → Smart search**. The chosen model is downloaded once, cached in
+the browser and runs in a Web Worker (WASM). Vectors are stored encrypted; they are left out of backups and sync.
 
-Her kasa kendi modelini seçer (Ayarlar → Akıllı arama → Model):
+Each vault chooses its own model (Settings → Smart search → Model):
 
-| Model | İndirme | Vektör | Maks. metin | Lisans | Not |
+| Model | Download | Vector | Max. text | License | Note |
 |---|---|---|---|---|---|
-| **EmbeddingGemma 300M** (varsayılan) | 195 MB | 768 | 2.048 token | Gemma şartları | TR/EN testinde en isabetli; telefonda da çalışır |
-| Multilingual E5 Small | 118 MB | 384 | 512 token | MIT | En küçük ve hızlı |
-| Multilingual E5 Base | 279 MB | 768 | 512 token | MIT | Bilgisayar için |
-| Snowflake Arctic Embed M v2.0 | 311 MB | 768 | 8.192 token | Apache 2.0 | Uzun metinler; bilgisayar için |
-| BGE-M3 | 568 MB | 1024 | 8.192 token | MIT | En büyük; bilgisayar için |
+| **EmbeddingGemma 300M** (default) | 195 MB | 768 | 2,048 tokens | Gemma Terms | Most accurate in the TR/EN test; also runs on phones |
+| Multilingual E5 Small | 118 MB | 384 | 512 tokens | MIT | Smallest and fastest |
+| Multilingual E5 Base | 279 MB | 768 | 512 tokens | MIT | For computers |
+| Snowflake Arctic Embed M v2.0 | 311 MB | 768 | 8,192 tokens | Apache 2.0 | Long texts; for computers |
+| BGE-M3 | 568 MB | 1024 | 8,192 tokens | MIT | Largest; for computers |
 
-Örnek TR/EN kasalarda (notlar + kısa görevler, 23 sorgu) doğru not ilk sırada: Gemma 20/23, E5 Small 19/23,
-E5 Base 19/23, Arctic 16/23, BGE-M3 16/23. Her modelin benzerlik ölçeği farklı olduğu için eşikleri ve "her şeye
-benzeyen" kısa belgeler için düzeltme ağırlığı model başına ayrı kalibre edildi (`embedding-protocol.ts`).
+On sample TR/EN vaults (notes + short tasks, 23 queries), the right note came first: Gemma 20/23, E5 Small 19/23,
+E5 Base 19/23, Arctic 16/23, BGE-M3 16/23. Similarity scales differ per model, so the thresholds and the correction
+weight for short documents that "resemble everything" are calibrated per model (`embedding-protocol.ts`).
 
-**Model değiştirilince:** yeni model indirilir (önceden indirildiyse indirilmez), tüm notlar ve görevler arka
-planda yeni modelle yeniden vektörlenir, eski vektörler yenileriyle değişir. Bu sırada kelime araması çalışmaya
-devam eder. Eski modelin dosyaları, bu cihazda onu kullanan başka bir kasa yoksa tarayıcıdan silinir. Notlara,
-yedeklere ve eşitlemeye dokunulmaz; model seçimi cihaza özeldir (telefonda daha hafif bir model seçilebilir).
-Akıllı aramayı bu sürümden önce açmış kasalar E5 Small'da kalır.
+**When the model changes:** the new model is downloaded (unless it already was), and all notes and tasks are
+embedded again with it in the background, replacing the old vectors. Keyword search keeps working meanwhile. The
+old model's files are deleted from the browser unless another vault on this device uses it. Notes, backups and sync
+are untouched; the model choice is per device (a phone can use a lighter model). Vaults that turned on smart search
+before models were selectable stay on E5 Small.
 
-## Notlarına sor
+## Ask your notes
 
-Kenar çubuğundaki **Sor** sayfasından (`G` `A`) açılır. Soru önce hibrit aramayla ilgili notlarda ve görevlerde
-aranır; bulunanlar numaralandırılıp küçük bir dil modeline verilir, model cevabı bunlardan yazar ve kaynakları `[1]`
-gibi gösterir (tıklanınca not ya da görev açılır). "Bugün ne yapmam gerekiyor?" gibi gündem soruları anlamca
-tanınır (11 dilde birer gündem cümlesine, bulunan notlardan daha yakınsa) ve cevap bir hafta içinde vadesi gelen açık
-görevlerden yazılır. Hiçbir şey bulunamazsa model çağrılmaz, uydurmaması için "bulamadım" denir.
+Open it from the **Ask** page in the sidebar (`G` `A`). The question is first looked up with the hybrid search in
+your notes and tasks; the results are numbered and given to a small language model, which writes the answer from
+them and cites them like `[1]` (click to open the note or task). Agenda questions such as "What do I have to do
+today?" are recognized by meaning (when the question is closer to one of 11 agenda phrases, one per language, than
+to the notes found), and the answer is written from the open tasks due within a week. When nothing is found, the
+model is not asked at all, so it cannot make anything up: the app says it found nothing.
 
-Model isteğe bağlıdır, cihaza özeldir ve ilk açılışta bir kez indirilir; WebGPU gerekir (Chrome/Edge 113+,
-Safari 26+). Ekran kartı 16 bit hesap yapabiliyorsa `q4f16`, yapamıyorsa daha büyük `q4` ağırlıkları kullanılır.
-Sohbet yalnızca bellekte tutulur; kasa kilitlenince model durdurulur ve sohbet silinir. Notlar ve sorular cihazdan
-çıkmaz. Model değiştirilince ya da özellik kapatılınca eski modelin dosyaları silinir (Ayarlar → Notlarına sor).
+The model is optional, per device, and downloaded once on first use; it needs WebGPU (Chrome/Edge 113+,
+Safari 26+). When the graphics card can compute in 16 bits, `q4f16` weights are used, otherwise the larger `q4`
+ones. The conversation lives in memory only; when the vault locks, the model stops and the conversation is cleared.
+Notes and questions never leave the device. When the model changes or the feature is turned off, the old model's
+files are deleted (Settings → Ask your notes).
 
-| Model | İndirme (q4f16 / q4) | Lisans | Not |
+| Model | Download (q4f16 / q4) | License | Note |
 |---|---|---|---|
-| **Qwen3 0.6B** (varsayılan) | 570 / 919 MB | Apache 2.0 | Hızlı; 11 dilin hepsinde talimatlara en iyi uyan |
-| Gemma 3 1B | 764 / 859 MB | Gemma şartları | İngilizcede güçlü; Türkçe cevapları da iyi ama zaman zaman İngilizceye kayıyor |
-| Apertus 0.5B | 517 / 811 MB | Apache 2.0 | Deneysel: denemelerimizde cevaplar çoğu zaman konu dışı ve yavaş |
+| **Qwen3 0.6B** (default) | 570 / 919 MB | Apache 2.0 | Fast; follows instructions best in all 11 languages |
+| Gemma 3 1B | 764 / 859 MB | Gemma Terms | Strong in English; good Turkish answers too, but sometimes drifts into English |
+| Apertus 0.5B | 517 / 811 MB | Apache 2.0 | Experimental: in our trials, answers were often off topic and slow |
 
-Denemeler (M serisi Mac, Chrome, örnek Türkçe kasa, akıllı arama açık): Qwen3 ve Gemma cevabı 1–5 saniyede yazdı,
-otel tarihleri ve bugünkü görevler gibi sorularda doğru kaynakları buldu; tek tük yanlış ayrıntılar oldu (küçük
-modellerin sınırı, sayfada "kaynakları kontrol et" uyarısı var). Apertus 0.5B aynı sorularda kendini tekrarladı ve
-15–40 saniye sürdü; tekrar döngüleri artık kesiliyor ama cevap kalitesi düşük.
+Trials (Apple silicon Mac, Chrome, sample Turkish vault, smart search on): Qwen3 and Gemma wrote their answers in
+1–5 seconds and found the right sources for questions such as hotel dates or today's tasks, with an occasional wrong
+detail (a limit of small models; the page reminds you to check the sources). Apertus 0.5B repeated itself on the
+same questions and took 15–40 seconds; loops are cut now, but the answers are poor.
 
-## Bağış
+## Donations
 
-Locry'yi çalıştıran kişi bağış hesaplarını `.env` ile tanımlarsa (bkz. `.env.example`), tanıtım sayfasının alt
-bölümünde ve Ayarlar'da **Locry'yi destekle** kartı görünür; hiçbiri tanımlı değilse hiçbir şey gösterilmez.
-Desteklenenler: GitHub Sponsors, Buy Me a Coffee, Ko-fi, Open Collective (hesap adı verilir, bağlantı her zaman
-platformun kendi adresine kurulur) ve kopyalanabilir kripto adresleri (`LOCRY_DONATE_CRYPTO=BTC:…,ETH:…`).
-Ödeme betiği, iframe ya da üçüncü taraf istek yoktur; bağlantılar yeni sekmede açılır.
+If whoever runs Locry sets donation accounts in `.env` (see `.env.example`), a "Support" button appears in the
+landing page header and the app's sidebar, leading to a **Support Locry** section on the landing page and a card in
+Settings; with none set, nothing is shown. Supported: GitHub Sponsors, Buy Me a Coffee, Ko-fi, Open Collective
+(you give the account name, and the link is always built to the platform's own address) and crypto addresses with a
+copy button (`LOCRY_DONATE_CRYPTO=BTC:…,ETH:…`). There are no payment scripts, iframes or third-party requests;
+links open in a new tab.
 
 ```bash
-LOCRY_DONATE_GITHUB=kullaniciadi
-LOCRY_DONATE_KOFI=kullaniciadi
+LOCRY_DONATE_GITHUB=username
+LOCRY_DONATE_KOFI=username
 LOCRY_DONATE_CRYPTO=BTC:bc1q…,ETH:0x…
 ```
 
-Değerler sunucunun ürettiği `/config.json` ile tarayıcıya gider; değiştirmek için yalnızca yeniden başlatmak
-(`docker compose up -d`) yeterlidir, yeniden derleme gerekmez. GitHub deposundaki **Sponsor** düğmesi için
-`.github/FUNDING.yml` dosyasındaki satırları doldur.
+The values reach the browser through the server-generated `/config.json`, so changing them only takes a restart
+(`docker compose up -d`), no rebuild. For the **Sponsor** button on the GitHub repository, fill in the lines in
+`.github/FUNDING.yml`.
 
-## Klavye kısayolları
+## Keyboard shortcuts
 
-`?` tuşu tüm listeyi gösterir. Öne çıkanlar: `⌘K` hızlı arama, `/` arama sayfası, `N` yeni not,
-`T` yeni görev, `G N` / `G T` / `G S` gezinme, `⌘⇧L` kilitle, `⌘\` kenar çubuğu.
+`?` shows the full list. Highlights: `⌘K` quick search, `/` search page, `N` new note, `T` new task,
+`G N` / `G T` / `G A` / `G S` navigation, `⌘⇧L` lock, `⌘\` sidebar.
 
-## Geliştirme
+## Development
 
 ```bash
-yarn test     # birim testleri (Vitest)
-yarn build    # production derlemesi → dist/locry
+yarn test     # unit tests (Vitest)
+yarn build    # production build → dist/locry
 ```
 
-Mimari ve fazlar: [docs/PLAN.md](docs/PLAN.md).
+Architecture and phases: [docs/PLAN.md](docs/PLAN.md) (in Turkish).
+
+## License
+
+[MIT](LICENSE) © 2026 Emre Erkan
