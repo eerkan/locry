@@ -32,6 +32,7 @@ export const id: Translation = {
     search: 'Cari',
     ask: 'Tanya',
     settings: 'Pengaturan',
+    support: 'Dukung',
     lock: 'Kunci',
     workspace: 'Ruang kerja',
   },

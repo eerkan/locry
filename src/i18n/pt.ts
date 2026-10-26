@@ -32,6 +32,7 @@ export const pt: Translation = {
     search: 'Buscar',
     ask: 'Perguntar',
     settings: 'Configurações',
+    support: 'Apoiar',
     lock: 'Bloquear',
     workspace: 'Espaço de trabalho',
   },

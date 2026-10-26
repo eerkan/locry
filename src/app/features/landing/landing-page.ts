@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, comput
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideArrowUpRight, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
 import { PreferencesService, type Theme } from '../../core/preferences.service';
 import { GITHUB_URL } from '../../core/site';
 import type { Donations } from '../../core/donate';
@@ -26,7 +26,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
 @Component({
   selector: 'app-landing-page',
   imports: [LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
-  providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
+  providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   styles: `
@@ -90,7 +90,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
     </ng-template>
     <div class="font-text min-h-svh bg-[var(--paper)] text-[var(--ink)] antialiased" [attr.lang]="tags[t.lang]" [attr.dir]="dir()">
       <a
-        href="#main"
+        [attr.href]="anchor('main')"
         class="sr-only z-50 rounded bg-[var(--ink)] px-3 py-2 text-[var(--paper)] focus:not-sr-only focus:fixed focus:start-3 focus:top-3"
         >{{ t.nav.skip }}</a
       >
@@ -102,14 +102,23 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
           >
           <nav class="hidden lg:block" [attr.aria-label]="t.sections.overview">
             <ul class="flex items-center gap-6 text-[13.5px] text-[var(--soft)]">
-              <li><a href="#features" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.features }}</a></li>
-              <li><a href="#security" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.security }}</a></li>
-              <li><a href="#sync" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.sync }}</a></li>
-              <li><a href="#self-host" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.selfHost }}</a></li>
-              <li><a href="#faq" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.faq }}</a></li>
+              <li><a [attr.href]="anchor('features')" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.features }}</a></li>
+              <li><a [attr.href]="anchor('security')" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.security }}</a></li>
+              <li><a [attr.href]="anchor('sync')" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.sync }}</a></li>
+              <li><a [attr.href]="anchor('self-host')" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.selfHost }}</a></li>
+              <li><a [attr.href]="anchor('faq')" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.faq }}</a></li>
             </ul>
           </nav>
           <div class="ms-auto flex items-center gap-1.5 sm:gap-3">
+            @if (donations()) {
+              <a
+                [attr.href]="anchor('support')"
+                class="flex h-8 items-center gap-1.5 rounded-md px-2 text-[13.5px] text-[var(--soft)] transition-colors hover:text-[var(--ink)]"
+                [attr.aria-label]="t.support.title"
+              >
+                <ng-icon name="lucideHeart" class="text-[15px] text-rose-500" aria-hidden="true" /><span class="hidden md:inline">{{ t.nav.support }}</span>
+              </a>
+            }
             <details #langMenu class="relative">
               <summary
                 class="font-code flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md px-2 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase transition-colors hover:text-[var(--ink)]"
@@ -507,7 +516,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
       <footer class="border-t border-[var(--rule)]">
         <!-- Only in the browser (after hydration): the accounts come from this installation's config. -->
         @if (donations(); as donations) {
-          <section class="border-b border-[var(--rule)]" aria-labelledby="support-title">
+          <section id="support" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="support-title">
             <div class="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-10 sm:px-6 md:flex-row md:justify-between">
               <div class="max-w-md">
                 <h2 id="support-title" class="font-display text-[22px] leading-tight font-[460]">{{ t.support.title }}</h2>
@@ -554,9 +563,9 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             <ng-container *ngTemplateOutlet="themeSwitch; context: { $implicit: 'flex self-start' }" />
           </div>
           <nav [attr.aria-label]="t.footer.links" class="font-code flex flex-wrap gap-x-6 gap-y-2 text-[12px] tracking-[0.08em] uppercase">
-            <a href="#features" class="hover:text-[var(--ink)]">{{ t.nav.features }}</a>
-            <a href="#security" class="hover:text-[var(--ink)]">{{ t.nav.security }}</a>
-            <a href="#faq" class="hover:text-[var(--ink)]">{{ t.nav.faq }}</a>
+            <a [attr.href]="anchor('features')" class="hover:text-[var(--ink)]">{{ t.nav.features }}</a>
+            <a [attr.href]="anchor('security')" class="hover:text-[var(--ink)]">{{ t.nav.security }}</a>
+            <a [attr.href]="anchor('faq')" class="hover:text-[var(--ink)]">{{ t.nav.faq }}</a>
             <a [href]="github" rel="noopener" class="hover:text-[var(--ink)]">GitHub</a>
           </nav>
         </div>
@@ -593,6 +602,13 @@ export class LandingPage {
   protected readonly names = LANGUAGE_NAMES;
   protected readonly tags = LANGUAGE_TAGS;
   protected readonly path = landingPath;
+  /**
+   * In-page links carry the page's own path: the document's base is "/", so a bare "#faq" on
+   * /tr would point at /#faq and leave the page.
+   */
+  protected anchor(id: string): string {
+    return `${landingPath(this.lang())}#${id}`;
+  }
   protected readonly dir = computed(() => direction(this.content().lang));
   protected readonly github = GITHUB_URL;
   protected readonly githubPath =

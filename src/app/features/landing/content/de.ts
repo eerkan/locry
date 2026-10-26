@@ -14,6 +14,7 @@ export const de: LandingContent = {
     sync: 'Synchronisierung',
     selfHost: 'Selbst hosten',
     faq: 'FAQ',
+    support: 'Unterstützen',
     open: 'Locry öffnen',
     skip: 'Zum Inhalt springen',
   },

@@ -14,6 +14,7 @@ export const tr: LandingContent = {
     sync: 'Eşitleme',
     selfHost: 'Kendi sunucunda',
     faq: 'SSS',
+    support: 'Destek ol',
     open: 'Locry’yi aç',
     skip: 'İçeriğe geç',
   },

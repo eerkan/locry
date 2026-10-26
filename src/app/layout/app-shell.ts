@@ -13,6 +13,7 @@ import {
   lucideSearch,
   lucideSettings,
   lucideMessageCircleQuestion,
+  lucideHeart,
 } from '@ng-icons/lucide';
 import { toast } from '@spartan-ng/brain/sonner';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
@@ -35,6 +36,7 @@ import { VaultLabel } from '../shared/vault-ui';
 import { SyncStatusLabel, announceSync, syncStatusLabel } from '../shared/sync-status';
 import { SyncService } from '../core/sync/sync.service';
 import { PreferencesService } from '../core/preferences.service';
+import { RuntimeConfigService } from '../core/runtime-config.service';
 
 interface NavItem {
   path: string;
@@ -68,6 +70,7 @@ interface NavItem {
       lucideListTodo,
       lucideSearch,
       lucideMessageCircleQuestion,
+      lucideHeart,
       lucideSettings,
       lucideLock,
       lucideChevronsUpDown,
@@ -180,6 +183,14 @@ interface NavItem {
                 </button>
               </li>
             }
+            @if (runtime.donations()) {
+              <li hlmSidebarMenuItem>
+                <a hlmSidebarMenuButton routerLink="/settings" fragment="support" [tooltip]="'nav.support' | transloco">
+                  <ng-icon name="lucideHeart" class="text-rose-500" />
+                  <span>{{ 'nav.support' | transloco }}</span>
+                </a>
+              </li>
+            }
             <li hlmSidebarMenuItem>
               <a
                 hlmSidebarMenuButton
@@ -236,6 +247,7 @@ export class AppShell {
   protected readonly vault = inject(VaultService);
   protected readonly ui = inject(ShellUi);
   protected readonly prefs = inject(PreferencesService);
+  protected readonly runtime = inject(RuntimeConfigService);
   private readonly notes = inject(NotesStore);
   private pendingG?: ReturnType<typeof setTimeout>;
   protected readonly isMac = /Mac|iPhone|iPad/.test(navigator.platform);

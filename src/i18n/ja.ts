@@ -32,6 +32,7 @@ export const ja: Translation = {
     search: '検索',
     ask: '質問',
     settings: '設定',
+    support: '支援する',
     lock: 'ロック',
     workspace: 'ワークスペース',
   },

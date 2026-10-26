@@ -29,6 +29,7 @@ export const tr = {
     search: 'Ara',
     ask: 'Sor',
     settings: 'Ayarlar',
+    support: 'Destek ol',
     lock: 'Kilitle',
     workspace: 'Çalışma alanı',
   },

@@ -14,6 +14,7 @@ export const ar: LandingContent = {
     sync: 'المزامنة',
     selfHost: 'استضافة ذاتية',
     faq: 'الأسئلة',
+    support: 'ادعم',
     open: 'افتح Locry',
     skip: 'تخطَّ إلى المحتوى',
   },

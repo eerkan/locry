@@ -32,6 +32,7 @@ export const ar: Translation = {
     search: 'البحث',
     ask: 'اسأل',
     settings: 'الإعدادات',
+    support: 'ادعم',
     lock: 'قفل',
     workspace: 'مساحة العمل',
   },

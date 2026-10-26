@@ -32,6 +32,7 @@ export const zh: Translation = {
     search: '搜索',
     ask: '提问',
     settings: '设置',
+    support: '支持',
     lock: '锁定',
     workspace: '工作区',
   },

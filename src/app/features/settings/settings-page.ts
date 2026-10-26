@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DOCUMENT, afterRenderEffect, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLock } from '@ng-icons/lucide';
@@ -136,6 +138,7 @@ import { VaultCard } from './vault-card';
   `,
 })
 export class SettingsPage {
+  private readonly fragment = toSignal(inject(ActivatedRoute).fragment);
   protected readonly prefs = inject(PreferencesService);
   protected readonly vault = inject(VaultService);
   protected readonly storage = inject(StorageHealthService);
@@ -157,6 +160,12 @@ export class SettingsPage {
 
   constructor() {
     void this.storage.refresh();
+    // Links such as the sidebar's "Support" (/settings#support) open on their card.
+    const document = inject(DOCUMENT);
+    afterRenderEffect(() => {
+      const id = this.fragment();
+      if (id) document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
   }
 
   protected formatBytes(bytes: number): string {

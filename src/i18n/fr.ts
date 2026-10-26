@@ -31,6 +31,7 @@ export const fr: Translation = {
     search: 'Recherche',
     ask: 'Demander',
     settings: 'Réglages',
+    support: 'Soutenir',
     lock: 'Verrouiller',
     workspace: 'Espace de travail',
   },

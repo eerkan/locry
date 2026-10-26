@@ -14,6 +14,7 @@ export const ja: LandingContent = {
     sync: '同期',
     selfHost: 'セルフホスト',
     faq: 'FAQ',
+    support: '支援する',
     open: 'Locry を開く',
     skip: '本文へスキップ',
   },

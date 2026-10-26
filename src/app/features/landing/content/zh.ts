@@ -14,6 +14,7 @@ export const zh: LandingContent = {
     sync: '同步',
     selfHost: '自行部署',
     faq: '常见问题',
+    support: '支持',
     open: '打开 Locry',
     skip: '跳到正文',
   },

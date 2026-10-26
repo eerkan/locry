@@ -14,6 +14,7 @@ export const ru: LandingContent = {
     sync: 'Синхронизация',
     selfHost: 'Свой сервер',
     faq: 'Вопросы',
+    support: 'Поддержать',
     open: 'Открыть Locry',
     skip: 'Перейти к содержимому',
   },

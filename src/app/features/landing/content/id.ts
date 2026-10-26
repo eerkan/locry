@@ -14,6 +14,7 @@ export const id: LandingContent = {
     sync: 'Sinkronisasi',
     selfHost: 'Host sendiri',
     faq: 'FAQ',
+    support: 'Dukung',
     open: 'Buka Locry',
     skip: 'Langsung ke konten',
   },

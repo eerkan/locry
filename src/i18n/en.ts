@@ -31,6 +31,7 @@ export const en: Translation = {
     search: 'Search',
     ask: 'Ask',
     settings: 'Settings',
+    support: 'Support',
     lock: 'Lock',
     workspace: 'Workspace',
   },

@@ -32,6 +32,7 @@ export const ru: Translation = {
     search: 'Поиск',
     ask: 'Спросить',
     settings: 'Настройки',
+    support: 'Поддержать',
     lock: 'Заблокировать',
     workspace: 'Рабочее пространство',
   },

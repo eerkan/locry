@@ -26,6 +26,8 @@ export interface LandingContent {
     sync: string;
     selfHost: string;
     faq: string;
+    /** Header link to the donation section (shown only when donations are configured). */
+    support: string;
     open: string;
     skip: string;
   };
