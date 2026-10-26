@@ -9,6 +9,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmSeparator } from '@spartan-ng/helm/separator';
 import { LANGS, LANGUAGE_NAMES } from '../../core/languages';
+import { Flag } from '../../shared/flag';
 import { type Lang, PreferencesService, type Theme } from '../../core/preferences.service';
 import { StorageHealthService } from '../../core/storage/storage-health.service';
 import { VaultService } from '../../core/vault/vault.service';
@@ -25,6 +26,7 @@ import { VaultCard } from './vault-card';
 @Component({
   selector: 'app-settings-page',
   imports: [
+    Flag,
     AiCard,
     AskCard,
     SupportCard,
@@ -54,11 +56,15 @@ import { VaultCard } from './vault-card';
         <div hlmCardContent class="flex flex-col gap-4">
           <div hlmField orientation="horizontal" class="justify-between">
             <label hlmFieldLabel for="lang">{{ 'common.language' | transloco }}</label>
+            <!-- Options of a native select cannot show images: the chosen language's flag sits next to it. -->
+            <span class="flex items-center gap-2">
+            <app-flag [lang]="prefs.lang()" />
             <select id="lang" [class]="selectClass" (change)="setLang($event)">
               @for (lang of langs; track lang) {
                 <option [value]="lang" [selected]="prefs.lang() === lang">{{ languageNames[lang] }}</option>
               }
             </select>
+            </span>
           </div>
           <div hlmField orientation="horizontal" class="justify-between">
             <label hlmFieldLabel for="theme">{{ 'common.theme' | transloco }}</label>

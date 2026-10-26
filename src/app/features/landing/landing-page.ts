@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, comput
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
 import { PreferencesService, type Theme } from '../../core/preferences.service';
 import { GITHUB_URL } from '../../core/site';
 import type { Donations } from '../../core/donate';
 import { copyText } from '../../shared/copy-text';
+import { Flag } from '../../shared/flag';
 import { RuntimeConfigService } from '../../core/runtime-config.service';
 import { VaultService } from '../../core/vault/vault.service';
 import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, detectLang, direction, isLang, type Lang } from '../../core/languages';
@@ -25,8 +26,8 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
  */
 @Component({
   selector: 'app-landing-page',
-  imports: [LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
-  providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
+  imports: [Flag, LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
+  providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   styles: `
@@ -124,7 +125,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 class="font-code flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md px-2 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase transition-colors hover:text-[var(--ink)]"
                 [attr.aria-label]="t.ui.language + ': ' + names[t.lang]"
               >
-                <ng-icon name="lucideLanguages" class="text-[15px]" aria-hidden="true" />{{ t.lang }}
+                <app-flag [lang]="t.lang" />{{ t.lang }}
               </summary>
               <ul
                 class="absolute end-0 top-full z-50 mt-2 max-h-[70svh] w-56 overflow-y-auto rounded-md border border-[var(--rule)] bg-[var(--paper)] p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.3)]"
@@ -139,7 +140,8 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                       [class]="t.lang === lang ? 'font-medium' : 'text-[var(--soft)]'"
                       [attr.aria-current]="t.lang === lang ? 'page' : null"
                       (click)="remember(lang); langMenu.open = false"
-                      >{{ names[lang] }}<span class="font-code text-[11px] text-[var(--soft)] uppercase" aria-hidden="true">{{ lang }}</span></a
+                      ><span class="flex items-center gap-2.5"><app-flag [lang]="lang" />{{ names[lang] }}</span
+                      ><span class="font-code text-[11px] text-[var(--soft)] uppercase" aria-hidden="true">{{ lang }}</span></a
                     >
                   </li>
                 }
@@ -578,10 +580,11 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
               [routerLink]="path(lang)"
               [attr.hreflang]="tags[lang]"
               [attr.lang]="tags[lang]"
+              class="inline-flex items-center gap-2"
               [class]="t.lang === lang ? 'text-[var(--ink)]' : 'hover:text-[var(--ink)]'"
               [attr.aria-current]="t.lang === lang ? 'page' : null"
               (click)="remember(lang)"
-              >{{ names[lang] }}</a
+              ><app-flag [lang]="lang" />{{ names[lang] }}</a
             >
           }
         </nav>

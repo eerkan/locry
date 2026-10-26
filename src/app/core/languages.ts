@@ -37,6 +37,25 @@ export const LANGUAGE_ENGLISH_NAMES: Record<Lang, string> = {
   de: 'German',
 };
 
+/**
+ * Flag shown next to each language: a country stands in for the language (English: the
+ * United States, Arabic: Saudi Arabia). SVGs from flag-icons, copied to flags/ by the build;
+ * not emoji, which Windows shows as letters.
+ */
+export const LANGUAGE_FLAGS: Record<Lang, string> = {
+  en: 'us',
+  tr: 'tr',
+  zh: 'cn',
+  es: 'es',
+  ar: 'sa',
+  pt: 'br',
+  id: 'id',
+  fr: 'fr',
+  ja: 'jp',
+  ru: 'ru',
+  de: 'de',
+};
+
 /** BCP 47 tags for `<html lang>`, hreflang and date/number formatting. */
 export const LANGUAGE_TAGS: Record<Lang, string> = {
   en: 'en',

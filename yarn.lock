@@ -3941,6 +3941,11 @@ fill-range@^7.1.1:
   dependencies:
     to-regex-range "^5.0.1"
 
+flag-icons@^7.6.0:
+  version "7.6.0"
+  resolved "https://registry.yarnpkg.com/flag-icons/-/flag-icons-7.6.0.tgz#79668a719f1ca591002ddda20dbe7e364bb96621"
+  integrity sha512-hir/PsXwr0EESyizKrXJzmkzpLIMf+1vlNKLqAfvdh+bsU94a7LYWTiubkHKqptGoCPzOUGcm6c4PfC9/BaGSQ==
+
 flatbuffers@^25.1.24:
   version "25.9.23"
   resolved "https://registry.yarnpkg.com/flatbuffers/-/flatbuffers-25.9.23.tgz#346811557fe9312ab5647535e793c761e9c81eb1"

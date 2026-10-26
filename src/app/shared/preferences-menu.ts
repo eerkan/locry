@@ -5,12 +5,13 @@ import { lucideLanguages, lucideMonitor, lucideMoon, lucideSun } from '@ng-icons
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { LANGS, LANGUAGE_NAMES } from '../core/languages';
+import { Flag } from './flag';
 import { PreferencesService, type Theme } from '../core/preferences.service';
 
 /** Language and theme picker, available on the lock screens and in the app shell. */
 @Component({
   selector: 'app-preferences-menu',
-  imports: [HlmButton, HlmDropdownMenuImports, NgIcon, TranslocoPipe],
+  imports: [Flag, HlmButton, HlmDropdownMenuImports, NgIcon, TranslocoPipe],
   providers: [provideIcons({ lucideLanguages, lucideSun, lucideMoon, lucideMonitor })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -25,12 +26,13 @@ import { PreferencesService, type Theme } from '../core/preferences.service';
     </button>
 
     <ng-template #menu>
-      <hlm-dropdown-menu class="w-44">
+      <hlm-dropdown-menu class="w-56">
         <hlm-dropdown-menu-label>{{ 'common.language' | transloco }}</hlm-dropdown-menu-label>
         <hlm-dropdown-menu-group>
           @for (lang of langs; track lang) {
             <button hlmDropdownMenuRadio [checked]="prefs.lang() === lang" (triggered)="prefs.setLang(lang)">
               <hlm-dropdown-menu-radio-indicator />
+              <app-flag [lang]="lang" />
               {{ languageNames[lang] }}
             </button>
           }

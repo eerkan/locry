@@ -45,6 +45,11 @@
                 "glob": "geist-mono-{latin,latin-ext,cyrillic}-wght-normal.woff2",
                 "input": "node_modules/@fontsource-variable/geist-mono/files",
                 "output": "fonts"
+              },
+              {
+                "glob": "{us,tr,cn,es,sa,br,id,fr,jp,ru,de}.svg",
+                "input": "node_modules/flag-icons/flags/4x3",
+                "output": "flags"
               }
             ],
             "styles": [
