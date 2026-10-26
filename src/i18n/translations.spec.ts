@@ -1,4 +1,4 @@
-import { detectLang, direction, LANGS, type Lang } from '../app/core/languages';
+import { detectLang, direction, langFromTag, LANGS, type Lang } from '../app/core/languages';
 import { ar } from './ar';
 import { de } from './de';
 import { en } from './en';
@@ -47,6 +47,15 @@ describe('translations', () => {
     expect(detectLang(['nl-NL', 'de-AT'])).toBe('de');
     expect(detectLang(['nl'])).toBe('en');
     expect(detectLang([])).toBe('en');
+  });
+
+  it('reads the language of an <html lang> tag', () => {
+    expect(langFromTag('zh-Hans')).toBe('zh');
+    expect(langFromTag('pt-BR')).toBe('pt');
+    expect(langFromTag('tr')).toBe('tr');
+    expect(langFromTag('en-GB')).toBe('en');
+    expect(langFromTag('nl')).toBeNull();
+    expect(langFromTag('')).toBeNull();
   });
 
   it('writes Arabic right to left', () => {

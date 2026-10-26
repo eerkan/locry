@@ -104,3 +104,11 @@ export function detectLang(preferred: readonly string[]): Lang {
   }
   return DEFAULT_LANG;
 }
+
+/** The language of a BCP 47 tag such as `<html lang>` ("zh-Hans", "pt-BR", "tr"), if supported. */
+export function langFromTag(tag: string | null | undefined): Lang | null {
+  if (!tag) return null;
+  const exact = LANGS.find((lang) => LANGUAGE_TAGS[lang].toLowerCase() === tag.toLowerCase());
+  const primary = tag.toLowerCase().split('-')[0];
+  return exact ?? (isLang(primary) ? primary : null);
+}
