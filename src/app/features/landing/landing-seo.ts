@@ -5,6 +5,17 @@ import { GITHUB_URL, SITE_URL_PLACEHOLDER } from '../../core/site';
 import { DEFAULT_LANG, LANGS, LANGUAGE_TAGS, OG_LOCALES, direction, type Lang } from '../../core/languages';
 import { landingPath, type LandingContent } from './landing-content';
 
+/**
+ * Chat apps (WhatsApp, Telegram, Slack) and social sites cache a link preview's image by its URL
+ * for a long time. Raise this after redrawing the cards (scripts/og-images.mjs) so shared links
+ * pick up the new image.
+ */
+const OG_IMAGE_VERSION = 2;
+
+function ogImage(site: string, lang: Lang): string {
+  return `${site}/landing/og-${lang}.jpg?v=${OG_IMAGE_VERSION}`;
+}
+
 /** First-screen fonts per script; CJK and Arabic headlines use system fonts, so nothing to preload. */
 function firstScreenFonts(lang: Lang): string[] {
   switch (lang) {
@@ -37,7 +48,7 @@ export class LandingSeo {
   apply(content: LandingContent): void {
     const site = this.siteOrigin();
     const url = `${site}${landingPath(content.lang)}`;
-    const image = `${site}/landing/og-${content.lang}.jpg`;
+    const image = ogImage(site, content.lang);
     this.document.documentElement.lang = LANGUAGE_TAGS[content.lang];
     this.document.documentElement.dir = direction(content.lang);
     this.title.setTitle(content.meta.title);
@@ -52,6 +63,7 @@ export class LandingSeo {
       ['property', 'og:url', url],
       ['property', 'og:locale', OG_LOCALES[content.lang]],
       ['property', 'og:image', image],
+      ['property', 'og:image:type', 'image/jpeg'],
       ['property', 'og:image:width', '1200'],
       ['property', 'og:image:height', '630'],
       ['property', 'og:image:alt', content.meta.ogImageAlt],
@@ -132,7 +144,7 @@ export class LandingSeo {
 
 function structuredData(content: LandingContent, site: string): object {
   const url = `${site}${landingPath(content.lang)}`;
-  const image = `${site}/landing/og-${content.lang}.jpg`;
+  const image = ogImage(site, content.lang);
   const languages = LANGS.map((lang) => LANGUAGE_TAGS[lang]);
   return {
     '@context': 'https://schema.org',
