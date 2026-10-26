@@ -287,6 +287,13 @@ export const pt: LandingContent = {
     madeWith: 'Feito com Angular, Web Crypto e WebAuthn, sem servidor.',
     links: 'Links',
   },
+  support: {
+    title: 'Apoie o Locry',
+    text: 'O Locry é gratuito, de código aberto e não tem anúncios nem rastreamento. Se ele é útil para você, você pode apoiar o desenvolvimento.',
+    crypto: 'Cripto',
+    copy: 'Copiar',
+    copied: 'Copiado',
+  },
   howTo: {
     name: 'Criar um cofre criptografado no Locry',
     description: 'Passos para criar no Locry um cofre de notas e tarefas com criptografia de ponta a ponta que abre com uma passkey.',

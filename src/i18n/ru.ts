@@ -504,6 +504,12 @@ export const ru: Translation = {
     switched: 'Модель изменена; новая скачивается.',
     selected: 'Модель выбрана. Она скачается, когда вы запустите «Спросите свои заметки».',
   },
+  support: {
+    title: 'Поддержать Locry',
+    description: 'Locry бесплатный, с открытым кодом, без рекламы и слежки. Если он вам полезен, вы можете поддержать его развитие.',
+    crypto: 'Криптовалюта',
+    copyAddress: 'Скопировать адрес {{label}}',
+  },
   drive: {
     title: 'Google Drive',
     description:

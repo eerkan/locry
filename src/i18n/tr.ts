@@ -493,6 +493,12 @@ export const tr = {
     switched: 'Model değişti; yenisi indiriliyor.',
     selected: 'Model seçildi. “Notlarına sor”u başlattığında indirilecek.',
   },
+  support: {
+    title: 'Locry’yi destekle',
+    description: 'Locry ücretsiz, açık kaynak; reklam ve takip yok. İşine yarıyorsa geliştirilmesine destek olabilirsin.',
+    crypto: 'Kripto',
+    copyAddress: '{{label}} adresini kopyala',
+  },
   drive: {
     title: 'Google Drive',
     description: 'Şifreli yedekleri Google Drive’ında yalnızca Locry’nin erişebildiği gizli bir klasöre yükle. Google içeriği göremez.',

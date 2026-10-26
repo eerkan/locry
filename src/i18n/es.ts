@@ -503,6 +503,12 @@ export const es: Translation = {
     switched: 'Modelo cambiado; se está descargando el nuevo.',
     selected: 'Modelo elegido. Se descargará cuando inicies «Pregunta a tus notas».',
   },
+  support: {
+    title: 'Apoya a Locry',
+    description: 'Locry es gratis, de código abierto y sin anuncios ni rastreo. Si te resulta útil, puedes apoyar su desarrollo.',
+    crypto: 'Cripto',
+    copyAddress: 'Copiar la dirección {{label}}',
+  },
   drive: {
     title: 'Google Drive',
     description:

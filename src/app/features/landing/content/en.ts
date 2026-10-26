@@ -287,6 +287,13 @@ export const en: LandingContent = {
     madeWith: 'Built with Angular, Web Crypto and WebAuthn, without a server.',
     links: 'Links',
   },
+  support: {
+    title: 'Support Locry',
+    text: 'Locry is free, open source and has no ads or tracking. If it is useful to you, you can support its development.',
+    crypto: 'Crypto',
+    copy: 'Copy',
+    copied: 'Copied',
+  },
   howTo: {
     name: 'Create an encrypted vault in Locry',
     description: 'Steps to create an end-to-end encrypted notes and tasks vault in Locry that opens with a passkey.',

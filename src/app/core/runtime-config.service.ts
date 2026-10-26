@@ -1,8 +1,10 @@
 import { Injectable, signal } from '@angular/core';
+import { type DonateConfig, type Donations, donations } from './donate';
 import { isGoogleClientId } from './drive/google-auth';
 
 interface RuntimeConfig {
   googleClientId?: string;
+  donate?: DonateConfig;
 }
 
 const CACHE_KEY = 'locry.runtime-config';
@@ -17,6 +19,9 @@ export class RuntimeConfigService {
   private readonly _googleClientId = signal<string | null>(null);
   /** Client ID that ships with this installation, if the operator configured one. */
   readonly googleClientId = this._googleClientId.asReadonly();
+  private readonly _donations = signal<Donations | null>(null);
+  /** Where people can support this installation's maintainer; null when none is configured. */
+  readonly donations = this._donations.asReadonly();
 
   async load(): Promise<void> {
     let config = this.cached();
@@ -38,6 +43,7 @@ export class RuntimeConfigService {
     }
     const id = config.googleClientId?.trim();
     this._googleClientId.set(id && isGoogleClientId(id) ? id : null);
+    this._donations.set(donations(config.donate));
   }
 
   private cached(): RuntimeConfig {

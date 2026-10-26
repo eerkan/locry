@@ -5,6 +5,9 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideArrowUpRight, lucideLanguages, lucideMonitor, lucideMoon, lucidePlus, lucideSun } from '@ng-icons/lucide';
 import { PreferencesService, type Theme } from '../../core/preferences.service';
 import { GITHUB_URL } from '../../core/site';
+import type { Donations } from '../../core/donate';
+import { copyText } from '../../shared/copy-text';
+import { RuntimeConfigService } from '../../core/runtime-config.service';
 import { VaultService } from '../../core/vault/vault.service';
 import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, detectLang, direction, isLang, type Lang } from '../../core/languages';
 import { landingPath, type LandingContent } from './landing-content';
@@ -502,6 +505,48 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
       </main>
 
       <footer class="border-t border-[var(--rule)]">
+        <!-- Only in the browser (after hydration): the accounts come from this installation's config. -->
+        @if (donations(); as donations) {
+          <section class="border-b border-[var(--rule)]" aria-labelledby="support-title">
+            <div class="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-10 sm:px-6 md:flex-row md:justify-between">
+              <div class="max-w-md">
+                <h2 id="support-title" class="font-display text-[22px] leading-tight font-[460]">{{ t.support.title }}</h2>
+                <p class="mt-2 text-[15px] leading-[1.6] text-[var(--soft)]">{{ t.support.text }}</p>
+              </div>
+              <div class="flex flex-col gap-4 md:items-end">
+                @if (donations.links.length) {
+                  <ul class="flex flex-wrap gap-2">
+                    @for (link of donations.links; track link.platform) {
+                      <li>
+                        <a
+                          [href]="link.url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex h-9 items-center gap-1.5 rounded-md border border-[var(--rule)] px-3.5 text-[14px] transition-colors hover:border-[var(--ink)]"
+                          >{{ link.name }}<ng-icon name="lucideArrowUpRight" class="text-[var(--soft)] rtl:-scale-x-100"
+                        /></a>
+                      </li>
+                    }
+                  </ul>
+                }
+                @if (donations.crypto.length) {
+                  <div class="flex w-full max-w-md flex-col gap-1.5">
+                    <p class="font-code text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.support.crypto }}</p>
+                    @for (wallet of donations.crypto; track wallet.label + wallet.address) {
+                      <div class="flex items-center gap-3 rounded-md border border-[var(--rule)] px-3 py-2 text-[13px]">
+                        <span class="w-14 shrink-0 font-medium">{{ wallet.label }}</span>
+                        <code #address dir="ltr" class="font-code min-w-0 flex-1 truncate text-[var(--soft)]">{{ wallet.address }}</code>
+                        <button type="button" class="shrink-0 text-[12px] underline underline-offset-2" (click)="copy(wallet.address, address)">
+                          {{ copied() === wallet.address ? t.support.copied : t.support.copy }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
         <div class="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 py-10 text-[14px] text-[var(--soft)] sm:px-6 md:flex-row md:justify-between">
           <div class="flex max-w-md flex-col gap-3">
             <span class="font-display text-[20px] font-[560] tracking-[-0.02em] text-[var(--ink)]">Locry<span class="text-[var(--accent)]">.</span></span>
@@ -567,6 +612,9 @@ export class LandingPage {
   });
   /** Set in the browser only (after hydration), so the prerendered HTML stays the same for everyone. */
   protected readonly hasVault = signal(false);
+  protected readonly donations = signal<Donations | null>(null);
+  protected readonly copied = signal<string | null>(null);
+  private readonly runtime = inject(RuntimeConfigService);
 
   // Shared class lists of the numbered sections.
   protected readonly row = 'mx-auto grid max-w-[1200px] gap-6 px-5 py-16 sm:px-6 md:grid-cols-[190px_1fr] md:gap-10 md:py-24 [&>*]:min-w-0';
@@ -587,8 +635,15 @@ export class LandingPage {
     inject(DestroyRef).onDestroy(() => this.prefs.applyDocumentLanguage());
     afterNextRender(() => {
       this.hasVault.set(this.vault.vaults().length > 0);
+      this.donations.set(this.runtime.donations());
       this.followBrowserLanguage();
     });
+  }
+
+  protected async copy(address: string, element: HTMLElement): Promise<void> {
+    if (!(await copyText(address, element))) return;
+    this.copied.set(address);
+    setTimeout(() => this.copied.update((c) => (c === address ? null : c)), 2000);
   }
 
   /** Remembers a language picked on the page, for this page and the app. */

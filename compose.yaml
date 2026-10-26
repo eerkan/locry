@@ -14,6 +14,12 @@ services:
     environment:
       # Built-in Google Client ID for Drive backups, from .env (see .env.example).
       LOCRY_GOOGLE_CLIENT_ID: ${LOCRY_GOOGLE_CLIENT_ID:-}
+      # Donation accounts shown on the landing page and in Settings (optional, see .env.example).
+      LOCRY_DONATE_GITHUB: ${LOCRY_DONATE_GITHUB:-}
+      LOCRY_DONATE_BUYMEACOFFEE: ${LOCRY_DONATE_BUYMEACOFFEE:-}
+      LOCRY_DONATE_KOFI: ${LOCRY_DONATE_KOFI:-}
+      LOCRY_DONATE_OPENCOLLECTIVE: ${LOCRY_DONATE_OPENCOLLECTIVE:-}
+      LOCRY_DONATE_CRYPTO: ${LOCRY_DONATE_CRYPTO:-}
       # Public address written into the landing pages' canonical links, sitemap and llms.txt.
       LOCRY_DOMAIN: ${LOCRY_DOMAIN:-}
       LOCRY_SITE_URL: ${LOCRY_SITE_URL:-}

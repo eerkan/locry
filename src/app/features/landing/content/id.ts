@@ -287,6 +287,13 @@ export const id: LandingContent = {
     madeWith: 'Dibuat dengan Angular, Web Crypto, dan WebAuthn, tanpa server.',
     links: 'Tautan',
   },
+  support: {
+    title: 'Dukung Locry',
+    text: 'Locry gratis, sumber terbuka, tanpa iklan atau pelacakan. Jika bermanfaat bagi Anda, Anda bisa mendukung pengembangannya.',
+    crypto: 'Kripto',
+    copy: 'Salin',
+    copied: 'Disalin',
+  },
   howTo: {
     name: 'Membuat brankas terenkripsi di Locry',
     description: 'Langkah-langkah membuat brankas catatan dan tugas terenkripsi end-to-end di Locry yang dibuka dengan passkey.',

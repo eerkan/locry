@@ -285,6 +285,13 @@ export const zh: LandingContent = {
     madeWith: '基于 Angular、Web Crypto 和 WebAuthn 构建，无需服务器。',
     links: '链接',
   },
+  support: {
+    title: '支持 Locry',
+    text: 'Locry 免费、开源，没有广告和跟踪。如果它对你有帮助，欢迎支持它的开发。',
+    crypto: '加密货币',
+    copy: '复制',
+    copied: '已复制',
+  },
   howTo: {
     name: '在 Locry 中创建加密保险库',
     description: '在 Locry 中创建一个用通行密钥打开、端到端加密的笔记与任务保险库的步骤。',

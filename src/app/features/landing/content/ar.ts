@@ -287,6 +287,13 @@ export const ar: LandingContent = {
     madeWith: 'مبني بـ Angular وWeb Crypto وWebAuthn، دون خادم.',
     links: 'روابط',
   },
+  support: {
+    title: 'ادعم Locry',
+    text: 'Locry مجاني ومفتوح المصدر، بلا إعلانات ولا تتبّع. إن كان مفيدًا لك، يمكنك دعم تطويره.',
+    crypto: 'العملات المشفّرة',
+    copy: 'نسخ',
+    copied: 'تم النسخ',
+  },
   howTo: {
     name: 'إنشاء خزنة مشفّرة في Locry',
     description: 'خطوات إنشاء خزنة ملاحظات ومهام مشفّرة من طرف إلى طرف في Locry تُفتح بمفتاح مرور.',

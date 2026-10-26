@@ -492,6 +492,12 @@ export const zh: Translation = {
     switched: '模型已更换，正在下载新模型。',
     selected: '已选择模型。开始“向你的笔记提问”时将下载。',
   },
+  support: {
+    title: '支持 Locry',
+    description: 'Locry 免费、开源，没有广告和跟踪。如果它对你有帮助，欢迎支持它的开发。',
+    crypto: '加密货币',
+    copyAddress: '复制 {{label}} 地址',
+  },
   drive: {
     title: 'Google 云端硬盘',
     description: '将加密备份上传到 Google 云端硬盘中只有 Locry 能访问的隐藏文件夹。Google 无法读取它们。',

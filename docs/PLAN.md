@@ -251,6 +251,16 @@ gerçek ekran görüntüleri.
 - Denemeler: Qwen3 ve Gemma 1–5 sn'de doğru kaynaklarla cevapladı; Apertus 0.5B tekrar edip konu dışına çıktı
   (doğru sohbet şablonu ve örneklemeyle de), bu yüzden "deneysel" olarak işaretli.
 
+### Faz 15 — Bağış ✅ tamamlandı
+- ✅ GitHub Sponsors, Buy Me a Coffee, Ko-fi, Open Collective ve kripto adresleri; hepsi isteğe bağlı ve `.env`'den
+  (`LOCRY_DONATE_*`), `/config.json` ile çalışma zamanında gelir: değiştirmek için yeniden derleme gerekmez.
+- ✅ Yalnızca hesap adı alınır, bağlantı her zaman platformun kendi adresine kurulur (sunucuda ve tarayıcıda iki kez
+  doğrulanır); URL ya da bozuk değerler uyarıyla atlanır. Ödeme betiği, iframe ya da üçüncü taraf istek yok.
+- ✅ Tanıtım sayfasında alt bilgide "Locry'yi destekle" bölümü (hydration'dan sonra, statik HTML aynı kalır), Ayarlar'da
+  kart, kripto adresleri için kopyala düğmesi; 11 dilde metinler.
+- ✅ Bir ayarın geçersiz olması diğerlerini artık düşürmüyor (önceden hatalı Client ID tüm config'i boşaltıyordu).
+- ✅ README, `.env.example`, `compose.yaml` ve GitHub "Sponsor" düğmesi için `.github/FUNDING.yml` şablonu.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`

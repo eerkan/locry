@@ -504,6 +504,12 @@ export const id: Translation = {
     switched: 'Model diganti; model baru sedang diunduh.',
     selected: 'Model dipilih. Model akan diunduh saat Anda memulai “Tanya catatan Anda”.',
   },
+  support: {
+    title: 'Dukung Locry',
+    description: 'Locry gratis, sumber terbuka, tanpa iklan atau pelacakan. Jika bermanfaat bagi Anda, Anda bisa mendukung pengembangannya.',
+    crypto: 'Kripto',
+    copyAddress: 'Salin alamat {{label}}',
+  },
   drive: {
     title: 'Google Drive',
     description:

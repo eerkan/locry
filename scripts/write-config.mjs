@@ -7,4 +7,7 @@ import { runtimeConfig } from './runtime-config.mjs';
 const file = resolve(import.meta.dirname, '../public/config.json');
 const config = runtimeConfig();
 writeFileSync(file, JSON.stringify(config, null, 2) + '\n');
-console.log(`config.json: ${config.googleClientId ? 'built-in Google Client ID set' : 'no built-in Google Client ID'}`);
+console.log(
+  `config.json: ${config.googleClientId ? 'built-in Google Client ID set' : 'no built-in Google Client ID'}, ` +
+    `${config.donate ? `donations: ${Object.keys(config.donate).join(', ')}` : 'no donation links'}`,
+);

@@ -287,6 +287,13 @@ export const tr: LandingContent = {
     madeWith: 'Angular, Web Crypto ve WebAuthn ile, sunucusuz.',
     links: 'Bağlantılar',
   },
+  support: {
+    title: 'Locry’yi destekle',
+    text: 'Locry ücretsiz, açık kaynak; reklam ve takip yok. İşine yarıyorsa geliştirilmesine destek olabilirsin.',
+    crypto: 'Kripto',
+    copy: 'Kopyala',
+    copied: 'Kopyalandı',
+  },
   howTo: {
     name: 'Locry ile şifreli bir kasa oluşturma',
     description: 'Locry’de passkey ile açılan, uçtan uca şifreli bir not ve görev kasası oluşturma adımları.',

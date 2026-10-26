@@ -495,6 +495,12 @@ export const en: Translation = {
     switched: 'Model changed; the new one is being downloaded.',
     selected: 'Model selected. It will be downloaded when you start “Ask your notes”.',
   },
+  support: {
+    title: 'Support Locry',
+    description: 'Locry is free, open source and has no ads or tracking. If it is useful to you, you can support its development.',
+    crypto: 'Crypto',
+    copyAddress: 'Copy the {{label}} address',
+  },
   drive: {
     title: 'Google Drive',
     description: 'Upload encrypted backups to a hidden folder in your Google Drive that only Locry can access. Google cannot read them.',

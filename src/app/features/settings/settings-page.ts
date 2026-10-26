@@ -12,6 +12,7 @@ import { StorageHealthService } from '../../core/storage/storage-health.service'
 import { VaultService } from '../../core/vault/vault.service';
 import { AiCard } from './ai-card';
 import { AskCard } from './ask-card';
+import { SupportCard } from './support-card';
 import { BackupCard } from './backup-card';
 import { DriveCard } from './drive-card';
 import { PasskeysCard } from './passkeys-card';
@@ -24,6 +25,7 @@ import { VaultCard } from './vault-card';
   imports: [
     AiCard,
     AskCard,
+    SupportCard,
     BackupCard,
     DriveCard,
     HlmButton,
@@ -129,6 +131,7 @@ import { VaultCard } from './vault-card';
       <app-drive-card />
       <app-ai-card />
       <app-ask-card />
+      <app-support-card />
     </div>
   `,
 })

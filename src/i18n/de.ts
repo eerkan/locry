@@ -503,6 +503,12 @@ export const de: Translation = {
     switched: 'Modell geändert; das neue wird heruntergeladen.',
     selected: 'Modell ausgewählt. Es wird heruntergeladen, wenn du „Frag deine Notizen“ startest.',
   },
+  support: {
+    title: 'Locry unterstützen',
+    description: 'Locry ist kostenlos, Open Source und ohne Werbung oder Tracking. Wenn es dir hilft, kannst du die Entwicklung unterstützen.',
+    crypto: 'Krypto',
+    copyAddress: '{{label}}-Adresse kopieren',
+  },
   drive: {
     title: 'Google Drive',
     description:

@@ -283,6 +283,24 @@ otel tarihleri ve bugünkü görevler gibi sorularda doğru kaynakları buldu; t
 modellerin sınırı, sayfada "kaynakları kontrol et" uyarısı var). Apertus 0.5B aynı sorularda kendini tekrarladı ve
 15–40 saniye sürdü; tekrar döngüleri artık kesiliyor ama cevap kalitesi düşük.
 
+## Bağış
+
+Locry'yi çalıştıran kişi bağış hesaplarını `.env` ile tanımlarsa (bkz. `.env.example`), tanıtım sayfasının alt
+bölümünde ve Ayarlar'da **Locry'yi destekle** kartı görünür; hiçbiri tanımlı değilse hiçbir şey gösterilmez.
+Desteklenenler: GitHub Sponsors, Buy Me a Coffee, Ko-fi, Open Collective (hesap adı verilir, bağlantı her zaman
+platformun kendi adresine kurulur) ve kopyalanabilir kripto adresleri (`LOCRY_DONATE_CRYPTO=BTC:…,ETH:…`).
+Ödeme betiği, iframe ya da üçüncü taraf istek yoktur; bağlantılar yeni sekmede açılır.
+
+```bash
+LOCRY_DONATE_GITHUB=kullaniciadi
+LOCRY_DONATE_KOFI=kullaniciadi
+LOCRY_DONATE_CRYPTO=BTC:bc1q…,ETH:0x…
+```
+
+Değerler sunucunun ürettiği `/config.json` ile tarayıcıya gider; değiştirmek için yalnızca yeniden başlatmak
+(`docker compose up -d`) yeterlidir, yeniden derleme gerekmez. GitHub deposundaki **Sponsor** düğmesi için
+`.github/FUNDING.yml` dosyasındaki satırları doldur.
+
 ## Klavye kısayolları
 
 `?` tuşu tüm listeyi gösterir. Öne çıkanlar: `⌘K` hızlı arama, `/` arama sayfası, `N` yeni not,

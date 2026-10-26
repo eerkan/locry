@@ -504,6 +504,12 @@ export const ja: Translation = {
     switched: 'モデルを変更しました。新しいモデルをダウンロードしています。',
     selected: 'モデルを選択しました。「メモに質問する」を開始するとダウンロードされます。',
   },
+  support: {
+    title: 'Locry を支援する',
+    description: 'Locry は無料のオープンソースで、広告もトラッキングもありません。役に立っていたら、開発を支援していただけます。',
+    crypto: '暗号資産',
+    copyAddress: '{{label}} のアドレスをコピー',
+  },
   drive: {
     title: 'Google Drive',
     description:

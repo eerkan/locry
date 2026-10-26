@@ -74,6 +74,8 @@ export interface LandingContent {
   faq: { title: string; items: Faq[] };
   cta: { title: string; text: string; start: string; github: string };
   footer: { tagline: string; openSource: string; madeWith: string; links: string };
+  /** Shown only when the installation configured donation accounts (LOCRY_DONATE_*). */
+  support: { title: string; text: string; crypto: string; copy: string; copied: string };
   howTo: { name: string; description: string; steps: { name: string; text: string }[] };
 }
 

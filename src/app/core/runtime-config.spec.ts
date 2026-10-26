@@ -36,6 +36,18 @@ describe('RuntimeConfigService', () => {
     expect(offline.googleClientId()).toBe(BUILT_IN);
   });
 
+  it('reads donation accounts and keeps them for offline use', async () => {
+    serve(Response.json({ donate: { github: 'emre', crypto: [{ label: 'BTC', address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' }] } }));
+    await config.load();
+    expect(config.donations()!.links.map((l) => l.url)).toEqual(['https://github.com/sponsors/emre']);
+    expect(config.donations()!.crypto).toHaveLength(1);
+
+    serve(() => Promise.reject(new TypeError('Failed to fetch')));
+    const offline = TestBed.runInInjectionContext(() => new RuntimeConfigService());
+    await offline.load();
+    expect(offline.donations()!.links).toHaveLength(1);
+  });
+
   it('forgets the cached value when the server has no config', async () => {
     serve(Response.json({ googleClientId: BUILT_IN }));
     await config.load();

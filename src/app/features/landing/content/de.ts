@@ -287,6 +287,13 @@ export const de: LandingContent = {
     madeWith: 'Gebaut mit Angular, Web Crypto und WebAuthn, ohne Server.',
     links: 'Links',
   },
+  support: {
+    title: 'Locry unterstützen',
+    text: 'Locry ist kostenlos, Open Source und ohne Werbung oder Tracking. Wenn es dir hilft, kannst du die Entwicklung unterstützen.',
+    crypto: 'Krypto',
+    copy: 'Kopieren',
+    copied: 'Kopiert',
+  },
   howTo: {
     name: 'Einen verschlüsselten Tresor in Locry erstellen',
     description: 'Schritte zum Erstellen eines Ende-zu-Ende-verschlüsselten Tresors für Notizen und Aufgaben in Locry, der sich mit einem Passkey öffnet.',

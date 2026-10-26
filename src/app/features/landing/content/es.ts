@@ -287,6 +287,13 @@ export const es: LandingContent = {
     madeWith: 'Hecha con Angular, Web Crypto y WebAuthn, sin servidor.',
     links: 'Enlaces',
   },
+  support: {
+    title: 'Apoya a Locry',
+    text: 'Locry es gratis, de código abierto y sin anuncios ni rastreo. Si te resulta útil, puedes apoyar su desarrollo.',
+    crypto: 'Cripto',
+    copy: 'Copiar',
+    copied: 'Copiado',
+  },
   howTo: {
     name: 'Crear una bóveda cifrada en Locry',
     description: 'Pasos para crear en Locry una bóveda de notas y tareas cifrada de extremo a extremo que se abre con una passkey.',

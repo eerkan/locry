@@ -504,6 +504,12 @@ export const ar: Translation = {
     switched: 'تم تغيير النموذج؛ يجري تنزيل الجديد.',
     selected: 'تم اختيار النموذج. سيُنزَّل عند بدء «اسأل ملاحظاتك».',
   },
+  support: {
+    title: 'ادعم Locry',
+    description: 'Locry مجاني ومفتوح المصدر، بلا إعلانات ولا تتبّع. إن كان مفيدًا لك، يمكنك دعم تطويره.',
+    crypto: 'العملات المشفّرة',
+    copyAddress: 'نسخ عنوان {{label}}',
+  },
   drive: {
     title: 'Google Drive',
     description:

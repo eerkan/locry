@@ -287,6 +287,13 @@ export const ja: LandingContent = {
     madeWith: 'Angular、Web Crypto、WebAuthn で作られ、サーバーは不要です。',
     links: 'リンク',
   },
+  support: {
+    title: 'Locry を支援する',
+    text: 'Locry は無料のオープンソースで、広告もトラッキングもありません。役に立っていたら、開発を支援していただけます。',
+    crypto: '暗号資産',
+    copy: 'コピー',
+    copied: 'コピーしました',
+  },
   howTo: {
     name: 'Locry で暗号化された保管庫を作成する',
     description: 'パスキーで開く、エンドツーエンド暗号化のメモ・タスク保管庫を Locry で作る手順。',

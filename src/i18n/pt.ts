@@ -504,6 +504,12 @@ export const pt: Translation = {
     switched: 'Modelo alterado; o novo está sendo baixado.',
     selected: 'Modelo escolhido. Ele será baixado quando você iniciar “Pergunte às suas notas”.',
   },
+  support: {
+    title: 'Apoie o Locry',
+    description: 'O Locry é gratuito, de código aberto e não tem anúncios nem rastreamento. Se ele é útil para você, você pode apoiar o desenvolvimento.',
+    crypto: 'Cripto',
+    copyAddress: 'Copiar o endereço {{label}}',
+  },
   drive: {
     title: 'Google Drive',
     description:
