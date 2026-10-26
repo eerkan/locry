@@ -74,7 +74,7 @@ export class LandingSeo {
     // Fonts of the first screen, so the headline does not reflow when they arrive.
     const fonts = firstScreenFonts(content.lang);
     this.document.head.querySelectorAll('link[data-seo^="font-"]').forEach((link, i) => i >= fonts.length && link.remove());
-    fonts.forEach((font, i) => this.preload(`font-${i}`, `/fonts/${font}.woff2`));
+    fonts.forEach((font, i) => this.preload(`font-${i}`, `fonts/${font}.woff2`));
   }
 
   private preload(id: string, href: string): void {
@@ -92,13 +92,16 @@ export class LandingSeo {
   }
 
   /**
-   * Prerendering writes the placeholder, which the server replaces with the real address. In
-   * the browser, keep that address (from the canonical link) rather than writing it back.
+   * Prerendering writes the placeholder, which the server (or the GitHub Pages build) replaces
+   * with the real address. In the browser, keep that address (from the canonical link) rather
+   * than writing the current one back, plus the base path when the app lives under one
+   * (https://user.github.io/locry).
    */
   private siteOrigin(): string {
     if (this.server) return SITE_URL_PLACEHOLDER;
     const canonical = this.document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href;
-    return canonical ? new URL(canonical).origin : this.document.location.origin;
+    const origin = canonical ? new URL(canonical).origin : this.document.location.origin;
+    return origin + new URL(this.document.baseURI).pathname.replace(/\/$/, '');
   }
 
   private link(id: string, rel: string, href: string, hreflang?: string): void {

@@ -261,6 +261,18 @@ gerçek ekran görüntüleri.
 - ✅ Bir ayarın geçersiz olması diğerlerini artık düşürmüyor (önceden hatalı Client ID tüm config'i boşaltıyordu).
 - ✅ README, `.env.example`, `compose.yaml` ve GitHub "Sponsor" düğmesi için `.github/FUNDING.yml` şablonu.
 
+### Faz 16 — GitHub Pages ✅ tamamlandı
+- ✅ `.github/workflows/pages.yml`: `main` push'unda test, derleme (`--base-href` = Pages alt yolu), hazırlama ve
+  yayın; `config.json` depo değişkenlerinden (Google Client ID, bağış hesapları).
+- ✅ `scripts/pages.mjs`: site adresi yer tutucusunu doldurur, dil sayfaları için `<dil>.html`, uygulama adresleri
+  için `404.html`, `/en` yönlendirmesi, `.nojekyll`; service worker manifestini alt yol ve dil sayfası
+  hariç tutmalarıyla yeniden üretir (ngsw-config gezinme desenlerine alt yolu kendisi eklemiyor).
+- ✅ Alt yol desteği: yazı tipleri (`url(fonts/…)`, `externalDependencies` ile derlemede çözülmeden kalır), tanıtım
+  görselleri, yazı tipi ön yüklemeleri ve sayfa içi bağlantılar göreli; tarayıcıda site adresi canonical'ın
+  kökeni + belge tabanı.
+- ✅ Pages gibi davranan yerel bir sunucuyla denendi: dil sayfaları, `404.html` ile derin bağlantılar, kasa oluşturma,
+  not açma ve yeniden yükleme, service worker; kök (`/`) derleme ve Docker değişmeden çalışıyor.
+
 ## Kurulum notları
 
 - Node 24 gerekir (`.nvmrc`): `nvm use`

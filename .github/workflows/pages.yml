@@ -1,0 +1,81 @@
+# Publishes Locry to GitHub Pages on every push to main (and on demand).
+#
+# One-time setup in the repository (Settings):
+# - Pages -> Build and deployment -> Source: "GitHub Actions".
+# - Optional, Secrets and variables -> Actions -> Variables (public values, not secrets):
+#     LOCRY_GOOGLE_CLIENT_ID       built-in Google OAuth Client ID for Drive backups; add the
+#                                  Pages address (https://<user>.github.io) to its
+#                                  "Authorized JavaScript origins"
+#     LOCRY_DONATE_GITHUB, LOCRY_DONATE_BUYMEACOFFEE, LOCRY_DONATE_KOFI,
+#     LOCRY_DONATE_OPENCOLLECTIVE, LOCRY_DONATE_CRYPTO   donation links (see .env.example)
+#
+# The site is served at https://<user>.github.io/<repo>/ (or at the root of a custom domain):
+# the build gets that base path, and scripts/pages.mjs does what scripts/serve.mjs would do
+# at runtime (site address, language pages, 404.html for app routes, service worker).
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer push replaces a queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Test
+        run: yarn test --no-watch
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Runtime config (config.json)
+        run: node scripts/write-config.mjs
+        env:
+          LOCRY_GOOGLE_CLIENT_ID: ${{ vars.LOCRY_GOOGLE_CLIENT_ID }}
+          LOCRY_DONATE_GITHUB: ${{ vars.LOCRY_DONATE_GITHUB }}
+          LOCRY_DONATE_BUYMEACOFFEE: ${{ vars.LOCRY_DONATE_BUYMEACOFFEE }}
+          LOCRY_DONATE_KOFI: ${{ vars.LOCRY_DONATE_KOFI }}
+          LOCRY_DONATE_OPENCOLLECTIVE: ${{ vars.LOCRY_DONATE_OPENCOLLECTIVE }}
+          LOCRY_DONATE_CRYPTO: ${{ vars.LOCRY_DONATE_CRYPTO }}
+
+      - name: Build
+        run: yarn build --base-href "${{ steps.pages.outputs.base_path }}/"
+
+      - name: Prepare for GitHub Pages
+        run: node scripts/pages.mjs
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/locry/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -50,7 +50,10 @@
             "styles": [
               "src/styles.css"
             ],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            "webWorkerTsConfig": "tsconfig.worker.json",
+            "externalDependencies": [
+              "fonts/*"
+            ]
           },
           "configurations": {
             "production": {

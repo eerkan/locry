@@ -111,6 +111,36 @@ verileri de adrese bağlıdır. Verileri taşımak için:
 Ayarlar'daki passkey listesi her passkey'in hangi adrese ait olduğunu gösterir. Google Drive kullanıyorsan alan
 adını da OAuth istemcisinin *Authorized JavaScript origins* listesine ekle.
 
+## GitHub Pages'te ücretsiz yayın
+
+Locry'nin sunucuya ihtiyacı yok, bu yüzden GitHub Pages'te ücretsiz çalışır (depo herkese açık olmalı). Her
+`main` push'unda `.github/workflows/pages.yml` testleri çalıştırır, uygulamayı derler ve yayınlar; adres
+`https://<kullanıcı>.github.io/<depo>/` olur (özel alan adı bağlanırsa kök).
+
+Bir kerelik ayar (depoda **Settings**):
+
+1. **Pages → Build and deployment → Source:** `GitHub Actions`.
+2. İsteğe bağlı, **Secrets and variables → Actions → Variables** (gizli değil, herkese açık değerler):
+   `LOCRY_GOOGLE_CLIENT_ID` ve bağış hesapları (`LOCRY_DONATE_*`, bkz. `.env.example`).
+3. Drive kullanılacaksa Google Cloud'daki OAuth istemcisinin "Yetkili JavaScript kaynakları"na
+   `https://<kullanıcı>.github.io` ekle.
+
+Pages yalnızca dosya sunar; `scripts/serve.mjs`'in istek başına yaptığı işleri derlemeden sonra
+`scripts/pages.mjs` dosyalar üzerinde bir kez yapar: site adresini sayfalara, `sitemap.xml` ve `llms.txt`'ye yazar,
+her dil sayfasını `/tr` gibi yönlendirmesiz açılsın diye `tr.html` olarak da koyar, uygulama adresleri (`/notes`)
+açılsın diye `404.html` olarak uygulama kabuğunu koyar, `/en` için yönlendirme sayfası ekler ve service worker
+manifestini (alt yol dahil) yeniden üretir. `config.json` derlemeden önce depo değişkenlerinden yazılır.
+
+Yerelde aynısını denemek için:
+
+```bash
+npx ng build --base-href /locry/ && SITE_URL=http://localhost:4332/locry node scripts/pages.mjs
+```
+
+Notlar: Pages özel HTTP başlıkları göndermez (güvenlik politikası zaten sayfadaki meta etiketinde); kasalar ve
+passkey'ler adrese bağlıdır, Pages'teki kasa `localhost`'takinden ayrıdır (taşımak için yedek + kurtarma anahtarı).
+Uygulama kök (`/`) yerine alt yolda da çalışır: yazı tipleri, görseller ve sayfa içi bağlantılar göreli adres kullanır.
+
 ## Kasalar
 
 Birden fazla kasa kullanabilirsin: kenar çubuğundaki kasa adına tıkla → **Yeni kasa**. Her kasanın kendi

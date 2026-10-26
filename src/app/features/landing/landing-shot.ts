@@ -42,7 +42,8 @@ export class LandingShot {
   /** A theme chosen on the page; null follows the system preference. */
   readonly theme = input<'light' | 'dark' | null>(null);
 
-  protected readonly base = computed(() => `/landing/${this.lang()}/${this.name()}`);
+  /** Relative to the document's base, so the page also works under a subpath. */
+  protected readonly base = computed(() => `landing/${this.lang()}/${this.name()}`);
   /** With a chosen theme, every source shows that theme; otherwise the media query picks. */
   protected readonly darkMedia = computed(() => (this.theme() ? null : '(prefers-color-scheme: dark)'));
   protected readonly darkSide = computed(() => this.theme() ?? 'dark');

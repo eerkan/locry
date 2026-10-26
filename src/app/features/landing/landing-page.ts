@@ -603,11 +603,12 @@ export class LandingPage {
   protected readonly tags = LANGUAGE_TAGS;
   protected readonly path = landingPath;
   /**
-   * In-page links carry the page's own path: the document's base is "/", so a bare "#faq" on
-   * /tr would point at /#faq and leave the page.
+   * In-page links carry the page's own path, relative to the document's base: a bare "#faq"
+   * on /tr would point at the base (/#faq) and leave the page. Relative, so it also works
+   * under a subpath ("tr#faq" with base /locry/).
    */
   protected anchor(id: string): string {
-    return `${landingPath(this.lang())}#${id}`;
+    return `${landingPath(this.lang()).slice(1)}#${id}`;
   }
   protected readonly dir = computed(() => direction(this.content().lang));
   protected readonly github = GITHUB_URL;
