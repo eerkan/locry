@@ -654,6 +654,12 @@ export class LandingPage {
     // The app beyond this page speaks the interface language again.
     inject(DestroyRef).onDestroy(() => this.prefs.applyDocumentLanguage());
     afterNextRender(() => {
+      // Installed as an app, Locry opens on the app (theme-init.js does this on page loads;
+      // this covers navigating here inside the app).
+      if (isInstalledApp()) {
+        void this.router.navigateByUrl('/app', { replaceUrl: true });
+        return;
+      }
       this.hasVault.set(this.vault.vaults().length > 0);
       this.donations.set(this.runtime.donations());
       this.followBrowserLanguage();
@@ -688,4 +694,14 @@ export class LandingPage {
     const lang = isLang(chosen) ? chosen : detectLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
     if (lang !== 'en') void this.router.navigateByUrl(landingPath(lang), { replaceUrl: true });
   }
+}
+
+/** Running as an installed app (home screen or desktop) rather than in a browser tab. */
+function isInstalledApp(): boolean {
+  return (
+    (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+    matchMedia(
+      '(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui), (display-mode: window-controls-overlay)',
+    ).matches
+  );
 }
