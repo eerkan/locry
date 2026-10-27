@@ -1,281 +1,295 @@
-# Locry — Proje Planı
+# Locry — Project Plan
 
-Tamamen tarayıcıda, backend olmadan çalışan; şifreli **todo listesi** ve **Markdown not** uygulaması.
+An encrypted **todo list** and **Markdown notes** app that runs entirely in the browser, with no backend.
 
-## Temel ilkeler
+## Core principles
 
-- **Backend yok.** Tüm veri tarayıcıda (IndexedDB) tutulur. Dışarıya çıkan tek trafik: kullanıcının açıkça başlattığı Google Drive yedeklemesi ve ilk açılışta embedding modelinin indirilmesi.
-- **Her şey şifreli.** Diskte (IndexedDB) ve yedeklerde düz metin bulunmaz. Şifre çözme anahtarı yalnızca bellekte, kasa açıkken durur.
-- **Parola yok, geçiş anahtarı (passkey) var.** Kurtarma için tek seferlik gösterilen bir kurtarma anahtarı.
-- **Arayüz:** Angular 22 + Spartan UI + Tailwind v4, TR/EN çalışma anında değiştirilebilir.
+- **No backend.** All data lives in the browser (IndexedDB). The only outgoing traffic: Google Drive backups the user explicitly starts, and downloading the embedding model on first use.
+- **Everything encrypted.** No plain text on disk (IndexedDB) or in backups. The decryption key lives only in memory, while the vault is open.
+- **No password, a passkey instead.** For recovery, a recovery key shown once.
+- **Interface:** Angular 22 + Spartan UI + Tailwind v4, TR/EN switchable at runtime.
 
-## Teknoloji seçimleri
+## Technology choices
 
-| Konu | Seçim | Neden |
+| Topic | Choice | Why |
 |---|---|---|
-| UI | Angular 22 (standalone, signals, zoneless), Spartan UI (vega), Tailwind v4 | Kurulu altyapı |
-| İkonlar | `@ng-icons/lucide` | Spartan ile uyumlu |
-| i18n | `@jsverse/transloco` | Çalışma anında dil değiştirme (Angular'ın yerleşik i18n'i derleme zamanlı) |
-| Depolama | IndexedDB (`idb`) | Büyük veri, ikili veri, kota |
-| Kriptografi | Web Crypto API (AES-256-GCM, HKDF-SHA-256) | Tarayıcı yerleşik, ek bağımlılık yok |
-| Passkey | WebAuthn + **PRF uzantısı** | Passkey'den şifreleme anahtarı türetmenin standart yolu |
-| Sıkıştırma | `CompressionStream('gzip')` | Tarayıcı yerleşik |
-| Markdown | `marked` + `DOMPurify` | Hızlı, XSS'e karşı temizlenmiş çıktı |
-| Anlamsal arama | `@huggingface/transformers` (Web Worker, WebGPU → WASM yedek), `multilingual-e5-small` | Tarayıcı içi, çok dilli (TR/EN), ~120 MB |
-| Drive | Google Identity Services (token client) + Drive REST v3, `drive.appdata` kapsamı | Backend gerektirmez, sadece uygulamaya ait gizli klasör |
-| Test | Vitest (Angular CLI) + `fake-indexeddb` | |
+| UI | Angular 22 (standalone, signals, zoneless), Spartan UI (vega), Tailwind v4 | Existing setup |
+| Icons | `@ng-icons/lucide` | Works with Spartan |
+| i18n | `@jsverse/transloco` | Language switching at runtime (Angular's built-in i18n is compile-time) |
+| Storage | IndexedDB (`idb`) | Large data, binary data, quota |
+| Cryptography | Web Crypto API (AES-256-GCM, HKDF-SHA-256) | Built into the browser, no extra dependency |
+| Passkey | WebAuthn + **PRF extension** | The standard way to derive an encryption key from a passkey |
+| Compression | `CompressionStream('gzip')` | Built into the browser |
+| Markdown | `marked` + `DOMPurify` | Fast, output sanitized against XSS |
+| Semantic search | `@huggingface/transformers` (Web Worker, WebGPU → WASM fallback), `multilingual-e5-small` | In the browser, multilingual (TR/EN), ~120 MB |
+| Drive | Google Identity Services (token client) + Drive REST v3, `drive.appdata` scope | Needs no backend, only the app's own hidden folder |
+| Tests | Vitest (Angular CLI) + `fake-indexeddb` | |
 
-## Güvenlik mimarisi
+## Security architecture
 
-### Anahtar hiyerarşisi
-
-```
-Kasa Anahtarı (VK)  — rastgele 256 bit, tüm veriyi şifreler, asla düz halde saklanmaz
- ├─ Anahtar yuvası: passkey #1  →  KEK = HKDF(PRF çıktısı, tuz)  →  AES-GCM(KEK, VK)
- ├─ Anahtar yuvası: passkey #2  →  ...
- └─ Anahtar yuvası: kurtarma    →  KEK = HKDF(kurtarma anahtarı 256 bit)  →  AES-GCM(KEK, VK)
-```
-
-- **Passkey ile açma:** `navigator.credentials.get()` + `prf.eval` → authenticator'dan 32 baytlık gizli değer → KEK → VK çözülür. Kullanıcı doğrulaması (biyometri/PIN) zorunlu.
-- **Kurtarma anahtarı:** 256 bit rastgele, Crockford Base32 olarak gruplanmış gösterilir (ör. `7K3M-Q9XA-...`), yalnızca kurulumda bir kez gösterilir; doğrulama istenir.
-- **Passkey'ler yedeklenebilir mi?** Passkey'in özel anahtarı authenticator'dan hiç çıkmaz; senkronizasyonu iCloud Keychain / Google Password Manager / 1Password yapar. Yedeğe **anahtar yuvaları** (passkey kimliği + o passkey ile sarılmış VK) dahil edilir, böylece senkronlanan passkey başka bir cihazda yedeği açabilir. Hiç passkey yoksa kurtarma anahtarı açar.
-- **rpId** `localhost`'tur; uygulama aynı origin'de (`http://localhost:4200`) çalıştığı sürece passkey'ler geçerlidir.
-- **PRF desteği yoksa** (eski tarayıcı/authenticator) kurulum net bir hata mesajıyla durur; şifresiz moda düşülmez.
-
-### Kayıt şifreleme
-
-- Her kayıt (not, görev, ayar, embedding) ayrı şifrelenir: `AES-GCM(VK, iv=rastgele 96 bit, aad = "locry:v1:<tür>:<id>")`.
-  AAD sayesinde şifreli bir kaydın başka bir kayıtla yer değiştirmesi tespit edilir.
-- IndexedDB'de düz tutulan tek şey: kayıt kimliği, türü ve kasa başlığı (anahtar yuvaları, sürüm). Başlık, çözülebildiğini doğrulamak için şifreli bir doğrulama değeri içerir.
-- **Otomatik kilit:** hareketsizlikte (varsayılan 10 dk, ayarlanabilir) ve elle; kilitlenince VK bellekten atılır. Sayfa yenilenince kasa kilitli açılır.
-
-### Yedek dosyası (`.locry`)
+### Key hierarchy
 
 ```
-[magic "LOCRY" + sürüm] [başlık JSON: anahtar yuvaları, iv, oluşturulma tarihi] [AES-GCM( gzip( tüm kayıtların JSON'u ) )]
+Vault Key (VK)  — random 256 bits, encrypts all data, never stored in plain form
+ ├─ Key slot: passkey #1  →  KEK = HKDF(PRF output, salt)  →  AES-GCM(KEK, VK)
+ ├─ Key slot: passkey #2  →  ...
+ └─ Key slot: recovery    →  KEK = HKDF(recovery key, 256 bits)  →  AES-GCM(KEK, VK)
 ```
 
-- Önce sıkıştırılır, sonra şifrelenir. Embedding'ler yedeğe girmez (geri yüklemede yeniden üretilir).
-- Geri yükleme: passkey ya da kurtarma anahtarı ile; **birleştir** veya **değiştir** seçeneği.
-- Aynı format hem yerel dosya dışa/içe aktarma hem Google Drive için kullanılır.
+- **Unlocking with a passkey:** `navigator.credentials.get()` + `prf.eval` → a 32-byte secret from the authenticator → KEK → VK is unwrapped. User verification (biometrics/PIN) is required.
+- **Recovery key:** 256 random bits, shown grouped in Crockford Base32 (e.g. `7K3M-Q9XA-...`), only once during setup; the user is asked to confirm it.
+- **Can passkeys be backed up?** A passkey's private key never leaves the authenticator; iCloud Keychain / Google Password Manager / 1Password sync it. Backups include the **key slots** (passkey ID + VK wrapped with that passkey), so a synced passkey can open the backup on another device. With no passkey at all, the recovery key opens it.
+- **rpId** is `localhost`; passkeys stay valid as long as the app runs on the same origin (`http://localhost:4200`).
+- **Without PRF support** (old browser/authenticator) setup stops with a clear error message; there is no fallback to an unencrypted mode.
 
-## Fazlar
+### Record encryption
 
-### Faz 1 — Temel altyapı ve güvenli kasa ✅ tamamlandı
-- Uygulama iskeleti: kenar çubuğu düzeni, yönlendirme, açık/koyu tema, TR/EN
-- Kripto çekirdeği: AES-GCM, HKDF, anahtar yuvaları, Base32 kurtarma anahtarı
-- Şifreli IndexedDB depolama katmanı
-- Passkey (PRF) ile kasa oluşturma ve açma, kurtarma anahtarı ile açma
-- Kurulum sihirbazı, kilit ekranı, kurtarma ekranı, otomatik kilit, route guard
-- Birim testleri (kripto, anahtar yuvaları, depolama)
+- Every record (note, task, setting, embedding) is encrypted separately: `AES-GCM(VK, iv=random 96 bits, aad = "locry:v1:<type>:<id>")`.
+  Thanks to the AAD, swapping one encrypted record for another is detected.
+- The only things kept in plain form in IndexedDB: record ID, type, and the vault header (key slots, version). The header holds an encrypted check value to confirm it can be decrypted.
+- **Auto-lock:** after inactivity (10 min by default, adjustable) and manually; locking drops the VK from memory. After a page reload the vault opens locked.
 
-### Faz 2 — Notlar ve görevler ✅ tamamlandı
-- ✅ Markdown notlar: düzenle/bölünmüş/önizleme modları, araç çubuğu ve kısayollar (⌘B/⌘I/⌘K),
-  liste devamı, önizlemeden görev kutusu işaretleme, etiketler, sabitleme, arşiv, otomatik kayıt,
-  boş notların otomatik silinmesi, Türkçe karakter duyarsız arama
-- ✅ Önizleme güvenliği: DOMPurify ile temizleme, dış görseller yüklenmez, bağlantılar `noopener noreferrer`
-- ✅ Görevler: Gelen kutusu / Bugün (gecikenler dahil) / Yaklaşan / Tamamlananlar görünümleri,
-  renkli kullanıcı listeleri (silinince görevler Gelen kutusuna taşınır), sürükle-bırak sıralama,
-  öncelik, bitiş tarihi, alt görevler, açıklama, nota bağlama, kenar çubuğunda bugünkü görev rozeti
-- ✅ Notlar ve görevler ortak şifreli koleksiyon altyapısını (`injectEncryptedCollection`) kullanır
-- ✅ Notlar listesinde metin arama (bellekte, çözülmüş veri üzerinde); notlar ve görevlerde ortak arama sayfası Faz 5 ile gelecek
+### Backup file (`.locry`)
 
-### Faz 3 — Yedekleme ve passkey yönetimi ✅ tamamlandı
-- ✅ `.locry` dışa/içe aktarma: gzip + AES-256-GCM, başlık AAD ile bağlı; birleştir (son yazan kazanır) / değiştir,
-  tek IndexedDB işleminde atomik yazım
-- ✅ Yeni cihazda kurulum ekranından yedekle başlama (eşitlenmiş passkey veya yedeğin kurtarma anahtarı ile)
-- ✅ Ayarlar: passkey ekle (mevcut passkey veya kurtarma anahtarıyla yeniden doğrulama, aynı cihazda
-  tekrar kayıt engellenir) / yeniden adlandır / kaldır (son passkey korunur), kurtarma anahtarını yenile
-  (onaylanana kadar eskisi geçerli), son yedek tarihi
+```
+[magic "LOCRY" + version] [header JSON: key slots, iv, creation date] [AES-GCM( gzip( JSON of all records ) )]
+```
 
-### Faz 4 — Google Drive ✅ tamamlandı
-- ✅ Kullanıcının kendi Google Cloud Client ID'si (kurulum adımlarıyla), GIS token modeli, `drive.appdata` kapsamı;
-  Google betiği yalnızca Drive kullanılınca yüklenir, erişim belirteci yalnızca bellekte tutulur ve kilitlenince silinir
-- ✅ Drive'a yedekle (5 MB üstü için resumable yükleme), listele, geri yükle (birleştir/değiştir), sil;
-  bu kasanın son N yedeği tutulur, başka kasaların yedeklerine dokunulmaz
-- ✅ Yeni cihazda kurulum ekranından Drive'dan başlama
-- ✅ Otomatik yedek (günlük/haftalık, uygulama açıkken); belirteç yoksa tıklanabilir bildirimle sorulur
+- Compressed first, then encrypted. Embeddings are not included in backups (they are recomputed on restore).
+- Restore: with a passkey or the recovery key; **merge** or **replace**.
+- The same format is used for local file export/import and for Google Drive.
 
-### Faz 5 — Anlamsal arama (local LLM) ✅ tamamlandı
-- ✅ Web Worker içinde Transformers.js 4, `Xenova/multilingual-e5-small` (q8, ~120 MB, WASM). Ölçüm: TR/EN test
-  sorgularında fp32 ile aynı kalite (8/9 ilk sırada), `paraphrase-multilingual-MiniLM-L12-v2`'den daha iyi.
-  ONNX çalışma zamanı uygulamayla birlikte sunulur (CDN yok); internete yalnızca model indirilirken çıkılır.
-- ✅ İsteğe bağlı (varsayılan kapalı); not ve görevler parçalara bölünüp vektörlenir, vektörler şifreli saklanır,
-  yalnızca değişen belgeler yeniden hesaplanır, yedeklere girmez
-- ✅ Karma arama: kelime + anlam; anlamsal eşik sorgunun kendi skor dağılımına göre (z-skoru) belirlenir
-- ✅ Arama sayfası (Tümü/Notlar/Görevler, vurgulu alıntılar), ⌘K komut paleti, notta "benzer notlar",
-  aramadan göreve doğrudan geçiş, Ayarlar'da akıllı arama kartı
+## Phases
 
-### Faz 6 — Cilalama ✅ tamamlandı
-- ✅ PWA: kurulabilir, çevrimdışı açılır (Angular service worker), yeni sürüm bildirimi, Locry ikonları
-  (normal + maskelenebilir); `yarn serve:prod` ile yerel production sunucusu (yalnızca localhost)
-- ✅ İçerik Güvenliği Politikası (CSP); kalıcı depolama isteği ve kullanım bilgisi
-- ✅ Klavye kısayolları (`?` yardım), kilit sonrası kalınan sayfaya dönüş (`?next=`, açık yönlendirme korumalı),
-  çevrilmiş sayfa başlıkları
-- ✅ Lighthouse: erişilebilirlik / en iyi uygulamalar / SEO 100
+### Phase 1 — Foundation and secure vault ✅ done
+- App skeleton: sidebar layout, routing, light/dark theme, TR/EN
+- Crypto core: AES-GCM, HKDF, key slots, Base32 recovery key
+- Encrypted IndexedDB storage layer
+- Creating and unlocking a vault with a passkey (PRF), unlocking with the recovery key
+- Setup wizard, lock screen, recovery screen, auto-lock, route guard
+- Unit tests (crypto, key slots, storage)
 
-### Faz 7 — Çoklu kasa ✅ tamamlandı
-Kararlar: kasalar tamamen bağımsız (ayrı anahtar, passkey, kurtarma anahtarı, yedek ve ayarlar);
-aynı anda yalnızca biri açık.
-- ✅ Kasa kaydı ayrı bir IndexedDB'de (`locry-vaults`): kimlik, ad, renk, sıra. Kilit ekranında gösterilebilmesi
-  için ad ve renk şifresiz; içerik ve anahtarlar her zamanki gibi şifreli.
-- ✅ Her kasanın ayrı IndexedDB'si (`locry-vault-<vaultId>`); tek kasalı sürümün `locry` veritabanı ilk açılışta
-  kasa olarak kayda alınır, veri taşınmaz.
-- ✅ Kilit ekranında kasa seçici (son kullanılan hatırlanır), "Yeni kasa", "Yedekten kasa ekle"; kenar çubuğunda
-  kasa değiştirici (açık kasayı kilitleyip seçilenin kilit ekranına gider); Ayarlar'da ad / renk / silme
-  (passkey ya da kurtarma anahtarıyla yeniden doğrulama; dosya ve Drive yedeklerine dokunulmaz).
-- ✅ Passkey'ler parola yöneticisinde "Locry · <kasa adı>" olarak görünür. Planlanan "kasayı passkey'den bulma"
-  yapılmadı: her kasanın PRF tuzu farklı ve passkey seçilmeden doğru tuzu vermek `evalByCredential` ister
-  (Safari desteği belirsiz); aynı `user.id` bazı parola yöneticilerinde eski passkey'in üzerine yazabilir.
-- ✅ Kasa başına tercihler (son yedek, Drive otomatik yedek / saklama, akıllı arama); dil, tema, otomatik kilit
-  ve Client ID uygulama genelinde. Vektör dizini kasanın kendi veritabanında.
-- ✅ Kasa adı ve rengi yedeğin şifreli içeriğinde taşınır. Kilit ekranından geri yükleme: aynı kimlikli kasa
-  varsa onu açıp birleştirir, yoksa yeni kasa olarak ekler.
-- ✅ Testler: kasa ayrımı ve geçiş, yeniden yüklemede son kasa, yeniden adlandırma, eski veritabanının kayda
-  alınması, silme, yedekten ayrı kasa ekleme ve aynı kasaya birleştirme.
+### Phase 2 — Notes and tasks ✅ done
+- ✅ Markdown notes: edit/split/preview modes, toolbar and shortcuts (⌘B/⌘I/⌘K),
+  list continuation, ticking task boxes from the preview, tags, pinning, archive, autosave,
+  automatic deletion of empty notes, search insensitive to Turkish characters
+- ✅ Preview security: sanitized with DOMPurify, external images are not loaded, links get `noopener noreferrer`
+- ✅ Tasks: Inbox / Today (including overdue) / Upcoming / Completed views,
+  colored user lists (deleting one moves its tasks to the Inbox), drag-and-drop ordering,
+  priority, due date, subtasks, description, link to a note, today's task badge in the sidebar
+- ✅ Notes and tasks share the encrypted collection infrastructure (`injectEncryptedCollection`)
+- ✅ Text search in the notes list (in memory, over decrypted data); a shared search page for notes and tasks came with Phase 5
 
-### Faz 8 — Cihazlar arası eşitleme (telefon + bilgisayar) ✅ tamamlandı
-Kararlar: kendi alan adında HTTPS (Caddy profili), Drive üzerinden otomatik eşitleme, çakışmada kopya.
-- ✅ **Silme kayıtları:** notlar, görevler ve listeler silinince şifreli bir silme kaydı kalır (90 gün); vektörler ve
-  eşitleme durumu yalnızca cihazda tutulur, eşitlenmez ve yedeklere girmez.
-- ✅ **Eşitleme dosyaları:** her cihaz yalnızca kendi dosyasına yazar (`appDataFolder`, yedek biçimi + silme
-  kayıtları; `locrySync`, kasa ve cihaz kimliği uygulama özelliği olarak). Değişmeyen içerik yeniden yüklenmez;
-  görülen dosyalar `modifiedTime` ile atlanır. Eşitleme kopyaları yedek listesinde görünmez, budamaya girmez.
-- ✅ **Üç yönlü birleştirme:** kayıt başına son anlaşılan sürüm yerelde şifreli tutulur. Tek tarafta değişen alınır;
-  iki tarafta değişende düzenleme silmeyi yener, notlarda eski sürüm "(çakışma)" kopyası olur, görevlerde son
-  değişen kazanır. Görev sıralaması artık `updatedAt`'i günceller.
-- ✅ **Kasa başlığı:** passkey yuvaları birleşir, kaldırılan yuvalar ve eski kurtarma anahtarı `removedSlotIds` ile
-  geri gelmez. Başlık, kasa anahtarıyla açılan dosyanın AAD'si olduğundan değiştirilemez. Kasa adı ve rengi de
-  (zaman damgasıyla) eşitlenir.
-- ✅ **Zamanlama:** kilit açılınca, sekmeye dönünce, değişiklikten 30 sn sonra, 5 dakikada bir; yalnızca açıkken.
-  Belirteç yoksa arka planda açılır pencere açılmaz; kenar çubuğu "Eşitlemek için Google'a bağlan" der.
-- ✅ **Arayüz:** Ayarlar'da eşitleme kartı (aç/kapat, durum, son eşitleme, eşitleyen cihazlar), kenar çubuğunda
-  durum göstergesi, arka planda çakışma olursa bildirim.
-- ✅ **Yeni cihaz:** geri yükleme ekranında "Eşitlenen kasalar" → kasa eklenir, eşitlemesi açılır.
-- ✅ **Mobil:** menüden sayfa seçilince yan menü kapanır; dar ekranda not, görev, ayarlar ve kilit ekranı kontrol
-  edildi. Belgeler: README'de kurulum adımları ve çalışma şekli.
-- ✅ Testler: birleştirme kuralları, başlık birleştirme, iki sahte cihazla uçtan uca eşitleme (düzenleme, silme,
-  çakışma, passkey ve kasa adı), belirteç yokken bekleme, eşitleme kopyalarının yedeklerden ayrı tutulması.
+### Phase 3 — Backups and passkey management ✅ done
+- ✅ `.locry` export/import: gzip + AES-256-GCM, bound to the header through AAD; merge (last writer wins) / replace,
+  atomic write in a single IndexedDB transaction
+- ✅ Starting from a backup on the setup screen of a new device (with a synced passkey or the backup's recovery key)
+- ✅ Settings: add a passkey (re-verifying with an existing passkey or the recovery key; registering the same device
+  twice is blocked) / rename / remove (the last passkey is protected), renew the recovery key
+  (the old one stays valid until the new one is confirmed), last backup date
 
-### Faz 9 — Tanıtım sayfası, SEO ve yapay zekâ aramaları ✅ tamamlandı
-Kararlar: `/` Türkçe, `/en` İngilizce landing; uygulama adresleri aynen (giriş `/app`); açık kaynak (GitHub);
-gerçek ekran görüntüleri.
-- ✅ Angular statik ön-üretim (`outputMode: static`) + hydration yalnızca `/` ve `/en` için; diğer rotalar
-  `index.csr.html` ile istemcide. Kasa, IndexedDB, `localStorage` ve `location` kullanan kod sunucu tarafında çalışmaz.
-  Artımlı hydration ve olay tekrarı kapalı (satır içi betik ister, CSP yasaklar).
-- ✅ İçerik: başlık, kısaca Locry (alıntılanabilir tanım + olgular), özellikler, görevler, şifreleme şeması ve
-  güvenlik modeli, çoklu kasa, eşitleme, akıllı arama, karşılaştırma, kendi sunucunda çalıştırma, SSS, CTA.
-  Bu cihazda kasa varsa düğmeler "Kasanı aç" olur (hydration sonrası).
-- ✅ SEO: meta, canonical, hreflang, OG/Twitter kartları, JSON-LD (SoftwareApplication, SoftwareSourceCode,
-  WebSite, WebPage, FAQPage, HowTo), robots.txt, sitemap.xml, llms.txt, uygulama sayfalarında noindex.
-  Adresler sunucuda `LOCRY_SITE_URL` / `LOCRY_DOMAIN` ile doldurulur.
-- ✅ Görseller: `scripts/screenshots.mjs` (Chrome + sanal passkey + örnek veri, TR/EN, açık/koyu, AVIF/WebP,
-  1080/2160 srcset), `scripts/og-images.mjs`. Tema betiği ilk boyamadan önce çalışır (titreme yok).
-- ✅ Sunucu: ön-üretilmiş sayfalar, brotli/gzip, yalnızca hash'li dosyalar kalıcı önbellekte; service worker
-  landing'i ağdan alır.
-- ✅ Yol üstünde düzeltilenler: şifreli koleksiyonlarda yükleme ile yazma arasındaki yarış (yeni test), anlamsal
-  aramada "her şeye benzeyen" kısa belgeler için merkez düzeltmesi (TR doğru ilk sonuç 7/12 → 9/12, EN 7/11 → 10/11,
-  ilgisiz eşleşmeler yarıya indi), arama alıntılarında Markdown tablo çizgileri.
-- ✅ Lighthouse: masaüstü 100/100/100/100; mobil performans 92–94, erişilebilirlik / en iyi uygulamalar / SEO 100.
+### Phase 4 — Google Drive ✅ done
+- ✅ The user's own Google Cloud Client ID (with setup steps), GIS token model, `drive.appdata` scope;
+  the Google script loads only when Drive is used, the access token lives only in memory and is dropped on lock
+- ✅ Back up to Drive (resumable upload above 5 MB), list, restore (merge/replace), delete;
+  the last N backups of this vault are kept, other vaults' backups are left alone
+- ✅ Starting from Drive on the setup screen of a new device
+- ✅ Automatic backup (daily/weekly, while the app is open); with no token, a clickable notification asks
 
-### Faz 10 — Seçilebilir gömme (embedding) modelleri ✅ tamamlandı
-- ✅ Beş model, kasa başına seçim: EmbeddingGemma 300M (varsayılan, q4 `no_gather` — tarayıcının WASM çalışma
-  zamanında düz q4'ün GatherBlockQuantized işlemi yok), Multilingual E5 Small / Base, Snowflake Arctic Embed M v2.0,
-  BGE-M3. Model kataloğunda depo, yükleme biçimi, havuzlama, önekler, boyut ve kalibrasyon.
-- ✅ Ölçüm (TR/EN, 23 sorgu): doğru not ilk sırada Gemma 20/23, E5 Small/Base 19/23, Arctic ve BGE-M3 16/23.
-  Model başına hubness ağırlığı, z eşiği, az belge için mutlak taban ve benzer not tabanı.
-- ✅ 15'ten az belgeli kasalarda z-skoru yerine modelin mutlak tabanı.
-- ✅ Model değişimi: onay penceresi (boyut, belge sayısı), işçi yeni modelle yeniden başlar, tüm belgeler yeniden
-  vektörlenir, kullanılmayan model dosyaları tarayıcı önbelleğinden silinir; önceden açık kasalar E5 Small'da kalır.
-- ✅ Yol üstünde: üretim sunucusunun sıkıştırma önbelleği aynı uzunluktaki yeni HTML'i eski sürümle karıştırıyordu
-  (artık dosyanın değişme zamanına bağlı).
+### Phase 5 — Semantic search (local model) ✅ done
+- ✅ Transformers.js 4 in a Web Worker, `Xenova/multilingual-e5-small` (q8, ~120 MB, WASM). Measured: on TR/EN test
+  queries the same quality as fp32 (8/9 in first place), better than `paraphrase-multilingual-MiniLM-L12-v2`.
+  The ONNX runtime ships with the app (no CDN); the only network access is downloading the model.
+- ✅ Optional (off by default); notes and tasks are split into chunks and embedded, vectors are stored encrypted,
+  only changed documents are recomputed, vectors are not included in backups
+- ✅ Hybrid search: keyword + meaning; the semantic threshold follows the query's own score distribution (z-score)
+- ✅ Search page (All/Notes/Tasks, highlighted excerpts), ⌘K command palette, "similar notes" in a note,
+  jumping straight from search to a task, smart search card in Settings
 
-### Faz 11 — Cihazlar arası yedeklerin birleştirilmesi ✅ tamamlandı
-- ✅ Drive yedekleri cihaz kimliği ve adıyla etiketlenir; budama yalnızca bu cihazın yedeklerini siler (önceden
-  sık yedek alan bir cihaz, diğer cihazın tek kopyası olan yedeği silebiliyordu).
-- ✅ Yedeklemeden önce diğer cihazların bu cihazın henüz birleştirmediği en yeni yedekleri birleştirilir;
-  yedekler silme kayıtlarını da taşır. Otomatik yedek, yerelde değişiklik yokken de yeni bir yabancı yedek varsa çalışır.
-- ✅ Birleştirme motoru düzeltildi: "onlar değiştirdi mi" artık o cihazdan en son görülen hale, "ben değiştirdim mi"
-  bu cihazın en son yayınladığı hale göre. Önceki tek ortak tabanla, eski bir kopya (eski yedek ya da yeni düzenlemeyi
-  henüz görmemiş bir cihaz) daha yeni bir düzenlemeyi ezebiliyordu. Dosya yedeği indirmek ve yedekten geri yüklemek
-  de yayın/ortak hal sayılır; ilk karşılaşmada gereksiz çakışma kopyası oluşmaz.
-- ✅ Eşitleme ve yedekleme aynı birleştirici üzerinden, sırayla çalışır (`SnapshotMerger`).
-- ✅ Testler: telefon yedeğinin birleştirilmesi ve korunması, silmenin taşınması, eski yedeğin yeni düzenlemeyi
-  ezmemesi, değişiklik yokken yabancı yedek için otomatik yedek, birleştirme kuralları.
+### Phase 6 — Polish ✅ done
+- ✅ PWA: installable, opens offline (Angular service worker), new version notice, Locry icons
+  (regular + maskable); local production server with `yarn serve:prod` (localhost only)
+- ✅ Content Security Policy (CSP); persistent storage request and usage info
+- ✅ Keyboard shortcuts (`?` for help), returning to the previous page after unlocking (`?next=`, protected against
+  open redirects), translated page titles
+- ✅ Lighthouse: accessibility / best practices / SEO 100
 
-### Faz 12 — Landing yeniden tasarımı ✅ tamamlandı
-- ✅ Editoryal tasarım: Fraunces başlıklar, Geist metin, Geist Mono teknik etiketler; numaralı bölümler, ince
-  çizgiler, tek sıcak vurgu rengi; gradyan, parıltı ve kart ızgarası yok. Şifreleme bölümünde gerçek akış şeması.
-- ✅ Aydınlık / karanlık / sistem teması (başlıkta ve alt bilgide); ekran görüntüleri seçilen temaya uyar.
-- ✅ Varsayılan dil İngilizce (`/`), Türkçe `/tr`; tarayıcı dili Türkçe olan ziyaretçi yönlenir, sayfada seçilen dil
-  hatırlanır ve uygulamanın diline de uygulanır. `/en` → `/` kalıcı yönlendirme; hreflang, sitemap, llms.txt güncel.
-- ✅ Yazı tipleri `/fonts` altında, yalnızca Latin + Latin Extended, ilk ekrandakiler önceden yüklenir (CLS 0).
-- Lighthouse: masaüstü performans 99; mobil 83–88 (önceki sistem yazı tipli tasarım 92–94); diğer kategoriler 100.
+### Phase 7 — Multiple vaults ✅ done
+Decisions: vaults are fully independent (separate key, passkeys, recovery key, backups and settings);
+only one is open at a time.
+- ✅ The vault registry is a separate IndexedDB (`locry-vaults`): ID, name, color, order. Name and color are
+  unencrypted so the lock screen can show them; content and keys are encrypted as always.
+- ✅ Each vault has its own IndexedDB (`locry-vault-<vaultId>`); the single-vault version's `locry` database is
+  registered as a vault on first launch, no data is moved.
+- ✅ Vault picker on the lock screen (remembers the last one used), "New vault", "Add vault from backup"; a vault
+  switcher in the sidebar (locks the open vault and goes to the chosen one's lock screen); name / color / delete in
+  Settings (re-verifying with a passkey or the recovery key; file and Drive backups are left alone).
+- ✅ Passkeys appear in password managers as "Locry · <vault name>". The planned "find the vault from the passkey"
+  was not built: each vault has a different PRF salt, and supplying the right salt before a passkey is chosen needs
+  `evalByCredential` (Safari support unclear); the same `user.id` can overwrite the old passkey in some password managers.
+- ✅ Per-vault preferences (last backup, Drive automatic backup / retention, smart search); language, theme, auto-lock
+  and Client ID are app-wide. The vector index lives in the vault's own database.
+- ✅ The vault's name and color travel inside the backup's encrypted content. Restoring from the lock screen: if a
+  vault with the same ID exists it is opened and merged, otherwise it is added as a new vault.
+- ✅ Tests: vault separation and switching, last vault after reload, renaming, registering the old database,
+  deletion, adding a separate vault from a backup and merging into the same vault.
 
-### Faz 13 — 11 dil ✅ tamamlandı
-- ✅ Arayüz dilleri: İngilizce (varsayılan), Türkçe ve internette en çok kullanılan diğer dokuz dil — Çince
-  (basitleştirilmiş), İspanyolca, Arapça, Portekizce (Brezilya), Endonezce, Fransızca, Japonca, Rusça, Almanca.
-  Dil listesi tek yerde (`core/languages.ts`): adlar, BCP 47 etiketleri, Open Graph yerelleri, yön.
-- ✅ İlk açılışta tarayıcının dili seçilir (destekleniyorsa), yoksa İngilizce. Ayarlar ve menüde dil adları kendi dillerinde.
-- ✅ Arapça tam sağdan sola: `<html dir="rtl">`, kenar çubuğu ve görev ayrıntısı paneli taraf değiştirir, yön bildiren
-  oklar aynalanır; Spartan bileşenlerindeki fiziksel kenar boşlukları mantıksal sınıflara çevrildi.
-- ✅ Çeviri testleri: her dil İngilizceyle aynı anahtarları ve aynı `{{yer tutucuları}}` taşır, hiçbiri boş değildir.
-- ✅ Tanıtım sayfası 11 dilde, her biri ayrı prerender edilmiş statik HTML (`/`, `/tr`, `/zh`, `/es`, `/ar`, `/pt`,
-  `/id`, `/fr`, `/ja`, `/ru`, `/de`); metinler dil başına ayrı parça olarak yüklenir. Başlıkta dil menüsü, alt bilgide
-  tüm diller; `/` adresine gelen ziyaretçi tarayıcısının diline yönlenir. hreflang (11 dil + x-default), sitemap,
-  llms.txt, JSON-LD çeviri ilişkileri güncel.
-- ✅ Yazı tipleri: Rusça için Geist Kiril; Çince, Japonca ve Arapça sistem yazı tiplerini kullanır (önceden yükleme yok,
-  eğik vurgu ve harf aralığı kapalı, Japonca başlıklar söz öbeği sınırında kırılır).
-- ✅ Ekran görüntüleri her dilde yeniden alındı (o dilin örnek notları, görevleri ve arama sorgusuyla; Arapçada
-  sağdan sola uygulama). OG kartları Chrome'da HTML olarak çiziliyor, Arapça ve CJK başlıklar düzgün diziliyor.
-- ✅ Yol üstünde: tanıtım sayfasından uygulamaya geçince sayfanın dili/yönü uygulamanın diline geri dönüyor; dar ekranda
-  karşılaştırma tablosu sayfayı taşırmıyor (Arapçada fark edildi).
-- ⚠️ Çeviriler yapay zekâ ile yapıldı; ana dili konuşanların gözden geçirmesi önerilir.
+### Phase 8 — Sync across devices (phone + computer) ✅ done
+Decisions: HTTPS on your own domain (Caddy profile), automatic sync through Drive, a copy on conflict.
+- ✅ **Deletion records:** deleting notes, tasks and lists leaves an encrypted deletion record (90 days); vectors and
+  sync state stay on the device only, are not synced and are not included in backups.
+- ✅ **Sync files:** each device writes only its own file (`appDataFolder`, backup format + deletion records;
+  `locrySync`, vault and device ID as app properties). Unchanged content is not uploaded again;
+  files already seen are skipped by `modifiedTime`. Sync copies don't appear in the backup list and are not pruned.
+- ✅ **Three-way merge:** the last agreed version of each record is kept locally, encrypted. A change on one side
+  is taken; when both sides changed, an edit beats a deletion, for notes the older version becomes a "(conflict)"
+  copy, for tasks the latest change wins. Reordering tasks now updates `updatedAt`.
+- ✅ **Vault header:** passkey slots are merged; removed slots and the old recovery key don't come back thanks to
+  `removedSlotIds`. The header is the AAD of the file opened with the vault key, so it cannot be altered. The vault's
+  name and color are synced too (with timestamps).
+- ✅ **Timing:** on unlock, on returning to the tab, 30 s after a change, every 5 minutes; only while open.
+  With no token, no pop-up opens in the background; the sidebar says "Connect to Google to sync".
+- ✅ **Interface:** sync card in Settings (on/off, status, last sync, syncing devices), status indicator in the
+  sidebar, a notification when a conflict happens in the background.
+- ✅ **New device:** "Synced vaults" on the restore screen → the vault is added and its sync turned on.
+- ✅ **Mobile:** picking a page from the menu closes the side menu; notes, tasks, settings and the lock screen were
+  checked on narrow screens. Docs: setup steps and how it works in the README.
+- ✅ Tests: merge rules, header merging, end-to-end sync with two fake devices (edit, delete,
+  conflict, passkeys and vault name), waiting without a token, keeping sync copies apart from backups.
 
-### Faz 14 — Notlarına sor ✅ tamamlandı
-- ✅ Sorulara kendi notlarından ve görevlerinden cevap: hibrit arama (kelime + anlam) ilgili belgeleri bulur, en iyi
-  sonucun %60'ının altındakiler elenir, kalanlar numaralı kaynaklar olarak küçük bir dil modeline verilir; cevap
-  akış hâlinde yazılır, `[n]` atıfları not/görev bağlantısına dönüşür, kaynak olmayan numaralar atılır.
-- ✅ Üç model, cihaz başına seçim, ilk kullanımda bir kez indirme: Qwen3 0.6B (varsayılan, düşünme modu kapalı),
-  Apertus 0.5B (deneysel), Gemma 3 1B. Transformers.js + WebGPU, ayrı Web Worker; `shader-f16` yoksa `q4`.
-  WebGPU yoksa özellik açıklamayla devre dışı.
-- ✅ Gündem soruları dilden bağımsız tanınır: soru, 11 dildeki gündem cümlelerine bulunan notlardan daha yakınsa
-  (aynı gömme modeliyle, belge ölçeğinde) bir hafta içinde vadesi gelen açık görevler kaynak olur. Akıllı arama
-  kapalıyken yalnızca hiçbir şey bulunamadığında.
-- ✅ Kaynak yoksa model çağrılmaz ("bulamadım"); tekrar döngüleri kesilir; Markdown cevaplar düz metne çevrilir.
-- ✅ Gizlilik: sohbet yalnızca bellekte, kasa kilitlenince model durdurulur ve sohbet silinir. Model dosyalarının
-  temizliği gömme ve dil modelleri arasında ortak (`model-cache.ts`), biri diğerinin dosyalarını silmez.
-- ✅ 11 dilde arayüz metinleri; kenar çubuğunda **Sor**, `G` `A` kısayolu, komut paletinde giriş, Ayarlar'da kart.
-- ✅ Testler: istem (kaynak numaraları, görev durumu, bütçe, geçmiş), atıflar, düşünme bloğu, döngü kesme, kaynak
-  yokken model çağrılmaması, zayıf sonuçların elenmesi, gündem, kilitte sohbetin silinmesi.
-- Denemeler: Qwen3 ve Gemma 1–5 sn'de doğru kaynaklarla cevapladı; Apertus 0.5B tekrar edip konu dışına çıktı
-  (doğru sohbet şablonu ve örneklemeyle de), bu yüzden "deneysel" olarak işaretli.
+### Phase 9 — Landing page, SEO and AI search ✅ done
+Decisions: `/` Turkish, `/en` English landing; app addresses unchanged (entry `/app`); open source (GitHub);
+real screenshots. (Phase 12 later made English the default.)
+- ✅ Angular static prerendering (`outputMode: static`) + hydration only for `/` and `/en`; other routes render on
+  the client from `index.csr.html`. Code using the vault, IndexedDB, `localStorage` and `location` doesn't run on the
+  server. Incremental hydration and event replay are off (they need an inline script, which the CSP forbids).
+- ✅ Content: hero, Locry in brief (a quotable definition + facts), features, tasks, encryption diagram and
+  security model, multiple vaults, sync, smart search, comparison, self-hosting, FAQ, CTA.
+  If this device has a vault, the buttons become "Open your vault" (after hydration).
+- ✅ SEO: meta, canonical, hreflang, OG/Twitter cards, JSON-LD (SoftwareApplication, SoftwareSourceCode,
+  WebSite, WebPage, FAQPage, HowTo), robots.txt, sitemap.xml, llms.txt, noindex on app pages.
+  Addresses are filled in on the server from `LOCRY_SITE_URL` / `LOCRY_DOMAIN`.
+- ✅ Images: `scripts/screenshots.mjs` (Chrome + virtual passkey + sample data, TR/EN, light/dark, AVIF/WebP,
+  1080/2160 srcset), `scripts/og-images.mjs`. The theme script runs before first paint (no flicker).
+- ✅ Server: prerendered pages, brotli/gzip, only hashed files cached long-term; the service worker fetches the
+  landing page from the network.
+- ✅ Fixed along the way: a race between loading and writing in encrypted collections (new test), a centering fix in
+  semantic search for short documents that "resemble everything" (TR correct first result 7/12 → 9/12, EN 7/11 → 10/11,
+  unrelated matches halved), Markdown table lines in search excerpts.
+- ✅ Lighthouse: desktop 100/100/100/100; mobile performance 92–94, accessibility / best practices / SEO 100.
 
-### Faz 15 — Bağış ✅ tamamlandı
-- ✅ GitHub Sponsors, Buy Me a Coffee, Ko-fi, Open Collective ve kripto adresleri; hepsi isteğe bağlı ve `.env`'den
-  (`LOCRY_DONATE_*`), `/config.json` ile çalışma zamanında gelir: değiştirmek için yeniden derleme gerekmez.
-- ✅ Yalnızca hesap adı alınır, bağlantı her zaman platformun kendi adresine kurulur (sunucuda ve tarayıcıda iki kez
-  doğrulanır); URL ya da bozuk değerler uyarıyla atlanır. Ödeme betiği, iframe ya da üçüncü taraf istek yok.
-- ✅ Tanıtım sayfasında alt bilgide "Locry'yi destekle" bölümü (hydration'dan sonra, statik HTML aynı kalır), Ayarlar'da
-  kart, kripto adresleri için kopyala düğmesi; 11 dilde metinler.
-- ✅ Bir ayarın geçersiz olması diğerlerini artık düşürmüyor (önceden hatalı Client ID tüm config'i boşaltıyordu).
-- ✅ README, `.env.example`, `compose.yaml` ve GitHub "Sponsor" düğmesi için `.github/FUNDING.yml` şablonu.
+### Phase 10 — Selectable embedding models ✅ done
+- ✅ Five models, chosen per vault: EmbeddingGemma 300M (default, q4 `no_gather` — the browser's WASM runtime lacks
+  plain q4's GatherBlockQuantized operation), Multilingual E5 Small / Base, Snowflake Arctic Embed M v2.0,
+  BGE-M3. The model catalog holds the repository, loading format, pooling, prefixes, size and calibration.
+- ✅ Measured (TR/EN, 23 queries): correct note in first place Gemma 20/23, E5 Small/Base 19/23, Arctic and BGE-M3 16/23.
+  Per-model hubness weight, z threshold, absolute floor for few documents, and a similar-notes floor.
+- ✅ In vaults with fewer than 15 documents, the model's absolute floor instead of the z-score.
+- ✅ Switching models: a confirmation dialog (size, document count), the worker restarts with the new model, all
+  documents are re-embedded, unused model files are removed from the browser cache; vaults opened before stay on E5 Small.
+- ✅ Along the way: the production server's compression cache mixed up new HTML of the same length with the old
+  version (now keyed to the file's modification time).
 
-### Faz 16 — GitHub Pages ✅ tamamlandı
-- ✅ `.github/workflows/pages.yml`: `main` push'unda test, derleme (`--base-href` = Pages alt yolu), hazırlama ve
-  yayın; `config.json` depo değişkenlerinden (Google Client ID, bağış hesapları).
-- ✅ `scripts/pages.mjs`: site adresi yer tutucusunu doldurur, dil sayfaları için `<dil>.html`, uygulama adresleri
-  için `404.html`, `/en` yönlendirmesi, `.nojekyll`; service worker manifestini alt yol ve dil sayfası
-  hariç tutmalarıyla yeniden üretir (ngsw-config gezinme desenlerine alt yolu kendisi eklemiyor).
-- ✅ Alt yol desteği: yazı tipleri (`url(fonts/…)`, `externalDependencies` ile derlemede çözülmeden kalır), tanıtım
-  görselleri, yazı tipi ön yüklemeleri ve sayfa içi bağlantılar göreli; tarayıcıda site adresi canonical'ın
-  kökeni + belge tabanı.
-- ✅ Pages gibi davranan yerel bir sunucuyla denendi: dil sayfaları, `404.html` ile derin bağlantılar, kasa oluşturma,
-  not açma ve yeniden yükleme, service worker; kök (`/`) derleme ve Docker değişmeden çalışıyor.
+### Phase 11 — Merging backups across devices ✅ done
+- ✅ Drive backups are tagged with the device ID and name; pruning deletes only this device's backups (before, a
+  device that backed up often could delete the backup that was another device's only copy).
+- ✅ Before backing up, the newest backups from other devices that this device hasn't merged yet are merged;
+  backups carry deletion records too. Automatic backup also runs with no local changes when a new foreign backup exists.
+- ✅ Merge engine fixed: "did they change it" is now measured against the state last seen from that device, "did I
+  change it" against what this device last published. With the previous single common base, an old copy (an old
+  backup, or a device that hadn't seen a new edit yet) could overwrite a newer edit. Downloading a file backup and
+  restoring from a backup also count as publish/common state; no needless conflict copy on first contact.
+- ✅ Sync and backup run through the same merger, one after the other (`SnapshotMerger`).
+- ✅ Tests: merging and keeping the phone's backup, carrying deletions, an old backup not overwriting a new edit,
+  automatic backup for a foreign backup with no changes, merge rules.
 
-## Kurulum notları
+### Phase 12 — Landing redesign ✅ done
+- ✅ Editorial design: Fraunces headings, Geist body text, Geist Mono technical labels; numbered sections, thin
+  rules, a single warm accent color; no gradients, glow or card grids. A real flow diagram in the encryption section.
+- ✅ Light / dark / system theme (in the header and footer); screenshots follow the chosen theme.
+- ✅ Default language English (`/`), Turkish at `/tr`; visitors whose browser language is Turkish are redirected, the
+  language picked on the page is remembered and applied to the app as well. `/en` → `/` permanent redirect; hreflang,
+  sitemap, llms.txt updated.
+- ✅ Fonts under `/fonts`, Latin + Latin Extended only, those on the first screen preloaded (CLS 0).
+- Lighthouse: desktop performance 99; mobile 83–88 (the previous system-font design 92–94); other categories 100.
 
-- Node 24 gerekir (`.nvmrc`): `nvm use`
-- Geliştirme: `yarn start` → http://localhost:4200
-- Günlük kullanım (çevrimdışı, kurulabilir): `yarn serve:prod` → http://localhost:4200
-- Passkey PRF desteği: Chrome/Edge 118+, Safari 18+; macOS'ta iCloud Keychain, Google Password Manager, 1Password veya donanım anahtarı.
+### Phase 13 — 11 languages ✅ done
+- ✅ Interface languages: English (default), Turkish and nine more of the most used languages on the web — Chinese
+  (simplified), Spanish, Arabic, Portuguese (Brazil), Indonesian, French, Japanese, Russian, German.
+  The language list lives in one place (`core/languages.ts`): names, BCP 47 tags, Open Graph locales, direction.
+- ✅ On first launch the browser's language is picked (if supported), otherwise English. Settings and the menu show
+  language names in their own language.
+- ✅ Full right-to-left Arabic: `<html dir="rtl">`, the sidebar and task detail panel switch sides, directional
+  arrows are mirrored; physical margins in Spartan components were converted to logical classes.
+- ✅ Translation tests: every language has the same keys and the same `{{placeholders}}` as English, none empty.
+- ✅ Landing page in 11 languages, each prerendered as its own static HTML (`/`, `/tr`, `/zh`, `/es`, `/ar`, `/pt`,
+  `/id`, `/fr`, `/ja`, `/ru`, `/de`); texts load as a separate chunk per language. Language menu in the header, all
+  languages in the footer; visitors to `/` are sent to their browser's language. hreflang (11 languages + x-default),
+  sitemap, llms.txt and JSON-LD translation links updated.
+- ✅ Fonts: Geist Cyrillic for Russian; Chinese, Japanese and Arabic use system fonts (no preloading, italic emphasis
+  and letter spacing off, Japanese headings break at phrase boundaries).
+- ✅ Screenshots retaken in every language (with that language's sample notes, tasks and search query; the app right
+  to left in Arabic). OG cards are drawn as HTML in Chrome, so Arabic and CJK headlines lay out correctly.
+- ✅ Along the way: going from the landing page to the app switches the page's language/direction back to the app's;
+  the comparison table no longer overflows the page on narrow screens (noticed in Arabic).
+- ⚠️ Translations were made with AI; a review by native speakers is recommended.
+
+### Phase 14 — Ask your notes ✅ done
+- ✅ Answers to questions from your own notes and tasks: hybrid search (keyword + meaning) finds relevant documents,
+  results below 60% of the best one are dropped, the rest go to a small language model as numbered sources; the
+  answer streams in, `[n]` citations become note/task links, numbers that aren't sources are dropped.
+- ✅ Three models, chosen per device, downloaded once on first use: Qwen3 0.6B (default, thinking mode off),
+  Apertus 0.5B (experimental), Gemma 3 1B. Transformers.js + WebGPU, a separate Web Worker; `q4` without `shader-f16`.
+  Without WebGPU the feature is disabled with an explanation.
+- ✅ Agenda questions are recognized in any language: when the question is closer to the agenda sentences in 11
+  languages than to the notes found (same embedding model, document scale), open tasks due within a week become
+  sources. With smart search off, only when nothing else is found.
+- ✅ With no sources the model is not called ("not found"); repetition loops are cut; Markdown answers become plain text.
+- ✅ Privacy: the chat lives only in memory; locking the vault stops the model and clears the chat. Model file
+  cleanup is shared between embedding and language models (`model-cache.ts`); neither deletes the other's files.
+- ✅ Interface texts in 11 languages; **Ask** in the sidebar, `G` `A` shortcut, an entry in the command palette, a card in Settings.
+- ✅ Tests: prompt (source numbers, task status, budget, history), citations, thinking block, loop cutting, the model
+  not being called without sources, dropping weak results, agenda, clearing the chat on lock.
+- Trials: Qwen3 and Gemma answered in 1–5 s with the right sources; Apertus 0.5B repeated itself and went off topic
+  (even with the right chat template and sampling), so it is marked "experimental".
+
+### Phase 15 — Donations ✅ done
+- ✅ GitHub Sponsors, Buy Me a Coffee, Ko-fi, Open Collective and crypto addresses; all optional, from `.env`
+  (`LOCRY_DONATE_*`), delivered at runtime through `/config.json`: changing them needs no rebuild.
+- ✅ Only account names are accepted; the link is always built to the platform's own address (validated twice, on
+  the server and in the browser); URLs or malformed values are skipped with a warning. No payment script, iframe or
+  third-party request.
+- ✅ A "Support Locry" section on the landing page (after hydration, the static HTML stays the same), a card in
+  Settings, a copy button for crypto addresses; texts in 11 languages.
+- ✅ One invalid setting no longer drops the others (before, a bad Client ID emptied the whole config).
+- ✅ README, `.env.example`, `compose.yaml`, and a `.github/FUNDING.yml` for GitHub's "Sponsor" button.
+
+### Phase 16 — GitHub Pages ✅ done
+- ✅ `.github/workflows/pages.yml`: on push to `main`, test, build (`--base-href` = the Pages subpath), prepare and
+  deploy; `config.json` from repository variables (Google Client ID, donation accounts).
+- ✅ `scripts/pages.mjs`: fills in the site address placeholder, `<lang>.html` for language pages, `404.html` for app
+  addresses, the `/en` redirect, `.nojekyll`; rebuilds the service worker manifest with the subpath and the language
+  page exclusions (ngsw-config doesn't add the subpath to navigation patterns itself).
+- ✅ Subpath support: fonts (`url(fonts/…)`, left unresolved at build time through `externalDependencies`), landing
+  images, font preloads and in-page links are relative; in the browser, the site address is the canonical link's
+  origin + the document base.
+- ✅ Tested with a local server that behaves like Pages: language pages, deep links through `404.html`, creating a
+  vault, opening a note and reloading, service worker; root (`/`) builds and Docker work unchanged.
+
+### Phase 17 — Launch: legal pages, sharing and visitor counts ✅ done
+- ✅ Privacy policy and terms of service in 11 languages (`/privacy`, `/terms`, `/<lang>/…`), prerendered, linked from
+  the landing footer and Google's OAuth consent screen; Google API Limited Use statement.
+- ✅ Sharing images (Open Graph) redrawn in the landing style for every language, versioned so chat apps refetch them.
+- ✅ Flags next to the language choices; the update notice in the page's language; the installed app opens on the
+  lock screen instead of the landing page.
+- ✅ Visitor counts with GoatCounter (`LOCRY_GOATCOUNTER`), on the public pages only: a single image request, no
+  script, no cookies; nothing under Do Not Track, Global Privacy Control, automation or localhost. The app is never
+  counted. The privacy policy describes it.
+- ✅ README "Try it live" buttons; GitHub "Sponsor" button.
+
+## Setup notes
+
+- Requires Node 24 (`.nvmrc`): `nvm use`
+- Development: `yarn start` → http://localhost:4200
+- Daily use (offline, installable): `yarn serve:prod` → http://localhost:4200
+- Passkey PRF support: Chrome/Edge 118+, Safari 18+; on macOS, iCloud Keychain, Google Password Manager, 1Password or a hardware key.
