@@ -30,7 +30,7 @@ export const ja: PrivacyContent = {
       heading: 'Google Drive（任意）',
       body: [
         'バックアップや同期のために Google Drive を接続すると、Locry は drive.appdata の権限だけを求めます。これは Drive 内の、Locry だけがアクセスできる非表示のフォルダーです。Drive 内のほかのファイルを表示、読み取り、変更することはできません。',
-        'すべてはアップロード前にデバイス上で暗号化されるため、Google が保存するのは暗号化されたデータと、ファイル名、サイズ、日時、デバイスのラベル（例：「iPhone · Safari」）だけです。Google が発行するアクセストークンはメモリ上にのみ保持され、保管庫をロックすると破棄されます。接続はいつでも設定画面または [Google アカウントの権限](https://myaccount.google.com/permissions) から解除できます。',
+        'すべてはアップロード前にデバイス上で暗号化されるため、Google が保存するのは暗号化されたデータと、ファイル名、サイズ、日時、デバイスのラベル（例：「iPhone · Safari」）だけです。Google が発行するアクセストークン（有効期間 1 時間）と Google アカウントのメールアドレスは、保管庫をロックした後も Drive が使えるよう、メモと同じく暗号化してこのデバイスの保管庫内にのみ保存されます。同期やバックアップに含まれることはなく、接続を解除すると削除されます。接続はいつでも設定画面または [Google アカウントの権限](https://myaccount.google.com/permissions) から解除できます。',
         'Google API から受け取った情報の Locry による使用と転送は、限定的使用（Limited Use）の要件を含む [Google API サービスのユーザーデータに関するポリシー](https://developers.google.com/terms/api-services-user-data-policy) に準拠します。これらの情報は、あなた自身の暗号化されたバックアップと同期用コピーの保存と読み取りにのみ使われ、誰とも共有されず、広告に使われず、人が読むこともありません。',
       ],
     },

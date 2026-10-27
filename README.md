@@ -245,9 +245,18 @@ For this, whoever runs the installation has to get a Google OAuth Client ID **on
 Safari"). Before backing up to Drive, a device downloads and merges the newest backups of the same vault from other
 devices that it has not merged yet, with the same rules as sync: a stale copy never overwrites a newer edit, an edit
 beats a delete, and when a note changed on both sides the older version is kept as a "(conflict)" copy. So the
-computer's backup also contains the changes made on the phone. Pruning to the "last N backups" only deletes the
-device's own backups. Auto backup also runs when nothing changed on this device but another device made a new
-backup.
+computer's backup also contains the changes made on the phone. The backup list in Settings is grouped by vault, and
+"Backups to keep" counts per vault: with 5 vaults kept at 5, Drive holds up to 25 backups. Pruning keeps the newest N
+of the vault, whichever device made them, but deletes another device's backup only once its changes were merged here.
+Auto backup also runs when nothing changed on this device but another device made a new backup.
+
+**Staying signed in:** Google's browser sign-in (no server, no client secret) gives one-hour access tokens and no
+refresh token, and its window may only open from a click. Locry keeps the token and the account's email in the
+vault, encrypted like the notes, on this device only (never synced or backed up; *Disconnect* deletes them), so a
+lock or reload doesn't ask again. When sync or a scheduled backup needs Drive and the token is gone or has less than
+10 minutes left, the next click in the app (not in a text field) renews it: with the account as a hint and the
+earlier grant, Google's window closes by itself, and the waiting backup runs and shows the usual "Automatic Drive
+backup done". Only if that fails does a notice with a button appear.
 
 The value is read at runtime as `/config.json`: in Docker, change `.env` and run `docker compose up -d`; `yarn start`
 and `yarn serve:prod` read `.env` too. When `LOCRY_GOOGLE_CLIENT_ID` is empty, each user can enter their own Client ID

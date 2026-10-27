@@ -25,6 +25,9 @@ export class FakeDrive {
       return new Response('{"error":"invalid"}', { status: 401 });
     }
 
+    if (method === 'GET' && url.pathname === '/drive/v3/about') {
+      return Response.json({ user: { emailAddress: 'someone@example.com' } });
+    }
     if (method === 'GET' && url.pathname === '/drive/v3/files') {
       const sorted = [...this.files].sort((a, b) => b.createdTime.localeCompare(a.createdTime));
       return Response.json({ files: sorted.map((f) => this.meta(f)) });
@@ -101,10 +104,19 @@ async function parseMultipart(init: RequestInit): Promise<{ metadata: { name: st
 
 export class FakeGoogleAuth {
   calls = 0;
+  /** Sign-in hint of the last request. */
+  loginHint: string | null | undefined;
+  /** Set to make the next request fail like a closed popup. */
+  fail: Error | null = null;
+  /** How long issued tokens live. */
+  lifetimeMs = 3_600_000;
   constructor(private readonly drive: FakeDrive) {}
-  async requestToken() {
+  async requestToken(_clientId: string, options: { loginHint?: string | null } = {}) {
     this.calls++;
-    return { value: this.drive.validToken, expiresAt: Date.now() + 3_600_000 };
+    this.loginHint = options.loginHint;
+    if (this.fail) throw this.fail;
+    return { value: this.drive.validToken, expiresAt: Date.now() + this.lifetimeMs };
   }
+  preload() {}
   async revoke() {}
 }

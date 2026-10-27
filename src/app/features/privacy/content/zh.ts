@@ -30,7 +30,7 @@ export const zh: PrivacyContent = {
       heading: 'Google 云端硬盘（可选）',
       body: [
         '如果你连接 Google 云端硬盘用于备份或同步，Locry 只请求 drive.appdata 权限：这是你云端硬盘中只有 Locry 能访问的隐藏文件夹。它无法查看、读取或修改你云端硬盘中的其他任何文件。',
-        '所有内容在上传前都会在你的设备上加密，因此 Google 只保存加密数据，以及文件名、大小、时间和设备标签（例如“iPhone · Safari”）。Google 签发的访问令牌只保存在内存中，保险库锁定时即被丢弃。你可以随时在设置中或在 [Google 账号权限](https://myaccount.google.com/permissions) 中断开连接。',
+        '所有内容在上传前都会在你的设备上加密，因此 Google 只保存加密数据，以及文件名、大小、时间和设备标签（例如“iPhone · Safari”）。Google 签发的访问令牌（有效期一小时）和你的 Google 账号邮箱保存在保险库中，与笔记一样加密，并且只在此设备上，这样保险库锁定后云端硬盘仍可继续使用；它们从不同步，也不会包含在备份中，断开连接即会删除。你可以随时在设置中或在 [Google 账号权限](https://myaccount.google.com/permissions) 中断开连接。',
         'Locry 对从 Google API 获取的信息的使用和传输遵守 [Google API 服务用户数据政策](https://developers.google.com/terms/api-services-user-data-policy)，包括“有限使用”（Limited Use）要求。这些信息仅用于保存和读取你自己的加密备份和同步副本；不会与任何人共享，不会用于广告，也不会由人工阅读。',
       ],
     },

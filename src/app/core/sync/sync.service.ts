@@ -63,6 +63,8 @@ export class SyncService {
   private readonly _lastError = signal<string | null>(null);
   private running: Promise<SyncSummary | null> | null = null;
   private again = false;
+  /** Local changes not uploaded yet (the debounce timer is still waiting). */
+  private pending = false;
   private timer?: ReturnType<typeof setTimeout>;
 
   readonly enabled = computed(() => this.prefs.sync() && this.drive.configured());
@@ -96,11 +98,21 @@ export class SyncService {
       const changes = this.store.changes();
       if (changes === seenChanges) return;
       seenChanges = changes;
+      this.pending = true;
       untracked(() => this.schedule(CHANGE_DEBOUNCE_MS));
     });
 
+    // A token renewed (on a click, or after unlocking with a kept token): sync what waited for it.
+    effect(() => {
+      if (this.drive.connected()) untracked(() => this._status() === 'needsAuth' && this.schedule(0));
+    });
+
     const onVisible = () => {
-      if (this.document.visibilityState !== 'visible') return;
+      if (this.document.visibilityState === 'hidden') {
+        // Phones suspend hidden pages, so the debounce timer may never fire: upload now.
+        if (this.pending) void this.syncNow();
+        return;
+      }
       const last = this._lastSyncAt();
       if (!last || Date.now() - Date.parse(last) > FOCUS_MIN_GAP_MS) this.schedule(0);
     };
@@ -137,6 +149,7 @@ export class SyncService {
       this._status.set('needsAuth');
       return null;
     }
+    this.pending = false;
     this.running = this.drive
       .withApi(options.interactive, (api) => {
         this._status.set('syncing');
@@ -152,6 +165,7 @@ export class SyncService {
         return summary;
       })
       .catch((error: unknown) => {
+        this.pending = true;
         if (error instanceof DriveError && error.code === 'unauthorized') {
           this._status.set('needsAuth');
         } else {
@@ -265,4 +279,3 @@ async function contentHash(parts: unknown[]): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', utf8Encode(JSON.stringify([slots, removed, profile, sorted])));
   return toBase64Url(new Uint8Array(digest));
 }
-

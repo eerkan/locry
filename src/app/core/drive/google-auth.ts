@@ -55,6 +55,7 @@ interface GoogleOAuth2 {
     client_id: string;
     scope: string;
     prompt?: string;
+    login_hint?: string;
     callback: (response: TokenResponse) => void;
     error_callback?: (error: { type: string }) => void;
   }): TokenClient;
@@ -78,15 +79,18 @@ export class GoogleAuth {
 
   /**
    * Opens Google's consent popup (or reuses an earlier grant) and returns an access token.
-   * Must be called from a user gesture, otherwise browsers block the popup.
+   * Must be called from a user gesture, otherwise browsers block the popup. With a
+   * `loginHint` (the account's email) and an earlier grant, Google skips the account picker
+   * and the popup closes by itself.
    */
-  async requestToken(clientId: string, options: { forceConsent?: boolean } = {}): Promise<AccessToken> {
+  async requestToken(clientId: string, options: { forceConsent?: boolean; loginHint?: string | null } = {}): Promise<AccessToken> {
     if (!clientId.trim()) throw new DriveError('notConfigured');
     const oauth2 = await this.load();
     return new Promise<AccessToken>((resolve, reject) => {
       const client = oauth2.initTokenClient({
         client_id: clientId.trim(),
         scope: DRIVE_APPDATA_SCOPE,
+        ...(options.loginHint ? { login_hint: options.loginHint } : {}),
         callback: (response) => {
           if (response.error || !response.access_token) {
             reject(new DriveError(response.error === 'access_denied' ? 'consentDenied' : 'failed', response));
@@ -103,6 +107,11 @@ export class GoogleAuth {
       // Empty prompt: consent is only shown the first time for this client and scope.
       client.requestAccessToken({ prompt: options.forceConsent ? 'consent' : '' });
     });
+  }
+
+  /** Loads Google's script ahead of time, so a later popup opens straight from the click. */
+  preload(): void {
+    this.load().catch(() => undefined);
   }
 
   /** Revokes the grant so the next connection asks for consent again. */

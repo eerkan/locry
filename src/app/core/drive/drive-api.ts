@@ -52,6 +52,12 @@ export class DriveApi {
     return files;
   }
 
+  /** Email address of the Google account, used as the sign-in hint next time. */
+  async accountEmail(): Promise<string | null> {
+    const body = (await this.json(`${API}/about?fields=user(emailAddress)`)) as { user?: { emailAddress?: string } };
+    return body.user?.emailAddress ?? null;
+  }
+
   async upload(name: string, content: Uint8Array<ArrayBuffer>, appProperties: Record<string, string>): Promise<DriveFile> {
     const metadata = { name, parents: ['appDataFolder'], mimeType: 'application/octet-stream', appProperties };
     return this.send('POST', `${UPLOAD_API}/files`, metadata, content);

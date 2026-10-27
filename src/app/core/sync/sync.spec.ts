@@ -207,7 +207,7 @@ describe('SyncService', () => {
       return records.filter((r) => r.type === 'note').map((r) => (r.value as { title: string }).title).sort();
     };
 
-    it('merges what the phone backed up before the laptop backs up, and keeps the phone backup', async () => {
+    it('merges what the phone backed up before the laptop backs up, then keeps the vault to its count', async () => {
       await sameVaultOnBoth();
       const phone = await boot('phone');
       await phone.store.put('note', 'n2', { id: 'n2', title: 'Telefondan', updatedAt: '2026-01-02T00:00:00Z' });
@@ -226,10 +226,11 @@ describe('SyncService', () => {
       // The laptop's backup holds both devices' changes...
       expect(await latestBackupOf('laptop-device', laptop)).toEqual(['Alışveriş', 'Laptoptan', 'Telefondan']);
 
-      // ...and pruning its own backups never deletes the phone's.
+      // ...so the vault keeps one backup in total, whichever device made it.
       await driveOf().backupNow();
-      const devices = drive.files.map((f) => f.appProperties['locryDeviceId']).sort();
-      expect(devices).toEqual(['laptop-device', 'phone-device']);
+      const devices = drive.files.filter((f) => !f.appProperties['locrySync']).map((f) => f.appProperties['locryDeviceId']);
+      expect(devices).toEqual(['laptop-device']);
+      expect(await latestBackupOf('laptop-device', laptop)).toEqual(['Alışveriş', 'Laptoptan', 'Telefondan']);
       // Nothing new from the phone the second time.
       expect((await driveOf().backupNow()).received).toBe(0);
     });

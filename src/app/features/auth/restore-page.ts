@@ -73,7 +73,6 @@ import { ReAuthPrompt } from '../../shared/reauth';
               <app-drive-backup-list
                 [files]="files"
                 [allowDelete]="false"
-                [showVaultBadge]="false"
                 [disabled]="drive.busy()"
                 (restore)="pickFromDrive($event)"
               />

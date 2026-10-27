@@ -5,6 +5,8 @@ import { type DriveAutoBackup, PreferencesService } from '../preferences.service
 import { RuntimeConfigService } from '../runtime-config.service';
 import { deviceId, deviceName } from '../sync/device';
 import { type MergeSummary, SnapshotMerger } from '../sync/snapshot-merger';
+import { EncryptedStore } from '../storage/encrypted-store.service';
+import { DRIVE_TOKEN_TYPE } from '../sync/sync-records';
 import { VaultService } from '../vault/vault.service';
 import { type DriveFile, DriveApi, type Fetch } from './drive-api';
 import { type AccessToken, DriveError, GoogleAuth } from './google-auth';
@@ -23,6 +25,16 @@ const AUTO_BACKUP_INTERVAL_MS: Record<Exclude<DriveAutoBackup, 'off'>, number> =
   daily: 24 * 3600_000,
   weekly: 7 * 24 * 3600_000,
 };
+
+/** A token this close to expiry is renewed on the next click, before work needs it. */
+export const RENEW_AHEAD_MS = 10 * 60_000;
+
+/** What is kept (encrypted with the vault key, on this device only) between unlocks. */
+interface StoredDriveToken {
+  token: AccessToken | null;
+  /** The Google account's email: lets Google skip the account picker next time. */
+  account: string | null;
+}
 
 /** Sync snapshots carry this app property; they are not listed as backups. */
 export function isSyncFile(file: DriveFile): boolean {
@@ -44,8 +56,9 @@ export interface BackupResult extends MergeSummary {
 
 /**
  * Backs up `.locry` files to the user's Google Drive app-data folder and restores them.
- * Talks to Google directly from the browser; the access token is kept in memory only and
- * dropped when the vault locks.
+ * Talks to Google directly from the browser. The short-lived access token (one hour) and the
+ * account's email are kept in the vault, encrypted like everything else and never synced or
+ * backed up, so Drive keeps working after a lock or reload; in memory only while unlocked.
  */
 @Injectable({ providedIn: 'root' })
 export class DriveService {
@@ -55,10 +68,14 @@ export class DriveService {
   private readonly vault = inject(VaultService);
   private readonly runtime = inject(RuntimeConfigService);
   private readonly merger = inject(SnapshotMerger);
+  private readonly store = inject(EncryptedStore);
   private readonly deviceId = deviceId();
   private readonly api = new DriveApi(() => this.requireToken(), inject(DRIVE_FETCH));
 
   private readonly token = signal<AccessToken | null>(null);
+  private readonly account = signal<string | null>(null);
+  /** One Google popup at a time: a click that renews and a button that asks share it. */
+  private pendingToken: Promise<AccessToken> | null = null;
   private readonly _files = signal<DriveFile[] | null>(null);
   private readonly _busy = signal(false);
 
@@ -69,6 +86,13 @@ export class DriveService {
   readonly hasBuiltInClientId = computed(() => !!this.runtime.googleClientId());
   readonly configured = computed(() => !!this.clientId());
   readonly connected = computed(() => !!this.token());
+  /**
+   * Drive was used from this vault before and background work wants it (sync or scheduled
+   * backups), so an expired token may be renewed on the user's next click.
+   */
+  readonly wantsRenewal = computed(
+    () => this.configured() && this.vault.isUnlocked() && !!this.account() && (this.prefs.sync() || this.prefs.driveAutoBackup() !== 'off'),
+  );
   readonly busy = this._busy.asReadonly();
   /** Backups in Drive, newest first; null until listed. */
   readonly files = computed<DriveBackup[] | null>(() => {
@@ -97,7 +121,7 @@ export class DriveService {
   );
 
   constructor() {
-    // Forget the token and the listing whenever the vault locks.
+    // Forget the token and the listing whenever the vault locks; pick the kept token up again on unlock.
     let seenLocks = this.vault.lockCount();
     effect(() => {
       const locks = this.vault.lockCount();
@@ -105,21 +129,44 @@ export class DriveService {
       seenLocks = locks;
       untracked(() => this.forget());
     });
+    effect(() => {
+      if (!this.vault.isUnlocked()) return;
+      this.vault.activeVault();
+      untracked(() => void this.restoreToken());
+    });
+    effect(() => {
+      if (this.wantsRenewal()) untracked(() => this.auth.preload());
+    });
   }
 
   /** Asks Google for access (popup on first use) and lists the backups. Call from a click. */
   async connect(): Promise<void> {
     await this.run(async () => {
-      this.token.set(await this.auth.requestToken(this.clientId() ?? ''));
+      await this.obtainToken();
       await this.loadFiles();
     });
   }
 
-  /** Revokes the grant and forgets the token. */
+  /** Revokes the grant and forgets the token and the account. */
   async disconnect(): Promise<void> {
     const token = this.token();
     this.forget();
+    if (this.vault.isUnlocked()) await this.store.delete(DRIVE_TOKEN_TYPE).catch(() => undefined);
     if (token) await this.auth.revoke(token.value).catch(() => undefined);
+  }
+
+  /** Whether the token is missing or about to expire while background work wants it. */
+  renewalDue(now = Date.now()): boolean {
+    const token = this.token();
+    return this.wantsRenewal() && (!token || token.expiresAt - now < RENEW_AHEAD_MS);
+  }
+
+  /**
+   * Renews the token for the known account. Call from a click: with the earlier grant and the
+   * account hint, Google's popup closes by itself.
+   */
+  async renew(): Promise<void> {
+    await this.obtainToken();
   }
 
   async refresh(): Promise<void> {
@@ -241,13 +288,19 @@ export class DriveService {
     return !!token && token.expiresAt > Date.now();
   }
 
+  /**
+   * Keeps the newest `driveKeep` backups of this vault, whichever device made them; other
+   * vaults keep their own count. Another device's backup is only deleted once its changes
+   * were merged here (and so are in the backup just uploaded).
+   */
   private async prune(vaultId: string): Promise<void> {
     const keep = Math.max(1, this.prefs.driveKeep());
-    // Only this device's backups: another device's may hold changes that exist nowhere else.
-    const ours = (this._files() ?? []).filter(
-      (f) => !isSyncFile(f) && f.appProperties['locryVaultId'] === vaultId && f.appProperties['locryDeviceId'] === this.deviceId,
-    );
-    const stale = ours.slice(keep);
+    const state = await this.merger.loadState();
+    const vaultBackups = (this._files() ?? []).filter((f) => !isSyncFile(f) && f.appProperties['locryVaultId'] === vaultId);
+    const stale = vaultBackups.slice(keep).filter((f) => {
+      const device = f.appProperties['locryDeviceId'];
+      return device === this.deviceId || (!!device && !this.merger.isNew(state, device, f.createdTime));
+    });
     for (const file of stale) await this.api.delete(file.id);
     if (stale.length) {
       const removed = new Set(stale.map((f) => f.id));
@@ -264,14 +317,57 @@ export class DriveService {
   private async withToken<T>(interactive: boolean, task: () => Promise<T>): Promise<T> {
     if (!this.hasValidToken()) {
       if (!interactive) throw new DriveError('unauthorized');
-      this.token.set(await this.auth.requestToken(this.clientId() ?? ''));
+      await this.obtainToken();
     }
     try {
       return await task();
     } catch (error) {
-      if (error instanceof DriveError && error.code === 'unauthorized') this.token.set(null);
+      if (error instanceof DriveError && error.code === 'unauthorized') this.dropToken();
       throw error;
     }
+  }
+
+  /** Asks Google for a token (sharing a request already in flight), keeps it and learns the account. */
+  private async obtainToken(): Promise<AccessToken> {
+    this.pendingToken ??= this.auth
+      .requestToken(this.clientId() ?? '', { loginHint: this.account() })
+      .finally(() => (this.pendingToken = null));
+    const token = await this.pendingToken;
+    this.token.set(token);
+    if (!this.account()) {
+      try {
+        this.account.set(await this.api.accountEmail());
+      } catch (error) {
+        console.warn('Could not read the Google account', error);
+      }
+    }
+    await this.saveToken();
+    return token;
+  }
+
+  private dropToken(): void {
+    this.token.set(null);
+    void this.saveToken();
+  }
+
+  private async saveToken(): Promise<void> {
+    if (!this.vault.isUnlocked()) return;
+    const value: StoredDriveToken = { token: this.token(), account: this.account() };
+    await this.store.put(DRIVE_TOKEN_TYPE, DRIVE_TOKEN_TYPE, value).catch((error) => console.warn('Could not keep the Drive token', error));
+  }
+
+  private async restoreToken(): Promise<void> {
+    const vaultId = this.vault.header()?.vaultId;
+    let stored: StoredDriveToken | undefined;
+    try {
+      stored = await this.store.get<StoredDriveToken>(DRIVE_TOKEN_TYPE, DRIVE_TOKEN_TYPE);
+    } catch {
+      return;
+    }
+    // Still the same vault, and nobody got a newer token meanwhile.
+    if (!stored || this.vault.header()?.vaultId !== vaultId || this.token()) return;
+    this.account.set(stored.account);
+    if (stored.token && stored.token.expiresAt > Date.now()) this.token.set(stored.token);
   }
 
   private async run<T>(task: () => Promise<T>): Promise<T> {
@@ -291,6 +387,7 @@ export class DriveService {
 
   private forget(): void {
     this.token.set(null);
+    this.account.set(null);
     this._files.set(null);
   }
 }

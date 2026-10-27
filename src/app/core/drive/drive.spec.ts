@@ -10,6 +10,9 @@ import { PasskeyClient } from '../vault/passkey';
 import { VaultService } from '../vault/vault.service';
 import { DriveApi } from './drive-api';
 import { AutoDriveBackupService } from './auto-drive-backup.service';
+import { DriveTokenRenewal } from './drive-token-renewal.service';
+import { DriveError } from './google-auth';
+import { readBackup, openBackup } from '../backup/backup-format';
 import { DRIVE_FETCH, DriveService } from './drive.service';
 import { GoogleAuth } from './google-auth';
 import { FakeDrive, FakeGoogleAuth } from './fake-drive.testing';
@@ -171,5 +174,79 @@ describe('DriveService', () => {
     await store.put('note', 'n1', { title: 'değişti' });
     await auto.check(Date.now() + 6 * 60_000);
     expect(backups()).toBe(2);
+  });
+
+  it('keeps the token encrypted in the vault across a lock, never in backups, and remembers the account', async () => {
+    await drive.connect();
+    expect(fakeAuth.loginHint).toBeNull();
+    vault.lock();
+    TestBed.tick();
+    expect(drive.connected()).toBe(false);
+
+    await vault.unlockWithPasskey();
+    TestBed.tick();
+    await vi.waitFor(() => expect(drive.connected()).toBe(true));
+    expect(fakeAuth.calls).toBe(1);
+
+    // A backup holds no token.
+    await drive.backupNow();
+    const sealed = readBackup(fakeDrive.files.at(-1)!.content as Uint8Array<ArrayBuffer>);
+    const records = await openBackup(sealed, vault.requireKey());
+    expect(records.map((r) => r.type)).not.toContain('drive-token');
+
+    // Asking again names the account, so Google skips the account picker.
+    fakeDrive.validToken = 'token-2';
+    await expect(drive.refresh()).rejects.toMatchObject({ code: 'unauthorized' });
+    await drive.refresh();
+    expect(fakeAuth.loginHint).toBe('someone@example.com');
+  });
+
+  it('keeps the newest backups of this vault from any device, but never one it has not merged', async () => {
+    prefs.setDrive({ driveKeep: 1 });
+    const vaultId = vault.header()!.vaultId;
+    // Another device's backup that cannot be read here, so it was never merged.
+    fakeDrive.files.push({
+      id: 'phone-unmerged',
+      name: 'locry-backup-phone.locry',
+      createdTime: '2020-01-01T00:00:00.000Z',
+      modifiedTime: '2020-01-01T00:00:00.000Z',
+      appProperties: { locryVaultId: vaultId, locryDeviceId: 'phone' },
+      content: new Uint8Array([1, 2, 3]),
+    });
+    await drive.backupNow();
+    await drive.backupNow();
+    const left = fakeDrive.files.filter((f) => f.appProperties['locryVaultId'] === vaultId).map((f) => f.id);
+    expect(left).toHaveLength(2);
+    expect(left).toContain('phone-unmerged');
+  });
+
+  it('renews an expiring token on a click outside text fields when background work needs it', async () => {
+    const renewal = TestBed.inject(DriveTokenRenewal);
+    fakeAuth.lifetimeMs = 5 * 60_000; // already inside the renewal window
+    await drive.connect();
+    expect(fakeAuth.calls).toBe(1);
+
+    // Nothing in the background wants Drive yet.
+    document.body.click();
+    expect(fakeAuth.calls).toBe(1);
+
+    prefs.setDrive({ driveAutoBackup: 'daily' });
+    const field = document.createElement('textarea');
+    document.body.append(field);
+    field.click();
+    expect(fakeAuth.calls).toBe(1);
+
+    document.body.click();
+    await vi.waitFor(() => expect(fakeAuth.calls).toBe(2));
+    expect(fakeAuth.loginHint).toBe('someone@example.com');
+
+    // A failed renewal is not retried on every click, and lets scheduled backups ask instead.
+    fakeAuth.fail = new DriveError('popupClosed');
+    await vi.waitFor(() => expect(renewal['renewing']).toBe(false));
+    document.body.click();
+    await vi.waitFor(() => expect(renewal.failures()).toBe(1));
+    document.body.click();
+    expect(fakeAuth.calls).toBe(3);
+    field.remove();
   });
 });
