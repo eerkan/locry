@@ -4,6 +4,14 @@ An **encrypted notes and tasks** app that runs entirely in the browser, with no 
 device, encrypted with a key bound to a passkey; if you want, it syncs with your other devices through Google
 Drive, still encrypted.
 
+<p>
+  <a href="https://eerkan.github.io/locry/"><img alt="Try Locry live" src="https://img.shields.io/badge/Try_it_live-eerkan.github.io%2Flocry-2563eb?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
+  <a href="https://eerkan.github.io/locry/app"><img alt="Open the app" src="https://img.shields.io/badge/Open_the_app-111827?style=for-the-badge&logo=lock&logoColor=white"></a>
+</p>
+
+No sign-up, nothing to install: open the link and create a vault with a passkey. Your notes never leave your device
+unencrypted.
+
 - Markdown notes (split preview, tags, pinning, archive)
 - Tasks (smart views, lists, subtasks, priorities, due dates, drag and drop)
 - Passkey sign-in, recovery key, auto-lock
