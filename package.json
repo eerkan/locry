@@ -45,6 +45,7 @@
     "@angular/build": "^22.2.3",
     "@angular/cli": "^22.2.3",
     "@angular/compiler-cli": "^22.2.0",
+    "@ng-icons/simple-icons": "36.1.0",
     "@spartan-ng/cli": "^1.8.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/typography": "^0.5.20",

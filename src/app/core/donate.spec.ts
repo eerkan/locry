@@ -1,3 +1,4 @@
+import { coinLogo } from '../shared/donate-logo';
 import { donations } from './donate';
 
 describe('donations', () => {
@@ -28,5 +29,16 @@ describe('donations', () => {
   it('is null when nothing is configured', () => {
     expect(donations(undefined)).toBeNull();
     expect(donations({})).toBeNull();
+  });
+});
+
+describe('coinLogo', () => {
+  it('finds coins by ticker, name or network-suffixed label', () => {
+    expect(coinLogo('BTC')?.icon).toBe('simpleBitcoin');
+    expect(coinLogo('btc')?.icon).toBe('simpleBitcoin');
+    expect(coinLogo('Ethereum')?.icon).toBe('simpleEthereum');
+    expect(coinLogo('USDT-TRC20')?.icon).toBe('simpleTether');
+    expect(coinLogo('MATIC')?.icon).toBe('simplePolygon');
+    expect(coinLogo('XYZ')).toBeNull();
   });
 });

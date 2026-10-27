@@ -7,6 +7,7 @@ import { PreferencesService, type Theme } from '../../core/preferences.service';
 import { GITHUB_URL } from '../../core/site';
 import type { Donations } from '../../core/donate';
 import { copyText } from '../../shared/copy-text';
+import { DonateLogo } from '../../shared/donate-logo';
 import { Flag } from '../../shared/flag';
 import { Analytics } from '../../core/analytics';
 import { RuntimeConfigService } from '../../core/runtime-config.service';
@@ -28,7 +29,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
  */
 @Component({
   selector: 'app-landing-page',
-  imports: [Flag, LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
+  imports: [DonateLogo, Flag, LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
   providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
@@ -535,8 +536,8 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                           [href]="link.url"
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="inline-flex h-9 items-center gap-1.5 rounded-md border border-[var(--rule)] px-3.5 text-[14px] transition-colors hover:border-[var(--ink)]"
-                          >{{ link.name }}<ng-icon name="lucideArrowUpRight" class="text-[var(--soft)] rtl:-scale-x-100"
+                          class="inline-flex h-9 items-center gap-2 rounded-md border border-[var(--rule)] px-3 text-[14px] transition-colors hover:border-[var(--ink)]"
+                          ><app-donate-logo [platform]="link.platform" />{{ link.name }}<ng-icon name="lucideArrowUpRight" class="text-[var(--soft)] rtl:-scale-x-100"
                         /></a>
                       </li>
                     }
@@ -547,7 +548,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                     <p class="font-code text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.support.crypto }}</p>
                     @for (wallet of donations.crypto; track wallet.label + wallet.address) {
                       <div class="flex items-center gap-3 rounded-md border border-[var(--rule)] px-3 py-2 text-[13px]">
-                        <span class="w-14 shrink-0 font-medium">{{ wallet.label }}</span>
+                        <span class="flex min-w-20 shrink-0 items-center gap-2 font-medium whitespace-nowrap"><app-donate-logo [coin]="wallet.label" />{{ wallet.label }}</span>
                         <code #address dir="ltr" class="font-code min-w-0 flex-1 truncate text-[var(--soft)]">{{ wallet.address }}</code>
                         <button type="button" class="shrink-0 text-[12px] underline underline-offset-2" (click)="copy(wallet.address, address)">
                           {{ copied() === wallet.address ? t.support.copied : t.support.copy }}

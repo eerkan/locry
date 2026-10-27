@@ -353,7 +353,9 @@ If whoever runs Locry sets donation accounts in `.env` (see `.env.example`), a "
 landing page header and the app's sidebar, leading to a **Support Locry** section on the landing page and a card in
 Settings; with none set, nothing is shown. Supported: GitHub Sponsors, Buy Me a Coffee, Ko-fi, Open Collective
 (you give the account name, and the link is always built to the platform's own address) and crypto addresses with a
-copy button (`LOCRY_DONATE_CRYPTO=BTC:…,ETH:…`). There are no payment scripts, iframes or third-party requests;
+copy button (`LOCRY_DONATE_CRYPTO=BTC:…,ETH:…`). Platforms and common coins (BTC, ETH, USDT, LTC, SOL, DOGE,
+XMR, BNB, ADA, XRP, POL, TON, XLM, DOT, ZEC, DASH, BCH; a label such as `USDT-TRC20` works too) show their logo
+([Simple Icons](https://simpleicons.org), CC0, bundled with the app); other coins a generic one. There are no payment scripts, iframes or third-party requests;
 links open in a new tab.
 
 ```bash
