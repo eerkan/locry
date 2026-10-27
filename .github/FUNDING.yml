@@ -1,6 +1,6 @@
 # GitHub shows a "Sponsor" button on the repository when any of these is set.
 # Fill in the same accounts as LOCRY_DONATE_* in .env (see .env.example), then uncomment.
-# github: [your-github-username]
+github: [eerkan]
 # buy_me_a_coffee: your-username
 # ko_fi: your-username
 # open_collective: your-collective
