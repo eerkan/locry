@@ -37,7 +37,12 @@ import { LIST_DOT, PRIORITY_TEXT, formatDue } from './task-ui';
       (toggled)="toggled.emit()"
     />
     <button type="button" class="flex min-w-0 flex-1 flex-col gap-1 text-start outline-none">
-      <span class="text-sm leading-5" [class.text-muted-foreground]="task().done" [class.line-through]="task().done">
+      <span
+        class="text-sm leading-5 decoration-transparent transition-[color,text-decoration-color] duration-300 group-has-[[data-completing]]:text-muted-foreground group-has-[[data-completing]]:line-through group-has-[[data-completing]]:decoration-current"
+        [class.text-muted-foreground]="task().done"
+        [class.line-through]="task().done"
+        [class.decoration-current]="task().done"
+      >
         {{ displayTitle() }}
       </span>
       @if (hasMeta()) {

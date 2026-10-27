@@ -202,7 +202,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
             <div class="flex flex-col">
               <h3 class="text-muted-foreground border-b px-2 pt-2 pb-1 text-xs font-medium">{{ dueHeading(group.date) }}</h3>
               @for (task of group.tasks; track task.id) {
-                <app-task-row [task]="task" [today]="store.today()" [list]="listFor(task)" [selected]="task.id === selectedId()" (toggled)="store.toggleDone(task.id)" (opened)="selectedId.set(task.id)" />
+                <app-task-row animate.enter="item-enter" [task]="task" [today]="store.today()" [list]="listFor(task)" [selected]="task.id === selectedId()" (toggled)="store.toggleDone(task.id)" (opened)="selectedId.set(task.id)" />
               }
             </div>
           }
@@ -210,6 +210,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
           <div cdkDropList [cdkDropListDisabled]="!manual()" (cdkDropListDropped)="drop($event)" class="flex flex-col">
             @for (task of openTasks(); track task.id) {
               <app-task-row
+                animate.enter="item-enter"
                 cdkDrag
                 [cdkDragData]="task"
                 [task]="task"
@@ -245,7 +246,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
             }
             @if (showCompleted() || (view().kind === 'smart' && smartView() === 'completed')) {
               @for (task of completedTasks(); track task.id) {
-                <app-task-row [task]="task" [today]="store.today()" [list]="view().kind === 'smart' ? listFor(task) : undefined" [selected]="task.id === selectedId()" (toggled)="store.toggleDone(task.id)" (opened)="selectedId.set(task.id)" />
+                <app-task-row animate.enter="item-enter" [task]="task" [today]="store.today()" [list]="view().kind === 'smart' ? listFor(task) : undefined" [selected]="task.id === selectedId()" (toggled)="store.toggleDone(task.id)" (opened)="selectedId.set(task.id)" />
               }
             }
           </div>

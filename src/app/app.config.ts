@@ -15,6 +15,7 @@ import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
 import { InlineTranslocoLoader } from './core/i18n';
 import { DEFAULT_LANG, LANGS } from './core/languages';
+import { pageTransitions } from './core/page-transitions';
 import { LocryTitleStrategy } from './core/title-strategy';
 import { PreferencesService } from './core/preferences.service';
 import { RuntimeConfigService } from './core/runtime-config.service';
@@ -24,7 +25,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(routes, withComponentInputBinding(), pageTransitions),
     // The landing pages are prerendered; the browser takes over their HTML instead of redrawing it.
     // Plain hydration: incremental hydration and event replay need inline scripts, which the
     // Content Security Policy forbids; the landing page's links and FAQ work without JS anyway.

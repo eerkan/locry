@@ -15,7 +15,7 @@ import { PreferencesMenu } from '../shared/preferences-menu';
         <app-logo />
         <app-preferences-menu />
       </header>
-      <main class="flex flex-1 items-center justify-center px-4 pb-16">
+      <main class="flex flex-1 items-center justify-center px-4 pb-16 [view-transition-name:page]">
         <div class="w-full max-w-md">
           <router-outlet />
         </div>

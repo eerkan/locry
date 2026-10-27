@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideFileUp, lucideFingerprint, lucideInfo, lucideLock, lucidePlus, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideFileUp, lucideFingerprint, lucideInfo, lucideLock, lucideLockOpen, lucidePlus, lucideTriangleAlert } from '@ng-icons/lucide';
 import { HlmAlertImports } from '@spartan-ng/helm/alert';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
@@ -11,18 +11,22 @@ import { errorKey } from '../../core/i18n';
 import { safeNext } from '../../core/vault/vault.guard';
 import { passkeySites } from '../../core/vault/vault-header';
 import { VaultService } from '../../core/vault/vault.service';
+import { prefersReducedMotion } from '../../shared/motion';
 import { VaultLabel } from '../../shared/vault-ui';
+
+/** How long the open lock shows after unlocking, before the app fades in. */
+const OPENED_PAUSE_MS = 220;
 
 @Component({
   selector: 'app-unlock-page',
   imports: [HlmAlertImports, HlmButton, HlmCardImports, HlmSpinner, NgIcon, RouterLink, TranslocoPipe, VaultLabel],
-  providers: [provideIcons({ lucideLock, lucideFingerprint, lucideInfo, lucideTriangleAlert, lucidePlus, lucideFileUp })],
+  providers: [provideIcons({ lucideLock, lucideLockOpen, lucideFingerprint, lucideInfo, lucideTriangleAlert, lucidePlus, lucideFileUp })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section hlmCard>
       <div hlmCardHeader class="items-center text-center">
         <span class="bg-muted mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
-          <ng-icon name="lucideLock" class="text-xl" />
+          <ng-icon [name]="opened() ? 'lucideLockOpen' : 'lucideLock'" class="lock-snap text-xl" />
         </span>
         <h1 hlmCardTitle class="text-xl">{{ 'unlock.title' | transloco }}</h1>
         <p hlmCardDescription>{{ 'unlock.description' | transloco }}</p>
@@ -110,6 +114,7 @@ export class UnlockPage {
   readonly next = input<string>();
 
   protected readonly busy = signal(false);
+  protected readonly opened = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected async choose(vaultId: string): Promise<void> {
@@ -127,6 +132,9 @@ export class UnlockPage {
     this.error.set(null);
     try {
       await this.vault.unlockWithPasskey();
+      // The open lock shows for a moment, then the app fades in over it.
+      this.opened.set(true);
+      if (!prefersReducedMotion()) await new Promise((resolve) => setTimeout(resolve, OPENED_PAUSE_MS));
       await this.router.navigateByUrl(safeNext(this.next()) ?? '/notes', { replaceUrl: true });
     } catch (error) {
       console.error(error);

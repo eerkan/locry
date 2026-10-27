@@ -130,7 +130,7 @@ import { TasksStore } from '../tasks/tasks.store';
 
         <div class="flex flex-1 flex-col gap-6" aria-live="polite">
           @for (exchange of ask.exchanges(); track exchange.id) {
-            <article class="flex flex-col gap-3">
+            <article animate.enter="item-enter" class="flex flex-col gap-3">
               <p class="bg-primary text-primary-foreground max-w-[85%] self-end rounded-2xl rounded-ee-sm px-4 py-2.5 text-sm whitespace-pre-wrap">
                 {{ exchange.question }}
               </p>

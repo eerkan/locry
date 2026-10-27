@@ -300,6 +300,16 @@ real screenshots. (Phase 12 later made English the default.)
   vault across devices, deleting another device's backup only after merging it.
 - ✅ Sync: runs as soon as Drive is connected again; on phones, pending changes upload when the app goes to the background.
 
+### Phase 19 — Motion ✅ done
+- ✅ Page transitions with the browser's View Transitions (`withViewTransitions`): only the content area moves, and
+  only between sections (Notes → Tasks, lock screen → app); opening another note or task list stays instant.
+- ✅ New list items rise in (`animate.enter`); ticking a task pops the box, draws the tick and strikes the title through
+  before it moves to Completed (320 ms).
+- ✅ Lock screen: the lock snaps shut on entry and shows open for a moment after unlocking.
+- ✅ Landing: sections rise in with CSS scroll-driven animations (no JavaScript, prerendered HTML unchanged; skipped
+  where unsupported), the key flow lights up stage by stage, screenshots lift on hover.
+- ✅ All of it is off with "reduce motion"; 150–420 ms, ease-out.
+
 ## Setup notes
 
 - Requires Node 24 (`.nvmrc`): `nvm use`

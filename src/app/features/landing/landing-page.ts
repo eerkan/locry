@@ -50,6 +50,58 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
       --rule: #2b2a25;
       --accent: #f0894a;
     }
+    /* Sections rise in as they scroll into view: CSS scroll-driven animations only, so the
+       prerendered page shows everything without JavaScript and browsers without support skip it. */
+    @supports (animation-timeline: view()) {
+      @media (prefers-reduced-motion: no-preference) {
+        .reveal > * {
+          animation: reveal linear both;
+          animation-timeline: view();
+          animation-range: entry 0% cover 22%;
+        }
+      }
+    }
+    @keyframes reveal {
+      from {
+        opacity: 0;
+        translate: 0 28px;
+      }
+    }
+    /* The key flow: each stage lights up in turn, as the key is derived step by step. */
+    @media (prefers-reduced-motion: no-preference) {
+      .flow-stage {
+        animation: flow-stage 4s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.6s);
+      }
+      .flow-arrow {
+        animation: flow-arrow 4s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.6s + 0.3s);
+      }
+    }
+    @keyframes flow-stage {
+      0%,
+      16%,
+      100% {
+        border-color: var(--rule);
+      }
+      6% {
+        border-color: var(--accent);
+      }
+    }
+    @keyframes flow-arrow {
+      0%,
+      12%,
+      100% {
+        translate: 0 0;
+      }
+      6% {
+        translate: var(--nudge, 4px) 0;
+        color: var(--accent);
+      }
+    }
+    [dir='rtl'] .flow-arrow {
+      --nudge: -4px;
+    }
     summary::-webkit-details-marker {
       display: none;
     }
@@ -225,7 +277,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 01 Overview -->
-        <section class="border-b border-[var(--rule)]" aria-labelledby="summary-title">
+        <section class="reveal border-b border-[var(--rule)]" aria-labelledby="summary-title">
           <div [class]="row">
             <p [class]="label">01 — {{ t.sections.overview }}</p>
             <div>
@@ -244,7 +296,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 02 Features -->
-        <section id="features" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="features-title">
+        <section id="features" class="reveal scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="features-title">
           <div [class]="row">
             <p [class]="label">02 — {{ t.sections.features }}</p>
             <div>
@@ -264,7 +316,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 03 Tasks -->
-        <section class="border-b border-[var(--rule)]" aria-labelledby="tasks-title">
+        <section class="reveal border-b border-[var(--rule)]" aria-labelledby="tasks-title">
           <div [class]="row">
             <p [class]="label">03 — {{ t.sections.tasks }}</p>
             <div class="grid items-start gap-10 xl:grid-cols-[1fr_1.35fr]">
@@ -285,7 +337,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 04 Security -->
-        <section id="security" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="security-title">
+        <section id="security" class="reveal scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="security-title">
           <div [class]="row">
             <p [class]="label">04 — {{ t.sections.security }}</p>
             <div>
@@ -295,13 +347,13 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
               <figure class="mt-12 rounded-[8px] border border-[var(--rule)] bg-[var(--panel)] p-5 sm:p-7">
                 <figcaption class="font-code text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">{{ t.ui.flow }}</figcaption>
                 <ol class="font-code mt-5 flex flex-wrap items-center gap-x-3 gap-y-3 text-[13px]">
-                  @for (stage of flow; track stage; let last = $last) {
-                    <li class="flex items-center gap-3">
-                      <span class="rounded-[5px] border bg-[var(--paper)] px-3 py-2" [class]="last ? 'border-[var(--accent)]' : 'border-[var(--rule)]'">{{
+                  @for (stage of flow; track stage; let last = $last; let i = $index) {
+                    <li class="flex items-center gap-3" [style.--i]="i">
+                      <span class="rounded-[5px] border bg-[var(--paper)] px-3 py-2" [class]="last ? 'border-[var(--accent)]' : 'flow-stage border-[var(--rule)]'">{{
                         stage
                       }}</span>
                       @if (!last) {
-                        <ng-icon name="lucideArrowRight" class="text-[var(--soft)] rtl:-scale-x-100" aria-hidden="true" />
+                        <ng-icon name="lucideArrowRight" class="flow-arrow text-[var(--soft)] rtl:-scale-x-100" aria-hidden="true" />
                       }
                     </li>
                   }
@@ -338,7 +390,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 05 Vaults -->
-        <section class="border-b border-[var(--rule)]" aria-labelledby="vaults-title">
+        <section class="reveal border-b border-[var(--rule)]" aria-labelledby="vaults-title">
           <div [class]="row">
             <p [class]="label">05 — {{ t.sections.vaults }}</p>
             <div class="grid items-start gap-10 xl:grid-cols-[1.35fr_1fr]">
@@ -359,7 +411,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 06 Sync -->
-        <section id="sync" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="sync-title">
+        <section id="sync" class="reveal scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="sync-title">
           <div [class]="row">
             <p [class]="label">06 — {{ t.sections.sync }}</p>
             <div>
@@ -393,7 +445,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 07 Smart search -->
-        <section class="border-b border-[var(--rule)]" aria-labelledby="search-title">
+        <section class="reveal border-b border-[var(--rule)]" aria-labelledby="search-title">
           <div [class]="row">
             <p [class]="label">07 — {{ t.sections.search }}</p>
             <div class="grid items-start gap-10 xl:grid-cols-[1fr_1.35fr]">
@@ -414,7 +466,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 08 Comparison -->
-        <section class="border-b border-[var(--rule)]" aria-labelledby="compare-title">
+        <section class="reveal border-b border-[var(--rule)]" aria-labelledby="compare-title">
           <div [class]="row">
             <p [class]="label">08 — {{ t.sections.compare }}</p>
             <div>
@@ -445,7 +497,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 09 Self-hosting -->
-        <section id="self-host" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="self-host-title">
+        <section id="self-host" class="reveal scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="self-host-title">
           <div [class]="row">
             <p [class]="label">09 — {{ t.sections.selfHost }}</p>
             <div class="grid items-start gap-10 xl:grid-cols-2">
@@ -474,7 +526,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         </section>
 
         <!-- 10 FAQ -->
-        <section id="faq" class="scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="faq-title">
+        <section id="faq" class="reveal scroll-mt-14 border-b border-[var(--rule)]" aria-labelledby="faq-title">
           <div [class]="row">
             <p [class]="label">10 — {{ t.sections.faq }}</p>
             <div>
@@ -652,7 +704,8 @@ export class LandingPage {
   protected readonly list = 'mt-8 flex flex-col gap-3';
   protected readonly listItem = 'grid grid-cols-[22px_1fr] text-[15.5px] leading-[1.6]';
   protected readonly dash = 'text-[var(--accent)]';
-  protected readonly frame = 'block rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 [&_img]:rounded-[6px]';
+  protected readonly frame =
+    'block rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 [&_img]:rounded-[6px] motion-safe:transition-[translate,box-shadow] motion-safe:duration-300 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]';
   protected readonly textLink =
     'inline-flex items-center gap-1 text-[15px] underline decoration-[var(--rule)] underline-offset-4 hover:decoration-[var(--ink)]';
 

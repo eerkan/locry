@@ -95,6 +95,7 @@ type View = 'active' | 'archived';
       <nav class="flex-1 overflow-y-auto p-2" [attr.aria-label]="'pages.notes.title' | transloco">
         @for (note of visibleNotes(); track note.id) {
           <a
+            animate.enter="item-enter"
             [routerLink]="['/notes', note.id]"
             class="hover:bg-accent/60 group mb-1 flex flex-col gap-1 rounded-lg px-3 py-2.5 transition-colors"
             [class.bg-accent]="note.id === selectedId()"

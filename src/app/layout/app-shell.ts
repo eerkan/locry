@@ -233,7 +233,7 @@ interface NavItem {
             <app-preferences-menu />
           </div>
         </header>
-        <div class="flex-1 p-4 md:p-6">
+        <div class="flex-1 p-4 md:p-6 [view-transition-name:page]">
           <router-outlet />
         </div>
       </main>

@@ -67,7 +67,7 @@ const SEARCH_DELAY_MS = 200;
         @if (results.length) {
           <ul class="flex flex-col gap-1" data-testid="search-results">
             @for (result of results; track result.doc.kind + result.doc.id) {
-              <li>
+              <li animate.enter="item-enter">
                 <a
                   class="hover:bg-accent/60 flex gap-3 rounded-lg px-3 py-3 transition-colors"
                   [routerLink]="link(result).commands"

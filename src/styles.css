@@ -203,3 +203,91 @@
     content: '🖼';
   }
 }
+
+/* ---------------------------------------------------------------------------------------------
+   Motion. Short and quiet (150–350 ms); everything here is off when the system asks for less
+   motion. Page transitions use the browser's View Transitions (Router: withViewTransitions):
+   only the content area moves, the sidebar and header stay put.
+   --------------------------------------------------------------------------------------------- */
+@keyframes locry-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes locry-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes locry-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes locry-check-pop {
+  50% {
+    transform: scale(1.18);
+  }
+}
+@keyframes locry-check-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes locry-lock-snap {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px) rotate(-10deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(1px) rotate(3deg);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-old(page) {
+  animation: locry-fade-out 120ms ease-in both;
+}
+::view-transition-new(page) {
+  animation: locry-rise 220ms ease-out both;
+}
+
+/* New items in lists (notes, tasks, search results, answers). */
+.item-enter {
+  animation: locry-rise 180ms ease-out;
+}
+/* A task being ticked: the box pops and the tick draws itself before the task moves away. */
+.check-pop {
+  animation: locry-check-pop 260ms ease-out;
+}
+.check-draw svg path,
+.check-draw svg polyline {
+  stroke-dasharray: 24;
+  animation: locry-check-draw 260ms ease-out both;
+}
+.lock-snap {
+  animation: locry-lock-snap 420ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .item-enter,
+  .check-pop,
+  .check-draw svg path,
+  .check-draw svg polyline,
+  .lock-snap {
+    animation: none !important;
+  }
+}
