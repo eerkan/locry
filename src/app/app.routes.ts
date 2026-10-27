@@ -1,7 +1,7 @@
 import type { Route, Routes } from '@angular/router';
 import { DEFAULT_LANG, LANGS } from './core/languages';
 import { loadLandingContent } from './features/landing/landing-content';
-import { loadPrivacyContent, privacyPath } from './features/privacy/privacy-content';
+import { LEGAL_DOCS, legalPath, loadLegalContent } from './features/privacy/privacy-content';
 import { vaultStatusGuard } from './core/vault/vault.guard';
 
 export const routes: Routes = [
@@ -15,15 +15,18 @@ export const routes: Routes = [
       loadComponent: () => import('./features/landing/landing-page').then((m) => m.LandingPage),
     }),
   ),
-  // Privacy policy, prerendered too: /privacy in English, /<code>/privacy in the others.
-  ...LANGS.map(
-    (lang): Route => ({
-      path: privacyPath(lang).slice(1),
-      pathMatch: 'full',
-      data: { lang, ownTitle: true },
-      resolve: { content: () => loadPrivacyContent(lang) },
-      loadComponent: () => import('./features/privacy/privacy-page').then((m) => m.PrivacyPage),
-    }),
+  // Privacy policy and terms of service, prerendered too: /privacy and /terms in English,
+  // /<code>/privacy and /<code>/terms in the others.
+  ...LEGAL_DOCS.flatMap((doc) =>
+    LANGS.map(
+      (lang): Route => ({
+        path: legalPath(doc, lang).slice(1),
+        pathMatch: 'full',
+        data: { lang, doc, ownTitle: true },
+        resolve: { content: () => loadLegalContent(doc, lang) },
+        loadComponent: () => import('./features/privacy/privacy-page').then((m) => m.PrivacyPage),
+      }),
+    ),
   ),
   // English used to live at /en.
   { path: 'en', pathMatch: 'full', redirectTo: '' },

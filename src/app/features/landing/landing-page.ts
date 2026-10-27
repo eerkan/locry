@@ -12,7 +12,7 @@ import { RuntimeConfigService } from '../../core/runtime-config.service';
 import { VaultService } from '../../core/vault/vault.service';
 import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, detectLang, direction, isLang, type Lang } from '../../core/languages';
 import { landingPath, type LandingContent } from './landing-content';
-import { privacyPath } from '../privacy/privacy-content';
+import { privacyPath, termsPath } from '../privacy/privacy-content';
 import { LandingSeo } from './landing-seo';
 import { LandingShot } from './landing-shot';
 
@@ -571,6 +571,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             <a [attr.href]="anchor('faq')" class="hover:text-[var(--ink)]">{{ t.nav.faq }}</a>
             <a [href]="github" rel="noopener" class="hover:text-[var(--ink)]">GitHub</a>
             <a [routerLink]="privacy(t.lang)" class="hover:text-[var(--ink)]">{{ t.footer.privacy }}</a>
+            <a [routerLink]="terms(t.lang)" class="hover:text-[var(--ink)]">{{ t.footer.terms }}</a>
           </nav>
         </div>
         <nav
@@ -608,6 +609,7 @@ export class LandingPage {
   protected readonly tags = LANGUAGE_TAGS;
   protected readonly path = landingPath;
   protected readonly privacy = privacyPath;
+  protected readonly terms = termsPath;
   /**
    * In-page links carry the page's own path, relative to the document's base: a bare "#faq"
    * on /tr would point at the base (/#faq) and leave the page. Relative, so it also works

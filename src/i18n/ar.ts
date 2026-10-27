@@ -46,6 +46,7 @@ export const ar: Translation = {
     theme: 'المظهر',
     comingSoon: 'قريبًا',
     privacy: 'سياسة الخصوصية',
+    terms: 'شروط الخدمة',
   },
   theme: {
     light: 'فاتح',

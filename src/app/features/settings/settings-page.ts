@@ -10,7 +10,7 @@ import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmSeparator } from '@spartan-ng/helm/separator';
 import { LANGS, LANGUAGE_NAMES } from '../../core/languages';
 import { Flag } from '../../shared/flag';
-import { privacyPath } from '../privacy/privacy-content';
+import { privacyPath, termsPath } from '../privacy/privacy-content';
 import { type Lang, PreferencesService, type Theme } from '../../core/preferences.service';
 import { StorageHealthService } from '../../core/storage/storage-health.service';
 import { VaultService } from '../../core/vault/vault.service';
@@ -144,6 +144,8 @@ import { VaultCard } from './vault-card';
       <app-support-card />
       <p class="text-muted-foreground text-center text-xs">
         <a class="hover:text-foreground underline underline-offset-2" [routerLink]="privacyPath(prefs.lang())">{{ 'common.privacy' | transloco }}</a>
+        ·
+        <a class="hover:text-foreground underline underline-offset-2" [routerLink]="termsPath(prefs.lang())">{{ 'common.terms' | transloco }}</a>
       </p>
     </div>
   `,
@@ -155,6 +157,7 @@ export class SettingsPage {
   protected readonly storage = inject(StorageHealthService);
 
   protected readonly privacyPath = privacyPath;
+  protected readonly termsPath = termsPath;
   protected readonly langs = LANGS;
   protected readonly languageNames = LANGUAGE_NAMES;
   protected readonly themes: Theme[] = ['light', 'dark', 'system'];

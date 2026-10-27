@@ -288,6 +288,7 @@ export const id: LandingContent = {
     madeWith: 'Dibuat dengan Angular, Web Crypto, dan WebAuthn, tanpa server.',
     links: 'Tautan',
     privacy: 'Privasi',
+    terms: 'Ketentuan',
   },
   support: {
     title: 'Dukung Locry',

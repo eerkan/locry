@@ -40,10 +40,12 @@ const LANDING_LANGS = ['tr', 'zh', 'es', 'ar', 'pt', 'id', 'fr', 'ja', 'ru', 'de
 const PAGES = {
   '/': 'index.html',
   ...Object.fromEntries(LANDING_LANGS.flatMap((lang) => [`/${lang}`, `/${lang}/`].map((path) => [path, `${lang}/index.html`]))),
-  // Privacy policy: /privacy in English, /<code>/privacy in the others.
+  // Privacy policy and terms: /privacy and /terms in English, /<code>/privacy and /<code>/terms in the others.
   ...Object.fromEntries(
-    ['', ...LANDING_LANGS.map((lang) => `/${lang}`)].flatMap((prefix) =>
-      [`${prefix}/privacy`, `${prefix}/privacy/`].map((path) => [path, `${prefix.slice(1)}${prefix ? '/' : ''}privacy/index.html`]),
+    ['privacy', 'terms'].flatMap((doc) =>
+      ['', ...LANDING_LANGS.map((lang) => `/${lang}`)].flatMap((prefix) =>
+        [`${prefix}/${doc}`, `${prefix}/${doc}/`].map((path) => [path, `${prefix.slice(1)}${prefix ? '/' : ''}${doc}/index.html`]),
+      ),
     ),
   ),
 };

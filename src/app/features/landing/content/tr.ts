@@ -288,6 +288,7 @@ export const tr: LandingContent = {
     madeWith: 'Angular, Web Crypto ve WebAuthn ile, sunucusuz.',
     links: 'Bağlantılar',
     privacy: 'Gizlilik',
+    terms: 'Koşullar',
   },
   support: {
     title: 'Locry’yi destekle',

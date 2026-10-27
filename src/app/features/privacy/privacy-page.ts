@@ -6,11 +6,12 @@ import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, direction, type Lang } from '../.
 import { Flag } from '../../shared/flag';
 import { landingPath } from '../landing/landing-content';
 import { LandingSeo } from '../landing/landing-seo';
-import { PRIVACY_UPDATED, type PrivacyContent, linkParts, privacyPath } from './privacy-content';
+import { LEGAL_UPDATED, type LegalContent, type LegalDoc, legalPath, linkParts } from './privacy-content';
 
 /**
- * The privacy policy, in every interface language (/privacy, /tr/privacy, …). Prerendered like
- * the landing pages, so it reads without JavaScript; Google's OAuth consent screen links here.
+ * A public legal document (privacy policy or terms of service), in every interface language
+ * (/privacy, /tr/terms, …). Prerendered like the landing pages, so it reads without JavaScript;
+ * Google's OAuth consent screen links to both.
  */
 @Component({
   selector: 'app-privacy-page',
@@ -60,13 +61,13 @@ import { PRIVACY_UPDATED, type PrivacyContent, linkParts, privacyPath } from './
       <main id="main" class="mx-auto max-w-3xl px-5 py-14 sm:px-6 md:py-20">
         <h1 class="font-display text-[40px] leading-[1.05] font-[440] tracking-[-0.02em] sm:text-[52px]">{{ t.title }}</h1>
         <p class="font-code mt-4 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase">
-          {{ t.updated }}: <time [attr.datetime]="updatedIso">{{ updatedLabel() }}</time>
+          {{ t.updated }}: <time [attr.datetime]="updatedIso()">{{ updatedLabel() }}</time>
         </p>
         <p class="mt-8 text-[18px] leading-[1.65]">{{ t.intro }}</p>
 
         @for (section of t.sections; track section.heading; let i = $index) {
-          <section class="mt-12 border-t border-[var(--rule)] pt-8" [attr.aria-labelledby]="'privacy-' + i">
-            <h2 [id]="'privacy-' + i" class="font-display text-[24px] leading-tight font-[460]">{{ section.heading }}</h2>
+          <section class="mt-12 border-t border-[var(--rule)] pt-8" [attr.aria-labelledby]="doc() + '-' + i">
+            <h2 [id]="doc() + '-' + i" class="font-display text-[24px] leading-tight font-[460]">{{ section.heading }}</h2>
             @for (paragraph of section.body; track $index) {
               <p class="mt-4 text-[16px] leading-[1.7] text-[var(--soft)]">
                 @for (part of parts(paragraph); track $index) {
@@ -105,24 +106,26 @@ import { PRIVACY_UPDATED, type PrivacyContent, linkParts, privacyPath } from './
 export class PrivacyPage {
   /** From the route's data and resolver. */
   readonly lang = input.required<Lang>();
-  readonly content = input.required<PrivacyContent>();
+  readonly doc = input.required<LegalDoc>();
+  readonly content = input.required<LegalContent>();
 
   protected readonly langs = LANGS;
   protected readonly names = LANGUAGE_NAMES;
   protected readonly tags = LANGUAGE_TAGS;
-  protected readonly path = privacyPath;
-  protected readonly updatedIso = PRIVACY_UPDATED;
+  protected readonly path = (lang: Lang) => legalPath(this.doc(), lang);
+  protected readonly updatedIso = computed(() => LEGAL_UPDATED[this.doc()]);
   protected readonly home = computed(() => landingPath(this.content().lang));
   protected readonly dir = computed(() => direction(this.content().lang));
   protected readonly updatedLabel = computed(() =>
-    new Intl.DateTimeFormat(LANGUAGE_TAGS[this.content().lang], { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(PRIVACY_UPDATED)),
+    new Intl.DateTimeFormat(LANGUAGE_TAGS[this.content().lang], { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(this.updatedIso())),
   );
 
   constructor() {
     const seo = inject(LandingSeo);
     effect(() => {
       const t = this.content();
-      seo.applyPage({ lang: t.lang, title: t.meta.title, description: t.meta.description, path: privacyPath });
+      const doc = this.doc();
+      seo.applyPage({ lang: t.lang, title: t.meta.title, description: t.meta.description, path: (lang) => legalPath(doc, lang) });
     });
   }
 

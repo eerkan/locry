@@ -286,6 +286,7 @@ export const zh: LandingContent = {
     madeWith: '基于 Angular、Web Crypto 和 WebAuthn 构建，无需服务器。',
     links: '链接',
     privacy: '隐私',
+    terms: '服务条款',
   },
   support: {
     title: '支持 Locry',

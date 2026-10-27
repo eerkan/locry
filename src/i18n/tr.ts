@@ -43,6 +43,7 @@ export const tr = {
     theme: 'Tema',
     comingSoon: 'Yakında',
     privacy: 'Gizlilik politikası',
+    terms: 'Kullanım koşulları',
   },
   theme: {
     light: 'Açık',

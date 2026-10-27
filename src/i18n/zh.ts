@@ -46,6 +46,7 @@ export const zh: Translation = {
     theme: '主题',
     comingSoon: '即将推出',
     privacy: '隐私政策',
+    terms: '服务条款',
   },
   theme: {
     light: '浅色',

@@ -288,6 +288,7 @@ export const ja: LandingContent = {
     madeWith: 'Angular、Web Crypto、WebAuthn で作られ、サーバーは不要です。',
     links: 'リンク',
     privacy: 'プライバシー',
+    terms: '利用規約',
   },
   support: {
     title: 'Locry を支援する',

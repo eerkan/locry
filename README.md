@@ -129,7 +129,8 @@ One-time setup (repository **Settings**):
    OAuth client.
 4. To let anyone (not only listed test users) connect Drive, publish the OAuth app. Google's **Branding** screen
    then asks for an app home page (`https://<user>.github.io/<repository>/`), a privacy policy
-   (`https://<user>.github.io/<repository>/privacy`, built in, in all 11 languages) and the domain under
+   (`https://<user>.github.io/<repository>/privacy`), terms of service (`…/<repository>/terms`; both built in, in
+   all 11 languages) and the domain under
    **Authorized domains**. That domain must be verified in Google Search Console, which checks the site's root
    (`https://<user>.github.io/`): put the verification file Search Console gives you in a separate
    `<user>/<user>.github.io` repository, which GitHub serves at that root.

@@ -46,6 +46,7 @@ export const id: Translation = {
     theme: 'Tema',
     comingSoon: 'Segera hadir',
     privacy: 'Kebijakan privasi',
+    terms: 'Ketentuan layanan',
   },
   theme: {
     light: 'Terang',

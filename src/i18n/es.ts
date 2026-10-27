@@ -45,6 +45,7 @@ export const es: Translation = {
     theme: 'Tema',
     comingSoon: 'Próximamente',
     privacy: 'Política de privacidad',
+    terms: 'Términos del servicio',
   },
   theme: {
     light: 'Claro',

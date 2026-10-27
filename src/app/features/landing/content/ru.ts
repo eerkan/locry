@@ -288,6 +288,7 @@ export const ru: LandingContent = {
     madeWith: 'Сделано на Angular, Web Crypto и WebAuthn, без сервера.',
     links: 'Ссылки',
     privacy: 'Конфиденциальность',
+    terms: 'Условия',
   },
   support: {
     title: 'Поддержать Locry',

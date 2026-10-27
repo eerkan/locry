@@ -288,6 +288,7 @@ export const fr: LandingContent = {
     madeWith: 'Construit avec Angular, Web Crypto et WebAuthn, sans serveur.',
     links: 'Liens',
     privacy: 'Confidentialité',
+    terms: 'Conditions',
   },
   support: {
     title: 'Soutenir Locry',

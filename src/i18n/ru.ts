@@ -46,6 +46,7 @@ export const ru: Translation = {
     theme: 'Тема',
     comingSoon: 'Скоро',
     privacy: 'Политика конфиденциальности',
+    terms: 'Условия использования',
   },
   theme: {
     light: 'Светлая',

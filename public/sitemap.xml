@@ -374,4 +374,191 @@
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url>
+    <loc>https://locry.invalid/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/tr/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/zh/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/es/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/ar/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/pt/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/id/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/fr/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/ja/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/ru/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/de/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/terms" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/terms" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/terms" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/terms" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/terms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/terms" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
 </urlset>
