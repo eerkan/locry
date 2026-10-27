@@ -32,7 +32,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
   imports: [DonateLogo, Flag, LandingShot, NgIcon, NgTemplateOutlet, RouterLink],
   providers: [provideIcons({ lucideArrowRight, lucideArrowUpRight, lucideHeart, lucideMonitor, lucideMoon, lucidePlus, lucideSun })],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block' },
+  host: { class: 'block', '[class.motion]': 'motion()' },
   styles: `
     :host {
       --paper: #f6f5f1;
@@ -41,6 +41,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
       --soft: #57554c;
       --rule: #dcd9cf;
       --accent: #b03f0c;
+      --mark: color-mix(in oklab, var(--accent) 16%, transparent);
     }
     :host-context(.dark) {
       --paper: #0f0f0e;
@@ -50,21 +51,157 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
       --rule: #2b2a25;
       --accent: #f0894a;
     }
-    /* Sections rise in as they scroll into view: CSS scroll-driven animations only, so the
-       prerendered page shows everything without JavaScript and browsers without support skip it. */
+    /* Motion, CSS only: the prerendered HTML (what search engines and AI crawlers read) is
+       unchanged and fully visible; nothing animates without support or with reduced motion.
+       The hero's heading and screenshots only move (transform), never fade, so LCP is not
+       delayed; nothing changes layout, so CLS stays 0. */
+    @media (prefers-reduced-motion: no-preference) {
+      .hero-in {
+        animation: hero-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        animation-delay: var(--d, 0ms);
+      }
+      .hero-rise {
+        animation: hero-rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      /* A highlighter stroke under the accent words (not an underline: that would read as a link). */
+      .hero-accent {
+        background-image: linear-gradient(var(--mark), var(--mark));
+        background-repeat: no-repeat;
+        background-position: 0 88%;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+        animation: hero-mark 900ms 550ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      [dir='rtl'] .hero-accent {
+        background-position: 100% 88%;
+      }
+      .hero-shot {
+        animation: hero-shot 1000ms 150ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      .hero-phone {
+        animation: hero-phone 1100ms 350ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      .pulse-dot {
+        animation: pulse-dot 2.4s ease-in-out infinite;
+      }
+    }
+    @keyframes hero-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+    }
+    @keyframes hero-rise {
+      from {
+        transform: translateY(18px);
+      }
+    }
+    @keyframes hero-mark {
+      from {
+        background-size: 0% 0.32em;
+      }
+      to {
+        background-size: 100% 0.32em;
+      }
+    }
+    @keyframes hero-shot {
+      from {
+        transform: translateY(28px) scale(0.985);
+      }
+    }
+    @keyframes hero-phone {
+      from {
+        transform: translateY(48px) rotate(3deg);
+      }
+    }
+    @keyframes pulse-dot {
+      50% {
+        opacity: 0.35;
+        transform: scale(0.7);
+      }
+    }
+
+    /* Scroll-driven: each block rises in as it enters the viewport (a natural stagger), the
+       phone screenshot drifts up a little faster than the page, the code types itself out and
+       the header gains a shadow once the page scrolls. Switched on (:host(.motion)) only after
+       the first paint: attaching ~150 scroll timelines up front delayed it by ~30 ms. */
     @supports (animation-timeline: view()) {
       @media (prefers-reduced-motion: no-preference) {
-        .reveal > * {
+        :host(.motion) .reveal :is(p, h2, li, dl > div, figure, tr, details, aside):not(:is(li, figure, details, aside, tr, dl > div) *) {
           animation: reveal linear both;
           animation-timeline: view();
-          animation-range: entry 0% cover 22%;
+          animation-range: entry 0% entry 90%;
+        }
+        :host(.motion) .reveal figure {
+          animation-name: reveal-shot;
+        }
+        :host(.motion) .reveal pre {
+          animation: type-in linear both;
+          animation-timeline: view();
+          animation-range: entry 30% cover 45%;
+        }
+        :host(.motion) .header-scroll {
+          animation: header-lift linear both;
+          animation-timeline: scroll(root);
+          animation-range: 0 120px;
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) and (min-width: 640px) {
+        :host(.motion) .hero-phone {
+          animation:
+            hero-phone 1100ms 350ms cubic-bezier(0.2, 0.7, 0.2, 1) both,
+            hero-parallax linear both;
+          animation-timeline: auto, scroll(root);
+          animation-range: normal, 0 700px;
         }
       }
     }
     @keyframes reveal {
       from {
         opacity: 0;
-        translate: 0 28px;
+        translate: 0 22px;
+      }
+    }
+    @keyframes reveal-shot {
+      from {
+        opacity: 0;
+        translate: 0 36px;
+        scale: 0.97;
+      }
+    }
+    @keyframes type-in {
+      from {
+        clip-path: inset(0 100% 0 0);
+      }
+    }
+    @keyframes hero-parallax {
+      to {
+        translate: 0 -56px;
+      }
+    }
+    @keyframes header-lift {
+      to {
+        box-shadow: 0 10px 28px -18px rgb(0 0 0 / 0.3);
+      }
+    }
+
+    /* FAQ answers open and close smoothly where the browser can animate to "auto". */
+    details {
+      interpolate-size: allow-keywords;
+    }
+    details::details-content {
+      block-size: 0;
+      overflow: clip;
+      transition:
+        block-size 300ms ease,
+        content-visibility 300ms allow-discrete;
+    }
+    details[open]::details-content {
+      block-size: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      details::details-content {
+        transition: none;
       }
     }
     /* The key flow: each stage lights up in turn, as the key is derived step by step. */
@@ -151,7 +288,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         >{{ t.nav.skip }}</a
       >
 
-      <header class="sticky top-0 z-40 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur">
+      <header class="header-scroll sticky top-0 z-40 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur">
         <div class="mx-auto flex h-14 max-w-[1200px] items-center gap-8 px-5 sm:px-6">
           <a [routerLink]="path(t.lang)" dir="ltr" class="font-display text-[22px] leading-none font-[560] tracking-[-0.02em]" aria-label="Locry"
             >Locry<span class="text-[var(--accent)]">.</span></a
@@ -165,7 +302,9 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
               <li><a [attr.href]="anchor('faq')" class="transition-colors hover:text-[var(--ink)]">{{ t.nav.faq }}</a></li>
             </ul>
           </nav>
-          <div class="ms-auto flex items-center gap-1.5 sm:gap-3">
+          <!-- The support link only appears after hydration (its accounts come from config.json); its own
+               slot grows to the left without moving the controls next to it (no layout shift). -->
+          <div class="ms-auto flex">
             @if (donations()) {
               <a
                 [attr.href]="anchor('support')"
@@ -174,6 +313,8 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                 <ng-icon name="lucideHeart" class="text-[15px] text-rose-500" aria-hidden="true" /><span class="sr-only md:not-sr-only">{{ t.nav.support }}</span>
               </a>
             }
+          </div>
+          <div class="-ms-6 flex items-center gap-1.5 sm:-ms-5 sm:gap-3">
             <details #langMenu class="relative">
               <summary
                 class="font-code flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md px-2 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase transition-colors hover:text-[var(--ink)]"
@@ -224,18 +365,18 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         <section class="border-b border-[var(--rule)]" aria-labelledby="hero-title">
           <div class="mx-auto grid max-w-[1200px] gap-10 px-5 pt-14 pb-12 sm:px-6 md:pt-24 lg:grid-cols-12">
             <div class="lg:col-span-7">
-              <p class="font-code flex items-center gap-2.5 text-[12px] tracking-[0.12em] text-[var(--soft)] uppercase">
-                <span class="size-1.5 bg-[var(--accent)]" aria-hidden="true"></span>{{ t.hero.eyebrow }}
+              <p class="hero-in font-code flex items-center gap-2.5 text-[12px] tracking-[0.12em] text-[var(--soft)] uppercase">
+                <span class="pulse-dot size-1.5 bg-[var(--accent)]" aria-hidden="true"></span>{{ t.hero.eyebrow }}
               </p>
               <h1
                 id="hero-title"
-                class="font-display mt-6 text-[44px] leading-[1.02] font-[440] tracking-[-0.025em] text-balance sm:text-[62px] lg:text-[74px]"
+                class="hero-rise font-display mt-6 text-[44px] leading-[1.02] font-[440] tracking-[-0.025em] text-balance sm:text-[62px] lg:text-[74px]"
               >
                 {{ t.hero.title }}
-                <em class="font-[380] text-[var(--accent)]">{{ t.hero.accent }}</em>
+                <em class="hero-accent font-[380] text-[var(--accent)]">{{ t.hero.accent }}</em>
               </h1>
             </div>
-            <div class="flex flex-col justify-end gap-7 lg:col-span-5 lg:pb-2">
+            <div class="hero-in flex flex-col justify-end gap-7 [--d:180ms] lg:col-span-5 lg:pb-2">
               <p class="text-[17px] leading-[1.65] text-[var(--soft)]">{{ t.hero.lead }}</p>
               <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
                 <a
@@ -261,14 +402,14 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             </div>
           </div>
           <div class="relative mx-auto max-w-[1200px] px-5 pb-16 sm:px-6 md:pb-24">
-            <figure class="hidden rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 sm:block md:p-2">
+            <figure class="hero-shot hidden rounded-[10px] border border-[var(--rule)] bg-[var(--panel)] p-1.5 sm:block md:p-2">
               <div class="overflow-hidden rounded-[6px] border border-[var(--rule)]">
                 <app-landing-shot [lang]="t.lang" name="hero" [width]="1440" [height]="900" [alt]="t.hero.screenshotAlt" [theme]="shotTheme()" eager />
               </div>
             </figure>
             <!-- On phones the phone screenshot replaces the desktop one; on larger screens it overlaps it. -->
             <figure
-              class="mx-auto w-3/4 max-w-72 overflow-hidden rounded-[26px] border-[6px] border-[#1b1a16] bg-[#1b1a16] shadow-[0_0_0_1px_var(--rule),0_24px_48px_-24px_rgb(0_0_0/0.35)] sm:absolute sm:end-12 sm:bottom-6 sm:w-[21%] sm:max-w-60 md:bottom-12"
+              class="hero-phone mx-auto w-3/4 max-w-72 overflow-hidden rounded-[26px] border-[6px] border-[#1b1a16] bg-[#1b1a16] shadow-[0_0_0_1px_var(--rule),0_24px_48px_-24px_rgb(0_0_0/0.35)] sm:absolute sm:end-12 sm:bottom-6 sm:w-[21%] sm:max-w-60 md:bottom-12"
             >
               <app-landing-shot [lang]="t.lang" name="phone" [width]="780" [height]="1688" [alt]="t.hero.phoneAlt" [theme]="shotTheme()" eager />
             </figure>
@@ -303,8 +444,8 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
               <p [class]="lead">{{ t.features.lead }}</p>
               <ol class="mt-12 grid gap-px border border-[var(--rule)] bg-[var(--rule)] sm:grid-cols-2 lg:grid-cols-3">
                 @for (feature of t.features.items; track feature.title; let i = $index) {
-                  <li class="bg-[var(--paper)] p-6">
-                    <span class="font-code text-[12px] text-[var(--soft)]">2.{{ i + 1 }}</span>
+                  <li class="group bg-[var(--paper)] p-6 transition-colors duration-300 hover:bg-[var(--panel)]">
+                    <span class="font-code text-[12px] text-[var(--soft)] transition-colors group-hover:text-[var(--accent)]">2.{{ i + 1 }}</span>
                     <h3 class="mt-3 text-[17px] font-medium tracking-[-0.01em]">{{ feature.title }}</h3>
                     <p class="mt-2 text-[14.5px] leading-[1.6] text-[var(--soft)]">{{ feature.text }}</p>
                   </li>
@@ -694,6 +835,8 @@ export class LandingPage {
   });
   /** Set in the browser only (after hydration), so the prerendered HTML stays the same for everyone. */
   protected readonly hasVault = signal(false);
+  /** Scroll-driven motion, switched on after the first paint (see the styles). */
+  protected readonly motion = signal(false);
   protected readonly donations = signal<Donations | null>(null);
   protected readonly copied = signal<string | null>(null);
   private readonly runtime = inject(RuntimeConfigService);
@@ -725,6 +868,7 @@ export class LandingPage {
         return;
       }
       this.hasVault.set(this.vault.vaults().length > 0);
+      requestAnimationFrame(() => this.motion.set(true));
       this.donations.set(this.runtime.donations());
       // A switch to the browser's language is counted on the page it lands on.
       if (!this.followBrowserLanguage()) this.analytics.pageview();

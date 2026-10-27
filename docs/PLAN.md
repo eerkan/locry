@@ -321,6 +321,18 @@ real screenshots. (Phase 12 later made English the default.)
   Alt+↑/↓, focus kept on the moved task; the drag handle is hidden from screen readers.
 - ✅ "Skip to content" in the app, as on the landing page (a button: a #fragment would leave the app under a base path).
 
+### Phase 21 — More landing motion, no SEO or Web Vitals cost ✅ done
+- ✅ Hero on load: the heading rises, a highlighter stroke draws under the accent words (not an underline, which would
+  read as a link), the screenshots slide in, the eyebrow dot pulses; transform only on the heading and screenshots,
+  so LCP is not delayed.
+- ✅ Scroll-driven (CSS only): every heading, paragraph, card, table row and FAQ item rises in as it enters, screenshots
+  scale up, the phone drifts with a little parallax, the self-host commands type themselves out, the header gains a
+  shadow; FAQ answers open smoothly (`::details-content`), feature cards tint on hover.
+- ✅ Measured against the previous build (same machine, 4× CPU, 10 Mbit): attaching ~150 scroll timelines up front
+  delayed the first paint by ~30 ms, so they switch on (`:host(.motion)`) on the frame after hydration; FCP/LCP equal
+  within noise, CLS 0. The prerendered text is unchanged; no JavaScript, no support or reduced motion → static page.
+- ✅ The support link got its own header slot, removing a small layout shift (0.0009 → 0) when it appears.
+
 ## Setup notes
 
 - Requires Node 24 (`.nvmrc`): `nvm use`
