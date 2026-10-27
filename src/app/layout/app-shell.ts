@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DOCUMENT, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DOCUMENT, type ElementRef, computed, inject, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -85,8 +85,16 @@ interface NavItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown)': 'onShortcut($event)' },
   template: `
+    <!-- A button rather than a #fragment link: under a base path (GitHub Pages) a fragment would leave the app. -->
+    <button
+      type="button"
+      class="bg-background focus-visible:ring-ring/50 sr-only z-50 rounded-md border px-3 py-2 text-sm shadow-md outline-none focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus-visible:ring-[3px]"
+      (click)="skipToContent()"
+    >
+      {{ 'nav.skip' | transloco }}
+    </button>
     <div hlmSidebarWrapper>
-      <hlm-sidebar collapsible="icon" [side]="prefs.startSide()">
+      <hlm-sidebar collapsible="icon" [side]="prefs.startSide()" role="navigation" [attr.aria-label]="'nav.workspace' | transloco">
         <hlm-sidebar-header class="px-3 py-3">
           <app-logo class="group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
           @if (vault.activeVault(); as active) {
@@ -98,7 +106,7 @@ interface NavItem {
                   [hlmDropdownMenuTrigger]="vaultMenu"
                   align="start"
                   [tooltip]="'vaults.switch' | transloco"
-                  [attr.aria-label]="'vaults.switch' | transloco"
+                  [attr.aria-label]="(active.name || ('vaults.unnamed' | transloco)) + ' · ' + ('vaults.switch' | transloco)"
                 >
                   <app-vault-label [vault]="active" class="flex-1 group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
                   <ng-icon name="lucideChevronsUpDown" class="text-muted-foreground" />
@@ -215,7 +223,7 @@ interface NavItem {
         <button hlmSidebarRail></button>
       </hlm-sidebar>
 
-      <main hlmSidebarInset>
+      <main hlmSidebarInset #content tabindex="-1" class="outline-none">
         <header class="bg-background/80 sticky top-0 z-10 flex h-14 items-center gap-2 border-b px-4 backdrop-blur">
           <button hlmSidebarTrigger></button>
           <hlm-separator orientation="vertical" class="mx-1 h-4 data-vertical:self-center" />
@@ -275,6 +283,13 @@ export class AppShell {
   protected readonly sync = inject(SyncService);
   protected readonly statusLabel = computed(() => syncStatusLabel(this.sync.status()));
   private readonly transloco = inject(TranslocoService);
+
+  private readonly content = viewChild.required<ElementRef<HTMLElement>>('content');
+
+  /** "Skip to content": past the sidebar, into the page's main area. */
+  protected skipToContent(): void {
+    this.content().nativeElement.focus();
+  }
 
   constructor() {
     // Unlocked-only background services, kept out of the initial bundle.

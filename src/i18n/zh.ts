@@ -27,6 +27,7 @@ export const zh: Translation = {
     continueList: '继续列表',
   },
   nav: {
+    skip: '跳到正文',
     notes: '笔记',
     tasks: '任务',
     search: '搜索',
@@ -275,7 +276,8 @@ export const zh: Translation = {
       },
       markDone: '完成“{{title}}”',
       markOpen: '重新打开“{{title}}”',
-      dragHandle: '拖动以重新排序',
+      moveUp: '将“{{title}}”上移',
+      moveDown: '将“{{title}}”下移',
       untitled: '无标题任务',
       detail: {
         title: '任务详情',

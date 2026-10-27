@@ -24,6 +24,7 @@ export const tr = {
     continueList: 'Listeye devam et',
   },
   nav: {
+    skip: 'İçeriğe geç',
     notes: 'Notlar',
     tasks: 'Görevler',
     search: 'Ara',
@@ -275,7 +276,8 @@ export const tr = {
       },
       markDone: '"{{title}}" görevini tamamla',
       markOpen: '"{{title}}" görevini yeniden aç',
-      dragHandle: 'Sürükleyerek sırala',
+      moveUp: '{{title}} yukarı taşı',
+      moveDown: '{{title}} aşağı taşı',
       untitled: 'Başlıksız görev',
       detail: {
         title: 'Görev ayrıntıları',

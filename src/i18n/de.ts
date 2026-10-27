@@ -26,6 +26,7 @@ export const de: Translation = {
     continueList: 'Liste fortsetzen',
   },
   nav: {
+    skip: 'Zum Inhalt springen',
     notes: 'Notizen',
     tasks: 'Aufgaben',
     search: 'Suche',
@@ -283,7 +284,8 @@ export const de: Translation = {
       },
       markDone: '„{{title}}“ erledigen',
       markOpen: '„{{title}}“ wieder öffnen',
-      dragHandle: 'Zum Umsortieren ziehen',
+      moveUp: '{{title}} nach oben verschieben',
+      moveDown: '{{title}} nach unten verschieben',
       untitled: 'Aufgabe ohne Titel',
       detail: {
         title: 'Aufgabendetails',

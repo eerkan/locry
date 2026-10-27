@@ -53,9 +53,25 @@ export function renderMarkdown(source: string): string {
     RETURN_DOM_FRAGMENT: true,
   });
   replaceBlockedImages(fragment);
+  labelTaskBoxes(fragment);
   const container = document.createElement('div');
   container.append(fragment);
   return container.innerHTML;
+}
+
+/** Names each task-list checkbox after its item's own text (not nested items), for screen readers. */
+function labelTaskBoxes(root: DocumentFragment): void {
+  for (const box of Array.from(root.querySelectorAll('input[data-task-index]'))) {
+    const item = box.closest('li');
+    if (!item) continue;
+    const own = Array.from(item.childNodes)
+      .filter((n) => !(n instanceof Element && (n.matches('ul, ol') || n === box)))
+      .map((n) => n.textContent ?? '')
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (own) box.setAttribute('aria-label', own.length > 120 ? `${own.slice(0, 119)}…` : own);
+  }
 }
 
 /** Swaps blocked remote images for a small labelled chip instead of a broken-image icon. */

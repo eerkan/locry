@@ -27,6 +27,7 @@ export const ar: Translation = {
     continueList: 'متابعة القائمة',
   },
   nav: {
+    skip: 'تخطَّ إلى المحتوى',
     notes: 'الملاحظات',
     tasks: 'المهام',
     search: 'البحث',
@@ -284,7 +285,8 @@ export const ar: Translation = {
       },
       markDone: 'إكمال «{{title}}»',
       markOpen: 'إعادة فتح «{{title}}»',
-      dragHandle: 'اسحب لإعادة الترتيب',
+      moveUp: 'نقل {{title}} لأعلى',
+      moveDown: 'نقل {{title}} لأسفل',
       untitled: 'مهمة بلا عنوان',
       detail: {
         title: 'تفاصيل المهمة',

@@ -111,7 +111,7 @@ import { VaultCard } from './vault-card';
             @if (storage.persisted() !== null) {
               <dt class="text-muted-foreground">{{ 'pages.settings.storage' | transloco }}</dt>
               <dd class="flex flex-col gap-1">
-                <span [class.text-amber-600]="!storage.persisted()" [class.dark:text-amber-500]="!storage.persisted()">
+                <span [class.text-amber-700]="!storage.persisted()" [class.dark:text-amber-400]="!storage.persisted()">
                   {{ (storage.persisted() ? 'pages.settings.storagePersisted' : 'pages.settings.storageNotPersisted') | transloco }}
                 </span>
                 @if (storage.estimate(); as estimate) {

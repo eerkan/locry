@@ -310,6 +310,17 @@ real screenshots. (Phase 12 later made English the default.)
   where unsupported), the key flow lights up stage by stage, screenshots lift on hover.
 - ✅ All of it is off with "reduce motion"; 150–420 ms, ease-out.
 
+### Phase 20 — Accessibility ✅ done
+- ✅ axe-core 4.14 (WCAG 2.2 AA + best practices) over the landing, legal pages, setup, lock screen, notes, tasks,
+  settings, search and Ask, light and dark, Turkish and Arabic: 7 kinds of issues → 0.
+- ✅ Markdown preview checkboxes are named after their item; label/name mismatches fixed (support link, language menu,
+  vault switcher); empty comparison header cell is a `td`; setup's recovery step has an `h1`; the sidebar is a
+  navigation landmark.
+- ✅ Contrast: light-theme muted text darkened to 5:1 on grey; note dates and the storage warning fixed.
+- ✅ Reordering tasks without dragging (WCAG 2.5.7): move up/down buttons (24 px, always shown on touch screens) and
+  Alt+↑/↓, focus kept on the moved task; the drag handle is hidden from screen readers.
+- ✅ "Skip to content" in the app, as on the landing page (a button: a #fragment would leave the app under a base path).
+
 ## Setup notes
 
 - Requires Node 24 (`.nvmrc`): `nvm use`

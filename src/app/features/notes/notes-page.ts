@@ -112,7 +112,7 @@ type View = 'active' | 'archived';
             <p class="text-muted-foreground line-clamp-2 text-xs">
               {{ excerpt(note) || ('pages.notes.noContent' | transloco) }}
             </p>
-            <div class="text-muted-foreground/80 flex items-center gap-2 text-[11px]">
+            <div class="text-muted-foreground flex items-center gap-2 text-[11px]">
               <span class="shrink-0">{{ updatedLabel(note) }}</span>
               @for (tag of note.tags.slice(0, 3); track tag) {
                 <span class="truncate">#{{ tag }}</span>

@@ -27,6 +27,7 @@ export const ru: Translation = {
     continueList: 'Продолжить список',
   },
   nav: {
+    skip: 'Перейти к содержимому',
     notes: 'Заметки',
     tasks: 'Задачи',
     search: 'Поиск',
@@ -284,7 +285,8 @@ export const ru: Translation = {
       },
       markDone: 'Выполнить «{{title}}»',
       markOpen: 'Вернуть в работу «{{title}}»',
-      dragHandle: 'Перетащите, чтобы изменить порядок',
+      moveUp: 'Переместить «{{title}}» выше',
+      moveDown: 'Переместить «{{title}}» ниже',
       untitled: 'Задача без названия',
       detail: {
         title: 'Подробности задачи',

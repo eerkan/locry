@@ -208,7 +208,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
           }
         } @else {
           <div cdkDropList [cdkDropListDisabled]="!manual()" (cdkDropListDropped)="drop($event)" class="flex flex-col">
-            @for (task of openTasks(); track task.id) {
+            @for (task of openTasks(); track task.id; let first = $first, last = $last) {
               <app-task-row
                 animate.enter="item-enter"
                 cdkDrag
@@ -217,6 +217,9 @@ const VIEW_ICONS: Record<SmartView, string> = {
                 [today]="store.today()"
                 [list]="view().kind === 'smart' ? listFor(task) : undefined"
                 [draggable]="manual()"
+                [first]="first"
+                [last]="last"
+                (moved)="move(task.id, $event)"
                 [selected]="task.id === selectedId()"
                 (toggled)="store.toggleDone(task.id)"
                 (opened)="selectedId.set(task.id)"
@@ -401,6 +404,18 @@ export class TasksPage {
     const ids = this.openTasks().map((t) => t.id);
     moveItemInArray(ids, event.previousIndex, event.currentIndex);
     void this.store.reorder(ids);
+  }
+
+  /** Moves a task one place (buttons or Alt+↑/↓), keeping keyboard focus on it. */
+  protected move(id: string, by: -1 | 1): void {
+    const ids = this.openTasks().map((t) => t.id);
+    const from = ids.indexOf(id);
+    const to = from + by;
+    if (from < 0 || to < 0 || to >= ids.length) return;
+    moveItemInArray(ids, from, to);
+    // The row's element moves in the DOM, which can drop focus: put it back on the same control.
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    void this.store.reorder(ids).then(() => requestAnimationFrame(() => active?.isConnected && active !== document.activeElement && active.focus()));
   }
 
   protected openListDialog(list: TaskList | null): void {

@@ -27,6 +27,7 @@ export const ja: Translation = {
     continueList: 'リストを続ける',
   },
   nav: {
+    skip: '本文へスキップ',
     notes: 'メモ',
     tasks: 'タスク',
     search: '検索',
@@ -284,7 +285,8 @@ export const ja: Translation = {
       },
       markDone: '「{{title}}」を完了にする',
       markOpen: '「{{title}}」を未完了に戻す',
-      dragHandle: 'ドラッグして並べ替え',
+      moveUp: '「{{title}}」を上へ移動',
+      moveDown: '「{{title}}」を下へ移動',
       untitled: '無題のタスク',
       detail: {
         title: 'タスクの詳細',

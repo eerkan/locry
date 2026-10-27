@@ -36,7 +36,7 @@ import { ColorPicker } from '../../shared/vault-ui';
     <section hlmCard>
       @if (pending(); as pending) {
         <div hlmCardContent>
-          <app-recovery-key-flow [recoveryKey]="pending.recoveryKey" [busy]="busy()" (confirmed)="finish()" />
+          <app-recovery-key-flow [headingLevel]="1" [recoveryKey]="pending.recoveryKey" [busy]="busy()" (confirmed)="finish()" />
         </div>
       } @else {
         <div hlmCardHeader>

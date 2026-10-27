@@ -27,6 +27,7 @@ export const pt: Translation = {
     continueList: 'Continuar a lista',
   },
   nav: {
+    skip: 'Pular para o conteúdo',
     notes: 'Notas',
     tasks: 'Tarefas',
     search: 'Buscar',
@@ -284,7 +285,8 @@ export const pt: Translation = {
       },
       markDone: 'Concluir “{{title}}”',
       markOpen: 'Reabrir “{{title}}”',
-      dragHandle: 'Arraste para reordenar',
+      moveUp: 'Mover {{title}} para cima',
+      moveDown: 'Mover {{title}} para baixo',
       untitled: 'Tarefa sem título',
       detail: {
         title: 'Detalhes da tarefa',

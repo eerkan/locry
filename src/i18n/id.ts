@@ -27,6 +27,7 @@ export const id: Translation = {
     continueList: 'Lanjutkan daftar',
   },
   nav: {
+    skip: 'Langsung ke konten',
     notes: 'Catatan',
     tasks: 'Tugas',
     search: 'Cari',
@@ -284,7 +285,8 @@ export const id: Translation = {
       },
       markDone: 'Selesaikan “{{title}}”',
       markOpen: 'Buka kembali “{{title}}”',
-      dragHandle: 'Seret untuk mengurutkan',
+      moveUp: 'Pindahkan {{title}} ke atas',
+      moveDown: 'Pindahkan {{title}} ke bawah',
       untitled: 'Tugas tanpa judul',
       detail: {
         title: 'Detail tugas',

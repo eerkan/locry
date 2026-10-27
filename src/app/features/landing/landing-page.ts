@@ -170,15 +170,14 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
               <a
                 [attr.href]="anchor('support')"
                 class="flex h-8 items-center gap-1.5 rounded-md px-2 text-[13.5px] text-[var(--soft)] transition-colors hover:text-[var(--ink)]"
-                [attr.aria-label]="t.support.title"
               >
-                <ng-icon name="lucideHeart" class="text-[15px] text-rose-500" aria-hidden="true" /><span class="hidden md:inline">{{ t.nav.support }}</span>
+                <ng-icon name="lucideHeart" class="text-[15px] text-rose-500" aria-hidden="true" /><span class="sr-only md:not-sr-only">{{ t.nav.support }}</span>
               </a>
             }
             <details #langMenu class="relative">
               <summary
                 class="font-code flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md px-2 text-[12px] tracking-[0.08em] text-[var(--soft)] uppercase transition-colors hover:text-[var(--ink)]"
-                [attr.aria-label]="t.ui.language + ': ' + names[t.lang]"
+                [attr.aria-label]="t.lang.toUpperCase() + ' · ' + t.ui.language + ': ' + names[t.lang]"
               >
                 <app-flag [lang]="t.lang" />{{ t.lang }}
               </summary>
@@ -477,7 +476,11 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
                   <thead>
                     <tr class="font-code border-b border-[var(--ink)] text-[12px] tracking-[0.08em] uppercase">
                       @for (header of t.compare.headers; track $index) {
-                        <th scope="col" class="py-3 pe-4 font-normal" [class]="$last ? 'text-[var(--accent)]' : 'text-[var(--soft)]'">{{ header }}</th>
+                        @if (header) {
+                          <th scope="col" class="py-3 pe-4 font-normal" [class]="$last ? 'text-[var(--accent)]' : 'text-[var(--soft)]'">{{ header }}</th>
+                        } @else {
+                          <td></td>
+                        }
                       }
                     </tr>
                   </thead>

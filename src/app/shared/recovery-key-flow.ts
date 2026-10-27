@@ -23,7 +23,11 @@ import { downloadFile } from './download';
   template: `
     @if (step() === 'show') {
       <div>
-        <h2 class="text-lg font-semibold">{{ 'setup.recoveryTitle' | transloco }}</h2>
+        @if (headingLevel() === 1) {
+          <h1 class="text-lg font-semibold">{{ 'setup.recoveryTitle' | transloco }}</h1>
+        } @else {
+          <h2 class="text-lg font-semibold">{{ 'setup.recoveryTitle' | transloco }}</h2>
+        }
         <p class="text-muted-foreground text-sm">{{ 'setup.recoveryDescription' | transloco }}</p>
       </div>
       <div
@@ -46,13 +50,18 @@ import { downloadFile } from './download';
       </div>
       <div hlmAlert>
         <ng-icon name="lucideTriangleAlert" />
-        <h3 hlmAlertTitle>{{ 'setup.recoveryWarningTitle' | transloco }}</h3>
+        <!-- One level under the flow's title. -->
+        <p hlmAlertTitle role="heading" [attr.aria-level]="headingLevel() + 1">{{ 'setup.recoveryWarningTitle' | transloco }}</p>
         <p hlmAlertDescription>{{ 'setup.recoveryWarning' | transloco }}</p>
       </div>
       <button hlmBtn class="w-full" (click)="goToConfirm()">{{ 'setup.savedIt' | transloco }}</button>
     } @else {
       <div>
-        <h2 class="text-lg font-semibold">{{ 'setup.confirmTitle' | transloco }}</h2>
+        @if (headingLevel() === 1) {
+          <h1 class="text-lg font-semibold">{{ 'setup.confirmTitle' | transloco }}</h1>
+        } @else {
+          <h2 class="text-lg font-semibold">{{ 'setup.confirmTitle' | transloco }}</h2>
+        }
         <p class="text-muted-foreground text-sm">{{ 'setup.confirmDescription' | transloco: { index: confirmIndex() + 1 } }}</p>
       </div>
       <div hlmField>
@@ -82,6 +91,8 @@ import { downloadFile } from './download';
   `,
 })
 export class RecoveryKeyFlow {
+  /** 1 when this flow is the page itself (setup), 2 inside a card. */
+  readonly headingLevel = input<1 | 2>(2);
   readonly recoveryKey = input.required<string>();
   readonly finishLabel = input('setup.finish');
   readonly busy = input(false);

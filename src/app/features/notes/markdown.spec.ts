@@ -54,6 +54,12 @@ describe('renderMarkdown', () => {
       'data-task-index="2"',
     ]);
   });
+
+  it('names task checkboxes after their own item text', () => {
+    const html = renderMarkdown('- [ ] Buy **milk**\n  - [x] whole');
+    expect(html).toContain('aria-label="Buy milk"');
+    expect(html).toContain('aria-label="whole"');
+  });
 });
 
 describe('toggleTask', () => {

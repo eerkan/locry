@@ -26,6 +26,7 @@ export const en: Translation = {
     continueList: 'Continue the list',
   },
   nav: {
+    skip: 'Skip to content',
     notes: 'Notes',
     tasks: 'Tasks',
     search: 'Search',
@@ -277,7 +278,8 @@ export const en: Translation = {
       },
       markDone: 'Complete "{{title}}"',
       markOpen: 'Reopen "{{title}}"',
-      dragHandle: 'Drag to reorder',
+      moveUp: 'Move {{title}} up',
+      moveDown: 'Move {{title}} down',
       untitled: 'Untitled task',
       detail: {
         title: 'Task details',

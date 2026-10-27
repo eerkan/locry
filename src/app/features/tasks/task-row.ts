@@ -2,7 +2,7 @@ import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCalendar, lucideFileText, lucideFlag, lucideGripVertical, lucideListChecks } from '@ng-icons/lucide';
+import { lucideCalendar, lucideChevronDown, lucideChevronUp, lucideFileText, lucideFlag, lucideGripVertical, lucideListChecks } from '@ng-icons/lucide';
 import { PreferencesService } from '../../core/preferences.service';
 import { type Task, type TaskList, dueStatus } from './task';
 import { TaskCheck } from './task-check';
@@ -11,20 +11,24 @@ import { LIST_DOT, PRIORITY_TEXT, formatDue } from './task-ui';
 @Component({
   selector: 'app-task-row',
   imports: [CdkDragHandle, NgIcon, TaskCheck, TranslocoPipe],
-  providers: [provideIcons({ lucideGripVertical, lucideCalendar, lucideFlag, lucideListChecks, lucideFileText })],
+  providers: [provideIcons({ lucideGripVertical, lucideChevronUp, lucideChevronDown, lucideCalendar, lucideFlag, lucideListChecks, lucideFileText })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class:
       'group hover:bg-accent/50 has-[button:focus-visible]:ring-ring/50 flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2.5 transition-colors has-[button:focus-visible]:ring-[3px]',
     '[class.bg-accent]': 'selected()',
     '(click)': 'opened.emit()',
+    // Reordering without dragging: Alt+↑ / Alt+↓ on the focused task.
+    '(keydown.alt.arrowup)': 'draggable() && move($event, -1)',
+    '(keydown.alt.arrowdown)': 'draggable() && move($event, 1)',
   },
   template: `
     @if (draggable()) {
+      <!-- Dragging is for the mouse; the move buttons at the end of the row do the same. -->
       <span
         class="text-muted-foreground/60 -ms-1 mt-0.5 cursor-grab opacity-0 group-hover:opacity-100 active:cursor-grabbing"
         cdkDragHandle
-        [attr.aria-label]="'pages.tasks.dragHandle' | transloco"
+        aria-hidden="true"
       >
         <ng-icon name="lucideGripVertical" />
       </span>
@@ -77,6 +81,29 @@ import { LIST_DOT, PRIORITY_TEXT, formatDue } from './task-ui';
         </div>
       }
     </button>
+    @if (draggable()) {
+      <!-- Reordering with a click or the keyboard, for everyone who does not drag. -->
+      <span class="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
+        <button
+          type="button"
+          class="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring/50 flex size-6 items-center justify-center rounded-md outline-none focus-visible:ring-[3px] disabled:invisible"
+          [disabled]="first()"
+          [attr.aria-label]="'pages.tasks.moveUp' | transloco: { title: displayTitle() }"
+          (click)="move($event, -1)"
+        >
+          <ng-icon name="lucideChevronUp" class="text-[14px]" />
+        </button>
+        <button
+          type="button"
+          class="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring/50 flex size-6 items-center justify-center rounded-md outline-none focus-visible:ring-[3px] disabled:invisible"
+          [disabled]="last()"
+          [attr.aria-label]="'pages.tasks.moveDown' | transloco: { title: displayTitle() }"
+          (click)="move($event, 1)"
+        >
+          <ng-icon name="lucideChevronDown" class="text-[14px]" />
+        </button>
+      </span>
+    }
   `,
 })
 export class TaskRow {
@@ -85,9 +112,14 @@ export class TaskRow {
   /** Shown in smart views, where tasks from several lists are mixed. */
   readonly list = input<TaskList | undefined>();
   readonly draggable = input(false);
+  /** Position in a reorderable list, to disable moving past the ends. */
+  readonly first = input(false);
+  readonly last = input(false);
   readonly selected = input(false);
   readonly toggled = output<void>();
   readonly opened = output<void>();
+  /** Move one place up (-1) or down (1). */
+  readonly moved = output<-1 | 1>();
 
   private readonly transloco = inject(TranslocoService);
   private readonly prefs = inject(PreferencesService);
@@ -114,4 +146,11 @@ export class TaskRow {
     const list = this.list();
     return list ? LIST_DOT[list.color] : '';
   });
+
+  protected move(event: Event, by: -1 | 1): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if ((by < 0 && this.first()) || (by > 0 && this.last())) return;
+    this.moved.emit(by);
+  }
 }
