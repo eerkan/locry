@@ -11,6 +11,7 @@
     <!--
       Defense in depth on top of DOMPurify: scripts only from this app (and Google sign-in),
       network only to the services the user opts into (Google Drive, Hugging Face models).
+      GoatCounter images count visits to the public pages, when the installation configures it.
       'wasm-unsafe-eval' is required by the in-browser AI runtime; ws: is the dev server's reload socket.
     -->
     <meta
@@ -18,7 +19,7 @@
       content="default-src 'self';
         script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client;
         style-src 'self' 'unsafe-inline';
-        img-src 'self' data: blob:;
+        img-src 'self' data: blob: https://*.goatcounter.com;
         font-src 'self' data:;
         connect-src 'self' ws://localhost:* https://www.googleapis.com https://accounts.google.com https://huggingface.co https://*.huggingface.co https://*.hf.co;
         frame-src https://accounts.google.com;

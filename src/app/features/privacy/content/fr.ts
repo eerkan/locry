@@ -20,9 +20,10 @@ export const fr: PrivacyContent = {
       ],
     },
     {
-      heading: 'Ni compte, ni statistiques, ni publicité',
+      heading: 'Ni compte, ni publicité, ni pistage',
       body: [
-        'Locry n’a ni inscription ni comptes utilisateurs. Il n’utilise aucun outil de statistiques, aucune publicité, aucun cookie de pistage et aucun traceur tiers.',
+        'Locry n’a ni inscription ni comptes utilisateurs. Il n’utilise aucune publicité, aucun cookie de pistage et aucun traceur tiers. L’application elle-même (vos coffres, notes, tâches et questions) n’est jamais comptée ni mesurée.',
+        'Seules les pages publiques de ce site (l’accueil, cette politique et les conditions) comptent les visites avec [GoatCounter](https://www.goatcounter.com), un outil de statistiques open source respectueux de la vie privée : pas de cookies, rien d’enregistré sur votre appareil et aucune donnée personnelle. Il enregistre l’adresse de la page, le site d’où vous venez, la taille de l’écran, ainsi que le navigateur, le système d’exploitation et le pays déduits de la requête ; votre adresse IP n’est pas conservée. Les visites ne sont pas comptées si votre navigateur envoie Do Not Track ou Global Privacy Control.',
       ],
     },
     {

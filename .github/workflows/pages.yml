@@ -8,6 +8,7 @@
 #                                  "Authorized JavaScript origins"
 #     LOCRY_DONATE_GITHUB, LOCRY_DONATE_BUYMEACOFFEE, LOCRY_DONATE_KOFI,
 #     LOCRY_DONATE_OPENCOLLECTIVE, LOCRY_DONATE_CRYPTO   donation links (see .env.example)
+#     LOCRY_GOATCOUNTER            GoatCounter site code; counts visits to the public pages
 #
 # The site is served at https://<user>.github.io/<repo>/ (or at the root of a custom domain):
 # the build gets that base path, and scripts/pages.mjs does what scripts/serve.mjs would do
@@ -57,6 +58,7 @@ jobs:
           LOCRY_DONATE_KOFI: ${{ vars.LOCRY_DONATE_KOFI }}
           LOCRY_DONATE_OPENCOLLECTIVE: ${{ vars.LOCRY_DONATE_OPENCOLLECTIVE }}
           LOCRY_DONATE_CRYPTO: ${{ vars.LOCRY_DONATE_CRYPTO }}
+          LOCRY_GOATCOUNTER: ${{ vars.LOCRY_GOATCOUNTER }}
 
       - name: Build
         run: yarn build --base-href "${{ steps.pages.outputs.base_path }}/"

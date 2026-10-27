@@ -8,6 +8,7 @@ import { GITHUB_URL } from '../../core/site';
 import type { Donations } from '../../core/donate';
 import { copyText } from '../../shared/copy-text';
 import { Flag } from '../../shared/flag';
+import { Analytics } from '../../core/analytics';
 import { RuntimeConfigService } from '../../core/runtime-config.service';
 import { VaultService } from '../../core/vault/vault.service';
 import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, detectLang, direction, isLang, type Lang } from '../../core/languages';
@@ -640,6 +641,7 @@ export class LandingPage {
   protected readonly donations = signal<Donations | null>(null);
   protected readonly copied = signal<string | null>(null);
   private readonly runtime = inject(RuntimeConfigService);
+  private readonly analytics = inject(Analytics);
 
   // Shared class lists of the numbered sections.
   protected readonly row = 'mx-auto grid max-w-[1200px] gap-6 px-5 py-16 sm:px-6 md:grid-cols-[190px_1fr] md:gap-10 md:py-24 [&>*]:min-w-0';
@@ -667,7 +669,8 @@ export class LandingPage {
       }
       this.hasVault.set(this.vault.vaults().length > 0);
       this.donations.set(this.runtime.donations());
-      this.followBrowserLanguage();
+      // A switch to the browser's language is counted on the page it lands on.
+      if (!this.followBrowserLanguage()) this.analytics.pageview();
     });
   }
 
@@ -687,9 +690,9 @@ export class LandingPage {
     this.prefs.setLang(lang);
   }
 
-  /** On /, show the browser's language when we have it, unless the visitor picked one. */
-  private followBrowserLanguage(): void {
-    if (this.lang() !== 'en') return;
+  /** On /, show the browser's language when we have it, unless the visitor picked one; true when it switches. */
+  private followBrowserLanguage(): boolean {
+    if (this.lang() !== 'en') return false;
     let chosen: string | null = null;
     try {
       chosen = localStorage.getItem(LANG_CHOICE_KEY);
@@ -697,7 +700,9 @@ export class LandingPage {
       chosen = null;
     }
     const lang = isLang(chosen) ? chosen : detectLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
-    if (lang !== 'en') void this.router.navigateByUrl(landingPath(lang), { replaceUrl: true });
+    if (lang === 'en') return false;
+    void this.router.navigateByUrl(landingPath(lang), { replaceUrl: true });
+    return true;
   }
 }
 

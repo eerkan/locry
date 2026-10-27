@@ -20,9 +20,10 @@ export const id: PrivacyContent = {
       ],
     },
     {
-      heading: 'Tanpa akun, analitik, atau iklan',
+      heading: 'Tanpa akun, iklan, atau pelacakan',
       body: [
-        'Locry tidak memiliki pendaftaran dan akun pengguna. Locry tidak memakai analitik, iklan, cookie pelacak, maupun pelacak pihak ketiga.',
+        'Locry tidak memiliki pendaftaran dan akun pengguna. Locry tidak memakai iklan, cookie pelacak, maupun pelacak pihak ketiga. Aplikasinya sendiri (brankas, catatan, tugas, dan pertanyaan Anda) tidak pernah dihitung atau diukur.',
+        'Hanya halaman publik situs ini (beranda, kebijakan ini, dan ketentuan) yang menghitung kunjungan dengan [GoatCounter](https://www.goatcounter.com), analitik sumber terbuka yang menghormati privasi: tanpa cookie, tidak ada yang disimpan di perangkat Anda, dan tanpa data pribadi. Yang dicatat adalah alamat halaman, situs asal Anda, ukuran layar, serta browser, sistem operasi, dan negara yang diperoleh dari permintaan; alamat IP Anda tidak disimpan. Kunjungan tidak dihitung jika browser Anda mengirim Do Not Track atau Global Privacy Control.',
       ],
     },
     {

@@ -20,9 +20,10 @@ export const es: PrivacyContent = {
       ],
     },
     {
-      heading: 'Sin cuenta, analítica ni anuncios',
+      heading: 'Sin cuenta, anuncios ni rastreo',
       body: [
-        'Locry no tiene registro ni cuentas de usuario. No usa analítica, publicidad, cookies de rastreo ni rastreadores de terceros.',
+        'Locry no tiene registro ni cuentas de usuario. No usa publicidad, cookies de rastreo ni rastreadores de terceros. La aplicación en sí (tus bóvedas, notas, tareas y preguntas) nunca se cuenta ni se mide.',
+        'Solo las páginas públicas de este sitio (la página de inicio, esta política y los términos) cuentan las visitas con [GoatCounter](https://www.goatcounter.com), una herramienta de analítica de código abierto que respeta la privacidad: sin cookies, sin guardar nada en tu dispositivo y sin datos personales. Registra la dirección de la página, el sitio del que vienes, el tamaño de la pantalla y el navegador, el sistema operativo y el país deducidos de la solicitud; tu dirección IP no se guarda. Las visitas no se cuentan si tu navegador envía Do Not Track o Global Privacy Control.',
       ],
     },
     {

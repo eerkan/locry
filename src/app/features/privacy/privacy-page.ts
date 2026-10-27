@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, computed, effect, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
+import { Analytics } from '../../core/analytics';
 import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, direction, type Lang } from '../../core/languages';
 import { Flag } from '../../shared/flag';
 import { landingPath } from '../landing/landing-content';
@@ -127,6 +128,8 @@ export class PrivacyPage {
       const doc = this.doc();
       seo.applyPage({ lang: t.lang, title: t.meta.title, description: t.meta.description, path: (lang) => legalPath(doc, lang) });
     });
+    const analytics = inject(Analytics);
+    afterNextRender(() => analytics.pageview());
   }
 
   protected parts(text: string) {

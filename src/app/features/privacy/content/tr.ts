@@ -20,9 +20,10 @@ export const tr: PrivacyContent = {
       ],
     },
     {
-      heading: 'Hesap, analiz ve reklam yok',
+      heading: 'Hesap, reklam ve takip yok',
       body: [
-        'Locry’de kayıt olma ve kullanıcı hesabı yoktur. Analiz aracı, reklam, takip çerezi ve üçüncü taraf izleyici kullanılmaz.',
+        'Locry’de kayıt olma ve kullanıcı hesabı yoktur. Reklam, takip çerezi ve üçüncü taraf izleyici kullanılmaz. Uygulamanın kendisi (kasaların, notların, görevlerin ve soruların) hiçbir şekilde sayılmaz ya da ölçülmez.',
+        'Yalnızca bu sitenin herkese açık sayfaları (ana sayfa, bu politika ve şartlar) ziyaretleri gizliliğe saygılı, açık kaynaklı bir analiz aracı olan [GoatCounter](https://www.goatcounter.com) ile sayar: çerez yoktur, cihazına hiçbir şey kaydedilmez ve kişisel veri toplanmaz. Kaydedilenler sayfa adresi, geldiğin site, ekran boyutu ve istekten çıkarılan tarayıcı, işletim sistemi ve ülkedir; IP adresin saklanmaz. Tarayıcın Do Not Track ya da Global Privacy Control gönderiyorsa ziyaretin sayılmaz.',
       ],
     },
     {

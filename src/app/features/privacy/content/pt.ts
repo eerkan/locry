@@ -20,9 +20,10 @@ export const pt: PrivacyContent = {
       ],
     },
     {
-      heading: 'Sem conta, análise ou anúncios',
+      heading: 'Sem conta, anúncios ou rastreamento',
       body: [
-        'O Locry não tem cadastro nem contas de usuário. Não usa ferramentas de análise, anúncios, cookies de rastreamento nem rastreadores de terceiros.',
+        'O Locry não tem cadastro nem contas de usuário. Não usa anúncios, cookies de rastreamento nem rastreadores de terceiros. O próprio aplicativo (seus cofres, notas, tarefas e perguntas) nunca é contado nem medido.',
+        'Apenas as páginas públicas deste site (a página inicial, esta política e os termos) contam visitas com o [GoatCounter](https://www.goatcounter.com), uma ferramenta de análise de código aberto que respeita a privacidade: sem cookies, nada armazenado no seu dispositivo e sem dados pessoais. Ele registra o endereço da página, o site de onde você veio, o tamanho da tela e o navegador, o sistema operacional e o país deduzidos da requisição; seu endereço IP não é armazenado. As visitas não são contadas quando seu navegador envia Do Not Track ou Global Privacy Control.',
       ],
     },
     {

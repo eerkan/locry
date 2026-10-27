@@ -48,6 +48,16 @@ describe('RuntimeConfigService', () => {
     expect(offline.donations()!.links).toHaveLength(1);
   });
 
+  it('reads the GoatCounter site code and ignores anything else', async () => {
+    serve(Response.json({ goatcounter: 'locry' }));
+    await config.load();
+    expect(config.goatcounter()).toBe('locry');
+
+    serve(Response.json({ goatcounter: 'evil.example.com/x' }));
+    await config.load();
+    expect(config.goatcounter()).toBeNull();
+  });
+
   it('forgets the cached value when the server has no config', async () => {
     serve(Response.json({ googleClientId: BUILT_IN }));
     await config.load();

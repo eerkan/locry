@@ -5,7 +5,11 @@ import { isGoogleClientId } from './drive/google-auth';
 interface RuntimeConfig {
   googleClientId?: string;
   donate?: DonateConfig;
+  goatcounter?: string;
 }
+
+/** A GoatCounter site code (the <code> in https://<code>.goatcounter.com). */
+export const GOATCOUNTER_CODE = /^[a-z0-9][a-z0-9-]{1,49}$/;
 
 const CACHE_KEY = 'locry.runtime-config';
 const LOAD_TIMEOUT_MS = 3000;
@@ -22,6 +26,9 @@ export class RuntimeConfigService {
   private readonly _donations = signal<Donations | null>(null);
   /** Where people can support this installation's maintainer; null when none is configured. */
   readonly donations = this._donations.asReadonly();
+  private readonly _goatcounter = signal<string | null>(null);
+  /** GoatCounter site code that counts visits to the public pages; null when none is configured. */
+  readonly goatcounter = this._goatcounter.asReadonly();
 
   async load(): Promise<void> {
     let config = this.cached();
@@ -44,6 +51,8 @@ export class RuntimeConfigService {
     const id = config.googleClientId?.trim();
     this._googleClientId.set(id && isGoogleClientId(id) ? id : null);
     this._donations.set(donations(config.donate));
+    const code = config.goatcounter?.trim();
+    this._goatcounter.set(code && GOATCOUNTER_CODE.test(code) ? code : null);
   }
 
   private cached(): RuntimeConfig {

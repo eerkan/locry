@@ -80,6 +80,7 @@ cp .env.example .env
 | `LOCRY_DOMAIN` | empty | Domain Caddy serves, e.g. `locry.example.com` |
 | `LOCRY_SITE_URL` | empty | Canonical address of the landing pages; defaults to `https://<LOCRY_DOMAIN>`, else the address you open |
 | `LOCRY_DONATE_*` | empty | Donation links, see [Donations](#donations) |
+| `LOCRY_GOATCOUNTER` | empty | GoatCounter site code, see [Visitor counts](#visitor-counts) |
 
 - The image is multi-stage: the build runs on Node 24, and the final image holds only the compiled app and a small
   dependency-free server. The container runs as a non-root user, with a read-only file system and dropped
@@ -132,7 +133,7 @@ One-time setup (repository **Settings**):
 
 1. **Pages → Build and deployment → Source:** `GitHub Actions`.
 2. Optional, **Secrets and variables → Actions → Variables** (public values, not secrets):
-   `LOCRY_GOOGLE_CLIENT_ID` and donation accounts (`LOCRY_DONATE_*`, see `.env.example`).
+   `LOCRY_GOOGLE_CLIENT_ID`, donation accounts (`LOCRY_DONATE_*`, see `.env.example`) and `LOCRY_GOATCOUNTER`.
 3. If Drive is used, add `https://<user>.github.io` to the "Authorized JavaScript origins" of the Google Cloud
    OAuth client.
 4. To let anyone (not only listed test users) connect Drive, publish the OAuth app. Google's **Branding** screen
@@ -355,6 +356,15 @@ LOCRY_DONATE_CRYPTO=BTC:bc1q…,ETH:0x…
 The values reach the browser through the server-generated `/config.json`, so changing them only takes a restart
 (`docker compose up -d`), no rebuild. For the **Sponsor** button on the GitHub repository, fill in the lines in
 `.github/FUNDING.yml`.
+
+## Visitor counts
+
+To see how many people visit the public pages, create a site at [GoatCounter](https://www.goatcounter.com) (free,
+open source) and set its code: `LOCRY_GOATCOUNTER=<code>` for `https://<code>.goatcounter.com`, in `.env` or as a
+repository variable for GitHub Pages. The landing, privacy and terms pages then count each visit with a single image
+request: no script, no cookies, nothing stored in the browser, and nothing when the browser sends Do Not Track or
+Global Privacy Control, or on localhost. The app behind the lock screen is never counted. The privacy policy
+describes this; with no code set, nothing is sent.
 
 ## Keyboard shortcuts
 

@@ -1,8 +1,11 @@
 // Runtime configuration exposed to the browser as /config.json. Only public values belong
-// here: an OAuth Client ID identifies the app and is not a secret, nor are donation pages.
+// here: an OAuth Client ID identifies the app and is not a secret, nor are donation pages or
+// the GoatCounter site code.
 const CLIENT_ID_PATTERN = /^[\w-]+\.apps\.googleusercontent\.com$/;
 /** Account names on the donation platforms; links are built from them, never taken as URLs. */
 const ACCOUNT_PATTERN = /^[A-Za-z0-9][\w.-]{0,63}$/;
+/** GoatCounter site code: the <code> in https://<code>.goatcounter.com. */
+const GOATCOUNTER_PATTERN = /^[a-z0-9][a-z0-9-]{1,49}$/;
 const CRYPTO_LABEL_PATTERN = /^[A-Za-z0-9][\w-]{0,19}$/;
 const CRYPTO_ADDRESS_PATTERN = /^[A-Za-z0-9:]{20,128}$/;
 
@@ -25,6 +28,12 @@ export function runtimeConfig(env = process.env) {
   }
   const donate = donateConfig(env);
   if (Object.keys(donate).length) config.donate = donate;
+  const goatcounter = (env.LOCRY_GOATCOUNTER ?? '').trim();
+  if (goatcounter && !GOATCOUNTER_PATTERN.test(goatcounter)) {
+    console.warn('LOCRY_GOATCOUNTER is not a GoatCounter site code (lowercase letters, digits, -); ignoring it.');
+  } else if (goatcounter) {
+    config.goatcounter = goatcounter;
+  }
   return config;
 }
 

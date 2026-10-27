@@ -20,9 +20,10 @@ export const en: PrivacyContent = {
       ],
     },
     {
-      heading: 'No account, analytics or ads',
+      heading: 'No account, ads or tracking',
       body: [
-        'Locry has no sign-up and no user accounts. It uses no analytics, no advertising, no tracking cookies and no third-party trackers.',
+        'Locry has no sign-up and no user accounts. It uses no advertising, no cookies for tracking and no third-party trackers. The app itself (your vaults, notes, tasks and questions) is never counted or measured.',
+        'Only the public pages of this site (the home page, this policy and the terms) count visits with [GoatCounter](https://www.goatcounter.com), open-source analytics that respects privacy: no cookies, nothing stored on your device and no personal data. It records the page address, the site you came from, the screen size, and the browser, operating system and country derived from the request; your IP address is not stored. Visits are not counted when your browser sends Do Not Track or Global Privacy Control.',
       ],
     },
     {
