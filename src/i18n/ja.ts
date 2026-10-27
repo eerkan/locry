@@ -45,6 +45,7 @@ export const ja: Translation = {
     language: '言語',
     theme: 'テーマ',
     comingSoon: '近日公開',
+    privacy: 'プライバシーポリシー',
   },
   theme: {
     light: 'ライト',

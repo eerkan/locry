@@ -42,6 +42,7 @@ export const tr = {
     language: 'Dil',
     theme: 'Tema',
     comingSoon: 'Yakında',
+    privacy: 'Gizlilik politikası',
   },
   theme: {
     light: 'Açık',

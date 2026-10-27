@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DOCUMENT, afterRenderEffect, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLock } from '@ng-icons/lucide';
@@ -10,6 +10,7 @@ import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmSeparator } from '@spartan-ng/helm/separator';
 import { LANGS, LANGUAGE_NAMES } from '../../core/languages';
 import { Flag } from '../../shared/flag';
+import { privacyPath } from '../privacy/privacy-content';
 import { type Lang, PreferencesService, type Theme } from '../../core/preferences.service';
 import { StorageHealthService } from '../../core/storage/storage-health.service';
 import { VaultService } from '../../core/vault/vault.service';
@@ -27,6 +28,7 @@ import { VaultCard } from './vault-card';
   selector: 'app-settings-page',
   imports: [
     Flag,
+    RouterLink,
     AiCard,
     AskCard,
     SupportCard,
@@ -140,6 +142,9 @@ import { VaultCard } from './vault-card';
       <app-ai-card />
       <app-ask-card />
       <app-support-card />
+      <p class="text-muted-foreground text-center text-xs">
+        <a class="hover:text-foreground underline underline-offset-2" [routerLink]="privacyPath(prefs.lang())">{{ 'common.privacy' | transloco }}</a>
+      </p>
     </div>
   `,
 })
@@ -149,6 +154,7 @@ export class SettingsPage {
   protected readonly vault = inject(VaultService);
   protected readonly storage = inject(StorageHealthService);
 
+  protected readonly privacyPath = privacyPath;
   protected readonly langs = LANGS;
   protected readonly languageNames = LANGUAGE_NAMES;
   protected readonly themes: Theme[] = ['light', 'dark', 'system'];

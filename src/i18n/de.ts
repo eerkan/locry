@@ -44,6 +44,7 @@ export const de: Translation = {
     language: 'Sprache',
     theme: 'Design',
     comingSoon: 'Demnächst',
+    privacy: 'Datenschutzerklärung',
   },
   theme: {
     light: 'Hell',

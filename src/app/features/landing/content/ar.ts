@@ -287,6 +287,7 @@ export const ar: LandingContent = {
     openSource: 'مفتوح المصدر',
     madeWith: 'مبني بـ Angular وWeb Crypto وWebAuthn، دون خادم.',
     links: 'روابط',
+    privacy: 'الخصوصية',
   },
   support: {
     title: 'ادعم Locry',

@@ -12,6 +12,7 @@ import { RuntimeConfigService } from '../../core/runtime-config.service';
 import { VaultService } from '../../core/vault/vault.service';
 import { LANGS, LANGUAGE_NAMES, LANGUAGE_TAGS, detectLang, direction, isLang, type Lang } from '../../core/languages';
 import { landingPath, type LandingContent } from './landing-content';
+import { privacyPath } from '../privacy/privacy-content';
 import { LandingSeo } from './landing-seo';
 import { LandingShot } from './landing-shot';
 
@@ -98,7 +99,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
 
       <header class="sticky top-0 z-40 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur">
         <div class="mx-auto flex h-14 max-w-[1200px] items-center gap-8 px-5 sm:px-6">
-          <a [routerLink]="path(t.lang)" class="font-display text-[22px] leading-none font-[560] tracking-[-0.02em]" aria-label="Locry"
+          <a [routerLink]="path(t.lang)" dir="ltr" class="font-display text-[22px] leading-none font-[560] tracking-[-0.02em]" aria-label="Locry"
             >Locry<span class="text-[var(--accent)]">.</span></a
           >
           <nav class="hidden lg:block" [attr.aria-label]="t.sections.overview">
@@ -560,7 +561,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
         }
         <div class="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 py-10 text-[14px] text-[var(--soft)] sm:px-6 md:flex-row md:justify-between">
           <div class="flex max-w-md flex-col gap-3">
-            <span class="font-display text-[20px] font-[560] tracking-[-0.02em] text-[var(--ink)]">Locry<span class="text-[var(--accent)]">.</span></span>
+            <span dir="ltr" class="font-display text-[20px] font-[560] tracking-[-0.02em] text-[var(--ink)]">Locry<span class="text-[var(--accent)]">.</span></span>
             <p>{{ t.footer.tagline }} {{ t.footer.madeWith }}</p>
             <ng-container *ngTemplateOutlet="themeSwitch; context: { $implicit: 'flex self-start' }" />
           </div>
@@ -569,6 +570,7 @@ const LANG_CHOICE_KEY = 'locry.landing-lang';
             <a [attr.href]="anchor('security')" class="hover:text-[var(--ink)]">{{ t.nav.security }}</a>
             <a [attr.href]="anchor('faq')" class="hover:text-[var(--ink)]">{{ t.nav.faq }}</a>
             <a [href]="github" rel="noopener" class="hover:text-[var(--ink)]">GitHub</a>
+            <a [routerLink]="privacy(t.lang)" class="hover:text-[var(--ink)]">{{ t.footer.privacy }}</a>
           </nav>
         </div>
         <nav
@@ -605,6 +607,7 @@ export class LandingPage {
   protected readonly names = LANGUAGE_NAMES;
   protected readonly tags = LANGUAGE_TAGS;
   protected readonly path = landingPath;
+  protected readonly privacy = privacyPath;
   /**
    * In-page links carry the page's own path, relative to the document's base: a bare "#faq"
    * on /tr would point at the base (/#faq) and leave the page. Relative, so it also works

@@ -5,8 +5,8 @@
 //
 // What scripts/serve.mjs does per request happens here once, on the files:
 // - the placeholder address in pages, sitemap.xml, robots.txt and llms.txt becomes SITE_URL;
-// - every prerendered language page also gets a <lang>.html next to its folder, so /tr is
-//   served as is instead of being redirected to /tr/;
+// - every prerendered page also gets a .html next to its folder (tr.html, tr/privacy.html), so
+//   /tr is served as is instead of being redirected to /tr/;
 // - 404.html is the app shell, so app routes such as /notes open the app;
 // - /en (the old English address) points to the English page at the root;
 // - the service worker manifest is rebuilt, since the edited files changed their hashes.
@@ -14,7 +14,7 @@
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { extname, join, relative, resolve } from 'node:path';
+import { extname, join, relative, resolve, sep } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const dist = resolve(root, process.env.DIST ?? 'dist/locry/browser');
@@ -50,9 +50,12 @@ for (const file of files(dist)) {
   replaced++;
 }
 
-// Language pages: /tr is served from tr.html (GitHub Pages adds .html), /tr/ from tr/index.html.
-const pages = readdirSync(dist).filter((name) => existsSync(join(dist, name, 'index.html')));
-for (const lang of pages) copyFileSync(join(dist, lang, 'index.html'), join(dist, `${lang}.html`));
+// Prerendered pages: /tr and /tr/privacy are served from tr.html and tr/privacy.html (GitHub
+// Pages adds .html), without the redirect to a trailing slash that tr/index.html would need.
+const pages = [...files(dist)]
+  .filter((file) => file.endsWith(`${sep}index.html`) && file !== join(dist, 'index.html'))
+  .map((file) => relative(dist, file).slice(0, -`${sep}index.html`.length));
+for (const page of pages) copyFileSync(join(dist, page, 'index.html'), join(dist, `${page}.html`));
 
 copyFileSync(join(dist, 'index.csr.html'), join(dist, '404.html'));
 
@@ -86,4 +89,4 @@ execFileSync(join(root, 'node_modules/.bin/ngsw-config'), [relative(root, dist),
   stdio: 'inherit',
 });
 
-console.log(`GitHub Pages: ${site} (base ${basePath}); ${replaced} files with the site address, ${pages.length} language pages, 404.html, en.html`);
+console.log(`GitHub Pages: ${site} (base ${basePath}); ${replaced} files with the site address, ${pages.length} pages, 404.html, en.html`);

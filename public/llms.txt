@@ -17,6 +17,7 @@ Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uc
 - [Locry — 日本語](https://locry.invalid/ja)
 - [Locry — Русский](https://locry.invalid/ru)
 - [Locry — Deutsch](https://locry.invalid/de)
+- [Privacy policy](https://locry.invalid/privacy): no server, no account, no tracking; what Google Drive and AI model downloads involve
 - [Source code on GitHub](https://github.com/eerkan/locry): README with setup, Docker and security details
 
 ## Key facts

@@ -45,6 +45,7 @@ export const id: Translation = {
     language: 'Bahasa',
     theme: 'Tema',
     comingSoon: 'Segera hadir',
+    privacy: 'Kebijakan privasi',
   },
   theme: {
     light: 'Terang',

@@ -187,4 +187,191 @@
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
+  <url>
+    <loc>https://locry.invalid/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/tr/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/zh/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/es/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/ar/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/pt/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/id/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/fr/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/ja/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/ru/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://locry.invalid/de/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://locry.invalid/privacy" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://locry.invalid/tr/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://locry.invalid/zh/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://locry.invalid/es/privacy" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://locry.invalid/ar/privacy" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://locry.invalid/pt/privacy" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://locry.invalid/id/privacy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://locry.invalid/fr/privacy" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://locry.invalid/ja/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://locry.invalid/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://locry.invalid/de/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://locry.invalid/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
 </urlset>

@@ -89,6 +89,43 @@ export class LandingSeo {
     fonts.forEach((font, i) => this.preload(`font-${i}`, `fonts/${font}.woff2`));
   }
 
+  /**
+   * Head tags for a simple public page such as the privacy policy: title, description, canonical,
+   * the page in every language as alternates, and the language's sharing card. Drops the landing
+   * page's structured data, which describes that page only.
+   */
+  applyPage(page: { lang: Lang; title: string; description: string; path: (lang: Lang) => string }): void {
+    const site = this.siteOrigin();
+    const url = `${site}${page.path(page.lang)}`;
+    const image = ogImage(site, page.lang);
+    this.document.documentElement.lang = LANGUAGE_TAGS[page.lang];
+    this.document.documentElement.dir = direction(page.lang);
+    this.title.setTitle(page.title);
+    const tags: [string, string, string][] = [
+      ['name', 'description', page.description],
+      ['name', 'robots', 'index, follow'],
+      ['property', 'og:type', 'website'],
+      ['property', 'og:site_name', 'Locry'],
+      ['property', 'og:title', page.title],
+      ['property', 'og:description', page.description],
+      ['property', 'og:url', url],
+      ['property', 'og:locale', OG_LOCALES[page.lang]],
+      ['property', 'og:image', image],
+      ['name', 'twitter:card', 'summary_large_image'],
+      ['name', 'twitter:title', page.title],
+      ['name', 'twitter:description', page.description],
+      ['name', 'twitter:image', image],
+    ];
+    for (const [attr, key, value] of tags) this.meta.updateTag({ [attr]: key, content: value }, `${attr}="${key}"`);
+    this.link('canonical', 'canonical', url);
+    for (const lang of LANGS) this.link(`alternate-${lang}`, 'alternate', `${site}${page.path(lang)}`, LANGUAGE_TAGS[lang]);
+    this.link('alternate-default', 'alternate', `${site}${page.path(DEFAULT_LANG)}`, 'x-default');
+    this.document.head.querySelector('script[data-seo="jsonld"]')?.remove();
+    const fonts = firstScreenFonts(page.lang);
+    this.document.head.querySelectorAll('link[data-seo^="font-"]').forEach((link, i) => i >= fonts.length && link.remove());
+    fonts.forEach((font, i) => this.preload(`font-${i}`, `fonts/${font}.woff2`));
+  }
+
   private preload(id: string, href: string): void {
     let link = this.document.head.querySelector<HTMLLinkElement>(`link[data-seo="${id}"]`);
     if (!link) {

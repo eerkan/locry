@@ -127,6 +127,12 @@ One-time setup (repository **Settings**):
    `LOCRY_GOOGLE_CLIENT_ID` and donation accounts (`LOCRY_DONATE_*`, see `.env.example`).
 3. If Drive is used, add `https://<user>.github.io` to the "Authorized JavaScript origins" of the Google Cloud
    OAuth client.
+4. To let anyone (not only listed test users) connect Drive, publish the OAuth app. Google's **Branding** screen
+   then asks for an app home page (`https://<user>.github.io/<repository>/`), a privacy policy
+   (`https://<user>.github.io/<repository>/privacy`, built in, in all 11 languages) and the domain under
+   **Authorized domains**. That domain must be verified in Google Search Console, which checks the site's root
+   (`https://<user>.github.io/`): put the verification file Search Console gives you in a separate
+   `<user>/<user>.github.io` repository, which GitHub serves at that root.
 
 Pages only serves files, so what `scripts/serve.mjs` does per request, `scripts/pages.mjs` does once on the files
 after the build: it writes the site address into the pages, `sitemap.xml` and `llms.txt`; adds each language page

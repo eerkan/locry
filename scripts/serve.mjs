@@ -40,6 +40,12 @@ const LANDING_LANGS = ['tr', 'zh', 'es', 'ar', 'pt', 'id', 'fr', 'ja', 'ru', 'de
 const PAGES = {
   '/': 'index.html',
   ...Object.fromEntries(LANDING_LANGS.flatMap((lang) => [`/${lang}`, `/${lang}/`].map((path) => [path, `${lang}/index.html`]))),
+  // Privacy policy: /privacy in English, /<code>/privacy in the others.
+  ...Object.fromEntries(
+    ['', ...LANDING_LANGS.map((lang) => `/${lang}`)].flatMap((prefix) =>
+      [`${prefix}/privacy`, `${prefix}/privacy/`].map((path) => [path, `${prefix.slice(1)}${prefix ? '/' : ''}privacy/index.html`]),
+    ),
+  ),
 };
 /** Old addresses of public pages. */
 const MOVED = { '/en': '/', '/en/': '/' };

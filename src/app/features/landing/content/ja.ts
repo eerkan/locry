@@ -287,6 +287,7 @@ export const ja: LandingContent = {
     openSource: 'オープンソース',
     madeWith: 'Angular、Web Crypto、WebAuthn で作られ、サーバーは不要です。',
     links: 'リンク',
+    privacy: 'プライバシー',
   },
   support: {
     title: 'Locry を支援する',

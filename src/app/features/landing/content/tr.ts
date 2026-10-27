@@ -287,6 +287,7 @@ export const tr: LandingContent = {
     openSource: 'Açık kaynak',
     madeWith: 'Angular, Web Crypto ve WebAuthn ile, sunucusuz.',
     links: 'Bağlantılar',
+    privacy: 'Gizlilik',
   },
   support: {
     title: 'Locry’yi destekle',

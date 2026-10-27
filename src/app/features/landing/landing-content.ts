@@ -75,7 +75,7 @@ export interface LandingContent {
   compare: { title: string; lead: string; headers: [string, string, string]; rows: [string, string, string][] };
   faq: { title: string; items: Faq[] };
   cta: { title: string; text: string; start: string; github: string };
-  footer: { tagline: string; openSource: string; madeWith: string; links: string };
+  footer: { tagline: string; openSource: string; madeWith: string; links: string; privacy: string };
   /** Shown only when the installation configured donation accounts (LOCRY_DONATE_*). */
   support: { title: string; text: string; crypto: string; copy: string; copied: string };
   howTo: { name: string; description: string; steps: { name: string; text: string }[] };
