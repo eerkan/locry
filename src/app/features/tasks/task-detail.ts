@@ -67,6 +67,18 @@ const SAVE_DELAY_MS = 400;
             }
           </div>
           @if (task.dueDate) {
+            <div class="flex flex-wrap items-center gap-2">
+              <input
+                type="time"
+                class="border-input bg-background focus-visible:ring-ring/50 h-8 rounded-md border px-2 text-sm outline-none focus-visible:ring-[3px]"
+                [attr.aria-label]="'pages.tasks.detail.dueTime' | transloco"
+                [value]="task.dueTime ?? ''"
+                (change)="setTime($any($event.target).value || null)"
+              />
+              @if (task.dueTime) {
+                <button hlmBtn size="xs" variant="ghost" (click)="setTime(null)">{{ 'pages.tasks.detail.clearTime' | transloco }}</button>
+              }
+            </div>
             <p class="text-muted-foreground text-xs">{{ dueLabel() }}</p>
           }
         </section>
@@ -233,7 +245,7 @@ export class TaskDetail {
   protected readonly nextWeek = computed(() => addDays(this.store.today(), 7));
   protected readonly dueLabel = computed(() => {
     const due = this.task()?.dueDate;
-    return due ? formatDue(due, this.store.today(), this.prefs.lang(), this.transloco) : '';
+    return due ? formatDue(due, this.store.today(), this.prefs.lang(), this.transloco, this.task()?.dueTime) : '';
   });
 
   private loadedId: string | null = null;
@@ -271,6 +283,10 @@ export class TaskDetail {
 
   protected setDue(date: string | null): void {
     void this.store.updateTask(this.taskId(), { dueDate: date });
+  }
+
+  protected setTime(time: string | null): void {
+    void this.store.updateTask(this.taskId(), { dueTime: time && /^\d{2}:\d{2}$/.test(time) ? time : null });
   }
 
   protected setPriority(value: unknown): void {

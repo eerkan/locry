@@ -29,11 +29,18 @@ export const PRIORITY_RING: Record<Priority, string> = {
 };
 
 /** "Today", "Tomorrow", "Overdue · 3 Oct" or a short date such as "24 Oct". */
-export function formatDue(dueDate: string, today: string, lang: string, transloco: TranslocoService): string {
+export function formatDue(dueDate: string, today: string, lang: string, transloco: TranslocoService, dueTime?: string | null): string {
   const status = dueStatus(dueDate, today);
-  if (status === 'today' || status === 'tomorrow') return transloco.translate(`pages.tasks.due.${status}`);
-  const label = formatDate(dueDate, today, lang);
+  const time = dueTime ? ` ${formatTime(dueTime, lang)}` : '';
+  if (status === 'today' || status === 'tomorrow') return transloco.translate(`pages.tasks.due.${status}`) + time;
+  const label = formatDate(dueDate, today, lang) + time;
   return status === 'overdue' ? `${transloco.translate('pages.tasks.due.overdue')} · ${label}` : label;
+}
+
+/** `HH:MM` in the language's clock style (02:30 in Turkish, 2:30 AM in English). */
+export function formatTime(time: string, lang: string): string {
+  const [h, m] = time.split(':').map(Number);
+  return new Intl.DateTimeFormat(lang, { timeStyle: 'short' }).format(new Date(2000, 0, 1, h, m));
 }
 
 /** Short calendar date; includes the year only when it differs from the current one. */

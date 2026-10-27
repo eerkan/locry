@@ -29,6 +29,10 @@ interface Preferences {
   /** "Ask your notes": opt-in, the language model is downloaded once per device. */
   askEnabled: boolean;
   askModel: ChatModelId;
+  /** Task reminders as system notifications on this device (while Locry is open). */
+  reminders: boolean;
+  /** When tasks due on a day without a time are announced, `HH:MM`. */
+  reminderTime: string;
 }
 
 /** Settings that belong to one vault. */
@@ -90,6 +94,8 @@ export class PreferencesService {
   readonly driveClientId = () => this.prefs().driveClientId;
   readonly askEnabled = () => this.prefs().askEnabled;
   readonly askModel = () => this.prefs().askModel;
+  readonly reminders = () => this.prefs().reminders;
+  readonly reminderTime = () => this.prefs().reminderTime;
   readonly lastBackupAt = () => this.vaultPrefs().lastBackupAt;
   readonly driveKeep = () => this.vaultPrefs().driveKeep;
   readonly driveAutoBackup = () => this.vaultPrefs().driveAutoBackup;
@@ -169,6 +175,10 @@ export class PreferencesService {
     this.prefs.update((p) => ({ ...p, ...patch }));
   }
 
+  setReminders(patch: Partial<Pick<Preferences, 'reminders' | 'reminderTime'>>): void {
+    this.prefs.update((p) => ({ ...p, ...patch }));
+  }
+
   setLastBackupAt(lastBackupAt: string): void {
     this.updateVault({ lastBackupAt });
   }
@@ -209,6 +219,8 @@ export class PreferencesService {
       driveClientId: '',
       askEnabled: false,
       askModel: DEFAULT_CHAT_MODEL,
+      reminders: false,
+      reminderTime: '09:00',
       vaults: {},
       legacy: null,
     };
@@ -228,6 +240,8 @@ export class PreferencesService {
         driveClientId: typeof stored.driveClientId === 'string' ? stored.driveClientId : '',
         askEnabled: stored.askEnabled === true,
         askModel: isChatModelId(stored.askModel) ? stored.askModel : defaults.askModel,
+        reminders: stored.reminders === true,
+        reminderTime: typeof stored.reminderTime === 'string' && /^\d{2}:\d{2}$/.test(stored.reminderTime) ? stored.reminderTime : defaults.reminderTime,
         vaults,
         legacy: stored.legacy ? parseVaultPreferences(stored.legacy) : hasLegacy ? parseVaultPreferences(stored) : null,
       };

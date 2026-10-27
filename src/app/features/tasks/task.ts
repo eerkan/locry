@@ -18,6 +18,8 @@ export interface Task {
   priority: Priority;
   /** Local calendar date, `YYYY-MM-DD`. */
   dueDate: string | null;
+  /** Optional local time on the due date, `HH:MM` (missing on tasks from older versions). */
+  dueTime?: string | null;
   subtasks: Subtask[];
   /** Optional link to a note. */
   noteId: string | null;
@@ -28,7 +30,7 @@ export interface Task {
 }
 
 export type TaskPatch = Partial<
-  Pick<Task, 'listId' | 'title' | 'notes' | 'done' | 'priority' | 'dueDate' | 'subtasks' | 'noteId'>
+  Pick<Task, 'listId' | 'title' | 'notes' | 'done' | 'priority' | 'dueDate' | 'dueTime' | 'subtasks' | 'noteId'>
 >;
 
 export const LIST_COLORS = ['slate', 'red', 'orange', 'amber', 'green', 'teal', 'blue', 'violet', 'pink'] as const;
@@ -90,9 +92,12 @@ export function dueStatus(dueDate: string | null, today: string): DueStatus | nu
 
 const byOrder = (a: Task, b: Task) => a.order - b.order || a.createdAt.localeCompare(b.createdAt);
 
-/** Earliest due date first, then higher priority, then manual order. */
+/** Earliest due date (and time; untimed last within a day) first, then higher priority, then manual order. */
 const byDue = (a: Task, b: Task) =>
-  (a.dueDate ?? '').localeCompare(b.dueDate ?? '') || b.priority - a.priority || byOrder(a, b);
+  (a.dueDate ?? '').localeCompare(b.dueDate ?? '') ||
+  (a.dueTime ?? '99').localeCompare(b.dueTime ?? '99') ||
+  b.priority - a.priority ||
+  byOrder(a, b);
 
 const byCompleted = (a: Task, b: Task) => (b.completedAt ?? '').localeCompare(a.completedAt ?? '');
 

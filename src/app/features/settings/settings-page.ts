@@ -16,6 +16,7 @@ import { StorageHealthService } from '../../core/storage/storage-health.service'
 import { VaultService } from '../../core/vault/vault.service';
 import { AiCard } from './ai-card';
 import { AskCard } from './ask-card';
+import { RemindersCard } from './reminders-card';
 import { SupportCard } from './support-card';
 import { BackupCard } from './backup-card';
 import { DriveCard } from './drive-card';
@@ -31,6 +32,7 @@ import { VaultCard } from './vault-card';
     RouterLink,
     AiCard,
     AskCard,
+    RemindersCard,
     SupportCard,
     BackupCard,
     DriveCard,
@@ -134,6 +136,7 @@ import { VaultCard } from './vault-card';
         </div>
       </section>
 
+      <app-reminders-card />
       <app-passkeys-card />
       <app-recovery-card />
       <app-backup-card />

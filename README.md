@@ -13,7 +13,8 @@ No sign-up, nothing to install: open the link and create a vault with a passkey.
 unencrypted.
 
 - Markdown notes (split preview, tags, pinning, archive)
-- Tasks (smart views, lists, subtasks, priorities, due dates, drag and drop)
+- Tasks (smart views, lists, subtasks, priorities, due dates and times, reordering by drag or keyboard)
+- Task reminders as system notifications while Locry is open (no server)
 - Passkey sign-in, recovery key, auto-lock
 - Multiple independent vaults (e.g. Personal and Work), each with its own passkeys and recovery key
 - Compressed, encrypted `.locry` backups; backups to Google Drive
@@ -160,6 +161,18 @@ Notes: Pages sends no custom HTTP headers (the Content Security Policy is in a m
 passkeys are bound to the address, so a vault on Pages is separate from the one on `localhost` (move data with a
 backup and the recovery key). The app also works under a subpath instead of the root: fonts, images and in-page
 links use relative addresses.
+
+## Task reminders
+
+**Settings → Reminders** turns on notifications for this device (the browser asks for permission). When a task's
+time comes, Locry shows a system notification, or a toast when it is in front; tasks with a date but no time are
+announced at a chosen time (09:00 by default). It works while Locry is open, also in a background tab or as an
+installed app, and on Android through the service worker.
+
+There is no server, so nothing arrives while Locry is closed: waking a closed web app takes Web Push, which needs a
+server sending at the right moment and knowing when tasks are due. Once the vault locks, only the times stay in
+memory; the notification then just says a task is due. A reminder missed by up to an hour (a sleeping computer) still
+shows; older ones are not replayed.
 
 ## Vaults
 

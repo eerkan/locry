@@ -135,7 +135,7 @@ export class TaskRow {
   protected readonly dueLabel = computed(() => {
     const due = this.task().dueDate;
     // Re-evaluated when the language changes through prefs.lang().
-    return due ? formatDue(due, this.today(), this.prefs.lang(), this.transloco) : '';
+    return due ? formatDue(due, this.today(), this.prefs.lang(), this.transloco, this.task().dueTime) : '';
   });
   protected readonly dueClass = computed(() => {
     const status = dueStatus(this.task().dueDate, this.today());

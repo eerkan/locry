@@ -100,6 +100,8 @@ export class TasksStore {
     const current = this.taskById(id);
     if (!current) return;
     const next: Task = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    // A time only makes sense on a date.
+    if (!next.dueDate) next.dueTime = null;
     if (patch.done !== undefined && patch.done !== current.done) {
       next.completedAt = patch.done ? next.updatedAt : null;
     }

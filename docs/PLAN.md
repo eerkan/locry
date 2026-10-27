@@ -333,6 +333,17 @@ real screenshots. (Phase 12 later made English the default.)
   within noise, CLS 0. The prerendered text is unchanged; no JavaScript, no support or reduced motion → static page.
 - ✅ The support link got its own header slot, removing a small layout shift (0.0009 → 0) when it appears.
 
+### Phase 22 — Task reminders ✅ done
+- ✅ Optional time on tasks (`dueTime`, `HH:MM`; missing on older records), shown in the locale's clock format and used
+  for sorting within a day.
+- ✅ `RemindersService`: while Locry is open, a system notification at a task's time (through the service worker, as
+  Android requires), a toast when it is in front; untimed tasks at a chosen time; one summary for 3+ at once; each
+  announced once; up to an hour late after sleep, older ones skipped; no replay of the past at startup.
+- ✅ When the vault locks only the times stay in memory, and notifications don't name the task.
+- ✅ Settings card: on/off (asks the browser), default time, a test, help when blocked. Clicking a notification
+  focuses the open window (no reload, which would lock the vault) and opens the task.
+- No server, so no reminders while Locry is closed (Web Push would need one; Notification Triggers never shipped).
+
 ## Setup notes
 
 - Requires Node 24 (`.nvmrc`): `nvm use`

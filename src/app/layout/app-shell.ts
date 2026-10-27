@@ -26,6 +26,7 @@ import { VaultService } from '../core/vault/vault.service';
 import { TasksStore } from '../features/tasks/tasks.store';
 import { Logo } from '../shared/logo';
 import { AutoDriveBackupService } from '../core/drive/auto-drive-backup.service';
+import { RemindersService } from '../core/reminders/reminders.service';
 import { StorageHealthService } from '../core/storage/storage-health.service';
 import { NotesStore } from '../features/notes/notes.store';
 import { CommandPalette } from './command-palette';
@@ -294,6 +295,7 @@ export class AppShell {
   constructor() {
     // Unlocked-only background services, kept out of the initial bundle.
     inject(AutoDriveBackupService);
+    inject(RemindersService);
     inject(StorageHealthService);
 
     // On phones the sidebar is an overlay: close it once a page was chosen.
