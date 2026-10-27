@@ -102,7 +102,7 @@ export class SyncService {
       untracked(() => this.schedule(CHANGE_DEBOUNCE_MS));
     });
 
-    // A token renewed (on a click, or after unlocking with a kept token): sync what waited for it.
+    // Connected (a button, or a kept token after unlocking): sync what waited for it.
     effect(() => {
       if (this.drive.connected()) untracked(() => this._status() === 'needsAuth' && this.schedule(0));
     });

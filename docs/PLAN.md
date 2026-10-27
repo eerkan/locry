@@ -292,13 +292,13 @@ real screenshots. (Phase 12 later made English the default.)
   secret). The token and the account's email are now kept in the vault, encrypted, local-only (never synced or backed
   up, deleted on disconnect), so a lock or reload no longer asks again; Google gets the account as `login_hint`, so
   no account picker.
-- ✅ When sync or a scheduled backup needs Drive and the token is gone or has under 10 minutes left, the next click in
-  the app (not in a text field) renews it; Google's window closes by itself. Failed renewals back off (5 min, 30 min
-  after a closed window) and scheduled backups fall back to the toast with a button.
-- ✅ Scheduled backups run by themselves after the renewal, with the usual "Automatic Drive backup done" toast.
+- ✅ Google's window never opens unasked: scheduled backups run by themselves while the token is valid (with the
+  usual "Automatic Drive backup done" toast); once it has expired, a toast offers a button, once per unlock, and the
+  window then closes by itself. (Renewing on the next click was tried and dropped: a window popping up unasked was
+  more disturbing than a button.)
 - ✅ Backup list grouped by vault (open vault first, vaults not on this device by short id); "Backups to keep" per
   vault across devices, deleting another device's backup only after merging it.
-- ✅ Sync: runs as soon as a token is renewed; on phones, pending changes upload when the app goes to the background.
+- ✅ Sync: runs as soon as Drive is connected again; on phones, pending changes upload when the app goes to the background.
 
 ## Setup notes
 

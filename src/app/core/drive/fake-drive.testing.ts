@@ -106,16 +106,11 @@ export class FakeGoogleAuth {
   calls = 0;
   /** Sign-in hint of the last request. */
   loginHint: string | null | undefined;
-  /** Set to make the next request fail like a closed popup. */
-  fail: Error | null = null;
-  /** How long issued tokens live. */
-  lifetimeMs = 3_600_000;
   constructor(private readonly drive: FakeDrive) {}
   async requestToken(_clientId: string, options: { loginHint?: string | null } = {}) {
     this.calls++;
     this.loginHint = options.loginHint;
-    if (this.fail) throw this.fail;
-    return { value: this.drive.validToken, expiresAt: Date.now() + this.lifetimeMs };
+    return { value: this.drive.validToken, expiresAt: Date.now() + 3_600_000 };
   }
   preload() {}
   async revoke() {}

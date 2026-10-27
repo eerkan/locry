@@ -10,8 +10,6 @@ import { PasskeyClient } from '../vault/passkey';
 import { VaultService } from '../vault/vault.service';
 import { DriveApi } from './drive-api';
 import { AutoDriveBackupService } from './auto-drive-backup.service';
-import { DriveTokenRenewal } from './drive-token-renewal.service';
-import { DriveError } from './google-auth';
 import { readBackup, openBackup } from '../backup/backup-format';
 import { DRIVE_FETCH, DriveService } from './drive.service';
 import { GoogleAuth } from './google-auth';
@@ -218,35 +216,5 @@ describe('DriveService', () => {
     const left = fakeDrive.files.filter((f) => f.appProperties['locryVaultId'] === vaultId).map((f) => f.id);
     expect(left).toHaveLength(2);
     expect(left).toContain('phone-unmerged');
-  });
-
-  it('renews an expiring token on a click outside text fields when background work needs it', async () => {
-    const renewal = TestBed.inject(DriveTokenRenewal);
-    fakeAuth.lifetimeMs = 5 * 60_000; // already inside the renewal window
-    await drive.connect();
-    expect(fakeAuth.calls).toBe(1);
-
-    // Nothing in the background wants Drive yet.
-    document.body.click();
-    expect(fakeAuth.calls).toBe(1);
-
-    prefs.setDrive({ driveAutoBackup: 'daily' });
-    const field = document.createElement('textarea');
-    document.body.append(field);
-    field.click();
-    expect(fakeAuth.calls).toBe(1);
-
-    document.body.click();
-    await vi.waitFor(() => expect(fakeAuth.calls).toBe(2));
-    expect(fakeAuth.loginHint).toBe('someone@example.com');
-
-    // A failed renewal is not retried on every click, and lets scheduled backups ask instead.
-    fakeAuth.fail = new DriveError('popupClosed');
-    await vi.waitFor(() => expect(renewal['renewing']).toBe(false));
-    document.body.click();
-    await vi.waitFor(() => expect(renewal.failures()).toBe(1));
-    document.body.click();
-    expect(fakeAuth.calls).toBe(3);
-    field.remove();
   });
 });

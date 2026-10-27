@@ -3,7 +3,6 @@ import { TranslocoService } from '@jsverse/transloco';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EncryptedStore } from '../storage/encrypted-store.service';
 import { VaultService } from '../vault/vault.service';
-import { DriveTokenRenewal } from './drive-token-renewal.service';
 import { type BackupResult, DriveService } from './drive.service';
 
 /** Often enough for the shortest schedule (5 minutes). */
@@ -11,9 +10,9 @@ const CHECK_INTERVAL_MS = 60_000;
 
 /**
  * Runs scheduled Drive backups while the app is open and unlocked, announcing each with a
- * toast. Without a valid token it waits for {@link DriveTokenRenewal} to renew it on the next
- * click, then backs up by itself. Only when that cannot work (Drive never used from this vault,
- * or the renewal failed) does a toast offer a button, once per unlock.
+ * toast. Google's window may only open from a click and is never opened unasked, so without
+ * a valid token (it lasts an hour and is kept across locks) a toast offers a button instead,
+ * once per unlock; with the account known, the window then closes by itself.
  */
 @Injectable({ providedIn: 'root' })
 export class AutoDriveBackupService {
@@ -21,8 +20,6 @@ export class AutoDriveBackupService {
   private readonly vault = inject(VaultService);
   private readonly transloco = inject(TranslocoService);
   private readonly store = inject(EncryptedStore);
-  private readonly renewal = inject(DriveTokenRenewal);
-  private failuresSeen = 0;
   private promptedThisUnlock = false;
   /** The backup in progress; a check arriving meanwhile waits for it, then decides again. */
   private running: Promise<void> | null = null;
@@ -38,11 +35,9 @@ export class AutoDriveBackupService {
         if (unlocked) setTimeout(() => void this.check(), 3000);
       });
     });
-    // A renewed token: back up right away if one is due. A failed renewal: offer the button.
+    // Connected from anywhere (sync, Settings, a kept token after unlocking): back up if one is due.
     effect(() => {
-      const connected = this.drive.connected();
-      const failed = this.renewal.failures() !== this.failuresSeen;
-      if (connected || failed) untracked(() => setTimeout(() => void this.check(), 0));
+      if (this.drive.connected()) untracked(() => setTimeout(() => void this.check(), 0));
     });
     const timer = setInterval(() => void this.check(), CHECK_INTERVAL_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
@@ -50,14 +45,12 @@ export class AutoDriveBackupService {
 
   async check(now = Date.now()): Promise<void> {
     while (this.running) await this.running;
-    if (!this.drive.autoBackupDue(now)) return;
+    // A backup started from a button (Settings or the toast) is already on its way.
+    if (!this.drive.autoBackupDue(now) || this.drive.busy()) return;
     if (this.drive.hasValidToken()) {
       this.running = this.backUp().finally(() => (this.running = null));
       await this.running;
-    } else if (this.drive.wantsRenewal() && this.renewal.failures() === this.failuresSeen) {
-      // The next click renews the token; the effect above then backs up.
     } else if (!this.promptedThisUnlock) {
-      this.failuresSeen = this.renewal.failures();
       this.promptedThisUnlock = true;
       toast(this.transloco.translate('drive.autoBackupDue'), {
         duration: 15_000,

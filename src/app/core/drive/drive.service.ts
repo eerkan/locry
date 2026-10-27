@@ -26,9 +26,6 @@ const AUTO_BACKUP_INTERVAL_MS: Record<Exclude<DriveAutoBackup, 'off'>, number> =
   weekly: 7 * 24 * 3600_000,
 };
 
-/** A token this close to expiry is renewed on the next click, before work needs it. */
-export const RENEW_AHEAD_MS = 10 * 60_000;
-
 /** What is kept (encrypted with the vault key, on this device only) between unlocks. */
 interface StoredDriveToken {
   token: AccessToken | null;
@@ -86,13 +83,6 @@ export class DriveService {
   readonly hasBuiltInClientId = computed(() => !!this.runtime.googleClientId());
   readonly configured = computed(() => !!this.clientId());
   readonly connected = computed(() => !!this.token());
-  /**
-   * Drive was used from this vault before and background work wants it (sync or scheduled
-   * backups), so an expired token may be renewed on the user's next click.
-   */
-  readonly wantsRenewal = computed(
-    () => this.configured() && this.vault.isUnlocked() && !!this.account() && (this.prefs.sync() || this.prefs.driveAutoBackup() !== 'off'),
-  );
   readonly busy = this._busy.asReadonly();
   /** Backups in Drive, newest first; null until listed. */
   readonly files = computed<DriveBackup[] | null>(() => {
@@ -134,8 +124,9 @@ export class DriveService {
       this.vault.activeVault();
       untracked(() => void this.restoreToken());
     });
+    // Drive was used from this vault: have Google's script ready, so a button opens the popup at once.
     effect(() => {
-      if (this.wantsRenewal()) untracked(() => this.auth.preload());
+      if (this.configured() && this.vault.isUnlocked() && this.account()) untracked(() => this.auth.preload());
     });
   }
 
@@ -153,20 +144,6 @@ export class DriveService {
     this.forget();
     if (this.vault.isUnlocked()) await this.store.delete(DRIVE_TOKEN_TYPE).catch(() => undefined);
     if (token) await this.auth.revoke(token.value).catch(() => undefined);
-  }
-
-  /** Whether the token is missing or about to expire while background work wants it. */
-  renewalDue(now = Date.now()): boolean {
-    const token = this.token();
-    return this.wantsRenewal() && (!token || token.expiresAt - now < RENEW_AHEAD_MS);
-  }
-
-  /**
-   * Renews the token for the known account. Call from a click: with the earlier grant and the
-   * account hint, Google's popup closes by itself.
-   */
-  async renew(): Promise<void> {
-    await this.obtainToken();
   }
 
   async refresh(): Promise<void> {
