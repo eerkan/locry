@@ -24,7 +24,8 @@ export class AutoDriveBackupService {
   private readonly renewal = inject(DriveTokenRenewal);
   private failuresSeen = 0;
   private promptedThisUnlock = false;
-  private running = false;
+  /** The backup in progress; a check arriving meanwhile waits for it, then decides again. */
+  private running: Promise<void> | null = null;
   /** Local change counter at the last automatic backup of this session. */
   private changesAtLastBackup: number | null = null;
 
@@ -48,22 +49,11 @@ export class AutoDriveBackupService {
   }
 
   async check(now = Date.now()): Promise<void> {
-    if (this.running || !this.drive.autoBackupDue(now)) return;
+    while (this.running) await this.running;
+    if (!this.drive.autoBackupDue(now)) return;
     if (this.drive.hasValidToken()) {
-      this.running = true;
-      try {
-        // Frequent schedules would otherwise upload identical copies: skip when nothing changed
-        // here and no other device backed up something new to merge.
-        const changes = this.store.changes();
-        if (changes === this.changesAtLastBackup && !(await this.drive.otherDevicesBackedUp())) return;
-        const result = await this.drive.backupNow({ interactive: false });
-        this.changesAtLastBackup = this.store.changes();
-        announceBackup(result, this.transloco, 'drive.autoBackupDone');
-      } catch (error) {
-        console.error(error);
-      } finally {
-        this.running = false;
-      }
+      this.running = this.backUp().finally(() => (this.running = null));
+      await this.running;
     } else if (this.drive.wantsRenewal() && this.renewal.failures() === this.failuresSeen) {
       // The next click renews the token; the effect above then backs up.
     } else if (!this.promptedThisUnlock) {
@@ -76,6 +66,20 @@ export class AutoDriveBackupService {
           onClick: () => void this.backupFromClick(),
         },
       });
+    }
+  }
+
+  private async backUp(): Promise<void> {
+    try {
+      // Frequent schedules would otherwise upload identical copies: skip when nothing changed
+      // here and no other device backed up something new to merge.
+      const changes = this.store.changes();
+      if (changes === this.changesAtLastBackup && !(await this.drive.otherDevicesBackedUp())) return;
+      const result = await this.drive.backupNow({ interactive: false });
+      this.changesAtLastBackup = this.store.changes();
+      announceBackup(result, this.transloco, 'drive.autoBackupDone');
+    } catch (error) {
+      console.error(error);
     }
   }
 
