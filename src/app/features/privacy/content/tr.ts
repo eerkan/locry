@@ -38,6 +38,7 @@ export const tr: PrivacyContent = {
       heading: 'Yapay zekâ özellikleri (isteğe bağlı)',
       body: [
         'Akıllı aramayı ya da “Notlarına sor”u açarsan yapay zekâ modelinin dosyaları bir kez Hugging Face’ten (huggingface.co) indirilir. Her indirmede olduğu gibi Hugging Face IP adresini ve hangi dosyaların istendiğini görebilir. Notların ve soruların yalnızca cihazında işlenir; hiçbir yapay zekâ servisine gönderilmez.',
+        'Sesle yazmayı kullanırsan mikrofon yalnızca sen konuşurken kaydedilir; kayıt cihazında bir konuşma modeliyle (Hugging Face’ten bir kez indirilen Whisper) metne çevrilir ve ardından atılır: hiçbir zaman saklanmaz ya da gönderilmez. Sesli okuma yalnızca cihazında kurulu sesleri kullanır; notlarının metni bir seslendirme servisine gönderilmez.',
       ],
     },
     {

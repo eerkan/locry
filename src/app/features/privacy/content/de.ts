@@ -38,6 +38,7 @@ export const de: PrivacyContent = {
       heading: 'KI-Funktionen (optional)',
       body: [
         'Wenn du die intelligente Suche oder „Frag deine Notizen“ aktivierst, werden die Dateien des KI-Modells einmalig von Hugging Face (huggingface.co) heruntergeladen. Wie bei jedem Download kann Hugging Face deine IP-Adresse und die angeforderten Dateien sehen. Deine Notizen und Fragen werden nur auf deinem Gerät verarbeitet und nie an einen KI-Dienst gesendet.',
+        'Wenn du das Diktieren nutzt, nimmt das Mikrofon nur auf, während du diktierst; die Aufnahme wird auf deinem Gerät von einem Sprachmodell (Whisper, einmal von Hugging Face geladen) in Text umgewandelt und danach verworfen: Sie wird nie gespeichert oder gesendet. Das Vorlesen nutzt nur auf deinem Gerät installierte Stimmen, der Text deiner Notizen geht also an keinen Sprachdienst.',
       ],
     },
     {

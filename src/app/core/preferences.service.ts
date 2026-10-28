@@ -10,6 +10,7 @@ import {
 } from './ai/embedding-protocol';
 import { type Lang, LANGUAGE_TAGS, detectLang, direction, isLang } from './languages';
 import { LEGACY_DB_NAME } from './storage/locry-db';
+import { DEFAULT_SPEECH_MODEL, SPEECH_MODELS, type SpeechModelId, isSpeechModelId } from './voice/speech-protocol';
 import { VaultService } from './vault/vault.service';
 
 export type { Lang } from './languages';
@@ -33,7 +34,17 @@ interface Preferences {
   reminders: boolean;
   /** When tasks due on a day without a time are announced, `HH:MM`. */
   reminderTime: string;
+  /** Dictation: opt-in, the speech model is downloaded once per device. */
+  speechEnabled: boolean;
+  speechModel: SpeechModelId;
+  /** Language spoken when dictating: the interface's, a fixed one, or detected by Whisper. */
+  dictationLang: DictationLang;
+  /** Reading notes aloud: a voice on this device (its URI), or null for the language's default. */
+  readVoice: string | null;
+  readRate: number;
 }
+
+export type DictationLang = 'interface' | 'auto' | Lang;
 
 /** Settings that belong to one vault. */
 interface VaultPreferences {
@@ -96,6 +107,11 @@ export class PreferencesService {
   readonly askModel = () => this.prefs().askModel;
   readonly reminders = () => this.prefs().reminders;
   readonly reminderTime = () => this.prefs().reminderTime;
+  readonly speechEnabled = () => this.prefs().speechEnabled;
+  readonly speechModel = () => this.prefs().speechModel;
+  readonly dictationLang = () => this.prefs().dictationLang;
+  readonly readVoice = () => this.prefs().readVoice;
+  readonly readRate = () => this.prefs().readRate;
   readonly lastBackupAt = () => this.vaultPrefs().lastBackupAt;
   readonly driveKeep = () => this.vaultPrefs().driveKeep;
   readonly driveAutoBackup = () => this.vaultPrefs().driveAutoBackup;
@@ -115,6 +131,7 @@ export class PreferencesService {
   readonly modelReposInUse = computed(() => [
     ...[...this.embeddingModelsInUse()].map((id) => EMBEDDING_MODELS[id].repo),
     ...(this.prefs().askEnabled ? [CHAT_MODELS[this.prefs().askModel].repo] : []),
+    ...(this.prefs().speechEnabled ? [SPEECH_MODELS[this.prefs().speechModel].repo] : []),
   ]);
 
   constructor() {
@@ -179,6 +196,10 @@ export class PreferencesService {
     this.prefs.update((p) => ({ ...p, ...patch }));
   }
 
+  setVoice(patch: Partial<Pick<Preferences, 'speechEnabled' | 'speechModel' | 'dictationLang' | 'readVoice' | 'readRate'>>): void {
+    this.prefs.update((p) => ({ ...p, ...patch }));
+  }
+
   setLastBackupAt(lastBackupAt: string): void {
     this.updateVault({ lastBackupAt });
   }
@@ -221,6 +242,11 @@ export class PreferencesService {
       askModel: DEFAULT_CHAT_MODEL,
       reminders: false,
       reminderTime: '09:00',
+      speechEnabled: false,
+      speechModel: DEFAULT_SPEECH_MODEL,
+      dictationLang: 'interface',
+      readVoice: null,
+      readRate: 1,
       vaults: {},
       legacy: null,
     };
@@ -241,6 +267,14 @@ export class PreferencesService {
         askEnabled: stored.askEnabled === true,
         askModel: isChatModelId(stored.askModel) ? stored.askModel : defaults.askModel,
         reminders: stored.reminders === true,
+        speechEnabled: stored.speechEnabled === true,
+        speechModel: isSpeechModelId(stored.speechModel) ? stored.speechModel : defaults.speechModel,
+        dictationLang:
+          stored.dictationLang === 'interface' || stored.dictationLang === 'auto' || isLang(stored.dictationLang)
+            ? stored.dictationLang
+            : defaults.dictationLang,
+        readVoice: typeof stored.readVoice === 'string' ? stored.readVoice : null,
+        readRate: typeof stored.readRate === 'number' && stored.readRate >= 0.5 && stored.readRate <= 2 ? stored.readRate : 1,
         reminderTime: typeof stored.reminderTime === 'string' && /^\d{2}:\d{2}$/.test(stored.reminderTime) ? stored.reminderTime : defaults.reminderTime,
         vaults,
         legacy: stored.legacy ? parseVaultPreferences(stored.legacy) : hasLegacy ? parseVaultPreferences(stored) : null,

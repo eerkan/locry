@@ -38,6 +38,7 @@ export const pt: PrivacyContent = {
       heading: 'Recursos de IA (opcionais)',
       body: [
         'Se você ativar a busca inteligente ou “Pergunte às suas notas”, os arquivos do modelo de IA são baixados uma vez do Hugging Face (huggingface.co). Como em qualquer download, o Hugging Face pode ver seu endereço IP e quais arquivos foram pedidos. Suas notas e perguntas são processadas apenas no seu dispositivo e nunca são enviadas a nenhum serviço de IA.',
+        'Se você usar o ditado, o microfone só grava enquanto você dita; a gravação vira texto no seu dispositivo com um modelo de fala (Whisper, baixado uma vez do Hugging Face) e depois é descartada: nunca é guardada nem enviada. A leitura em voz alta usa apenas vozes instaladas no seu dispositivo, então o texto das suas notas não é enviado a nenhum serviço de voz.',
       ],
     },
     {

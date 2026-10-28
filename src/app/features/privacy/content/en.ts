@@ -38,6 +38,7 @@ export const en: PrivacyContent = {
       heading: 'AI features (optional)',
       body: [
         'If you turn on smart search or “Ask your notes”, the AI model files are downloaded once from Hugging Face (huggingface.co). As with any download, Hugging Face can see your IP address and which files were requested. Your notes and questions are processed only on your device and are never sent to any AI service.',
+        'Dictation, if you use it, records the microphone only while you dictate; the recording is turned into text on your device by a speech model (Whisper, downloaded once from Hugging Face) and then discarded: it is never stored or sent. Reading aloud uses only voices installed on your device, so the text of your notes is not sent to a speech service.',
       ],
     },
     {

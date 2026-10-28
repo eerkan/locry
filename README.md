@@ -15,6 +15,7 @@ unencrypted.
 - Markdown notes (split preview, tags, pinning, archive)
 - Tasks (smart views, lists, subtasks, priorities, due dates and times, reordering by drag or keyboard)
 - Task reminders as system notifications while Locry is open (no server)
+- **Voice:** dictate notes and tasks with Whisper running in the browser, and have notes read aloud with the device's own voices; nothing is recorded or sent
 - Passkey sign-in, recovery key, auto-lock
 - Multiple independent vaults (e.g. Personal and Work), each with its own passkeys and recovery key
 - Compressed, encrypted `.locry` backups; backups to Google Drive
@@ -161,6 +162,26 @@ Notes: Pages sends no custom HTTP headers (the Content Security Policy is in a m
 passkeys are bound to the address, so a vault on Pages is separate from the one on `localhost` (move data with a
 backup and the recovery key). The app also works under a subpath instead of the root: fonts, images and in-page
 links use relative addresses.
+
+## Voice
+
+**Dictation.** The microphone button in the note toolbar and next to the new-task box records while you speak;
+pressing it again turns the recording into text with OpenAI's Whisper (MIT), running in the browser through
+Transformers.js on WebGPU (or WebAssembly), and inserts it. The audio is held in memory only until it is transcribed,
+then dropped: nothing is stored or sent. The model is downloaded once, after asking, and chosen in **Settings → Voice**:
+
+| Model | Download | Notes |
+|---|---|---|
+| **Whisper Small** (default) | 299 MB with WebGPU, 249 MB without | Turkish trial word for word; ~1 s per sentence on a laptop GPU |
+| Whisper Base | 206 MB / 77 MB | Smallest; for phones without WebGPU, more mistakes |
+| Whisper Large v3 Turbo | 563 MB, WebGPU with 16-bit only | Most accurate |
+
+The spoken language follows the interface by default, or is set (or detected) in Settings. Recordings stop at three
+minutes. The browser's own speech recognition (Web Speech API) is not used: Chrome sends that audio to Google.
+
+**Reading aloud.** The speaker button on a note reads its title and text with the browser's speech synthesis, using
+only voices installed on the device (`localService`; Chrome's "Google" voices are synthesized on Google's servers and
+are left out). Voice and speed are set in Settings; more voices come with the system's language settings.
 
 ## Task reminders
 

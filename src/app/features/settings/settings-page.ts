@@ -17,6 +17,7 @@ import { VaultService } from '../../core/vault/vault.service';
 import { AiCard } from './ai-card';
 import { AskCard } from './ask-card';
 import { RemindersCard } from './reminders-card';
+import { VoiceCard } from './voice-card';
 import { SupportCard } from './support-card';
 import { BackupCard } from './backup-card';
 import { DriveCard } from './drive-card';
@@ -33,6 +34,7 @@ import { VaultCard } from './vault-card';
     AiCard,
     AskCard,
     RemindersCard,
+    VoiceCard,
     SupportCard,
     BackupCard,
     DriveCard,
@@ -144,6 +146,7 @@ import { VaultCard } from './vault-card';
       <app-drive-card />
       <app-ai-card />
       <app-ask-card />
+      <app-voice-card />
       <app-support-card />
       <p class="text-muted-foreground text-center text-xs">
         <a class="hover:text-foreground underline underline-offset-2" [routerLink]="privacyPath(prefs.lang())">{{ 'common.privacy' | transloco }}</a>

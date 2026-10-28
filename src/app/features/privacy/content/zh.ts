@@ -38,6 +38,7 @@ export const zh: PrivacyContent = {
       heading: 'AI 功能（可选）',
       body: [
         '如果你开启智能搜索或“向你的笔记提问”，AI 模型文件会从 Hugging Face（huggingface.co）下载一次。与任何下载一样，Hugging Face 可以看到你的 IP 地址和所请求的文件。你的笔记和问题只在你的设备上处理，绝不会发送给任何 AI 服务。',
+        '如果你使用语音输入，麦克风只在你口述时录音；录音由语音模型（Whisper，从 Hugging Face 下载一次）在你的设备上转成文字，然后被丢弃：从不保存或发送。朗读只使用你设备上安装的语音，因此笔记内容不会发送到语音服务。',
       ],
     },
     {

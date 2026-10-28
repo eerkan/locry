@@ -344,6 +344,18 @@ real screenshots. (Phase 12 later made English the default.)
   focuses the open window (no reload, which would lock the vault) and opens the task.
 - No server, so no reminders while Locry is closed (Web Push would need one; Notification Triggers never shipped).
 
+### Phase 23 — Voice ✅ done
+- ✅ Dictation with Whisper in a Web Worker (Transformers.js; WebGPU, else WebAssembly): MediaRecorder → 16 kHz mono →
+  transcript, audio dropped after; never stored or sent. Web Speech API deliberately not used (Chrome sends audio to
+  Google). Mic button in the note toolbar (inserts at the caret) and next to the new-task box (fills it to confirm).
+- ✅ Models, per device: Whisper Small (default; q4 encoder + q4 decoder, 299 MB), Base (77–206 MB), Large v3 Turbo
+  (563 MB, WebGPU f16 only). Trial with a Turkish system voice as a fake microphone: Base made mistakes ("mahkete",
+  "sütve"), Small and Turbo word for word, ~1 s per sentence on a laptop GPU; Small's 4-bit encoder matched fp32 and
+  halved the download. Asks before the first download; shared model cache cleanup; stops on lock.
+- ✅ Read aloud with speechSynthesis, on-device voices only, in sentence-sized pieces (Chrome stops long utterances);
+  voice and speed in Settings; stops on lock and when leaving the note.
+- ✅ Privacy policy (11 languages) states both; 37 interface strings in 11 languages.
+
 ## Setup notes
 
 - Requires Node 24 (`.nvmrc`): `nvm use`

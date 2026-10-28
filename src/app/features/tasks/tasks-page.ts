@@ -47,6 +47,7 @@ import { TaskDetail } from './task-detail';
 import { TaskRow } from './task-row';
 import { LIST_DOT, formatDue } from './task-ui';
 import { ShellUi } from '../../layout/shell-ui.service';
+import { DictateButton } from '../../shared/dictate-button';
 import { TasksStore } from './tasks.store';
 
 const VIEW_ICONS: Record<SmartView, string> = {
@@ -59,6 +60,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
 @Component({
   selector: 'app-tasks-page',
   imports: [
+    DictateButton,
     CdkDrag,
     CdkDragPlaceholder,
     CdkDropList,
@@ -194,6 +196,7 @@ const VIEW_ICONS: Record<SmartView, string> = {
               (input)="draft.set($any($event.target).value)"
               (keydown.enter)="addTask()"
             />
+            <app-dictate-button (transcript)="dictated($event)" />
           </div>
         }
 
@@ -382,6 +385,13 @@ export class TasksPage {
 
   protected go(key: string): void {
     void this.router.navigate(['/tasks', key]);
+  }
+
+  /** A dictated task goes into the box, to check and add with Enter. */
+  protected dictated(text: string): void {
+    const title = text.replace(/[.。]$/, '');
+    this.draft.update((current) => (current.trim() ? `${current.trim()} ${title}` : title));
+    this.quickAdd()?.nativeElement.focus();
   }
 
   protected async addTask(): Promise<void> {

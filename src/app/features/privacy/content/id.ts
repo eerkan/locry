@@ -38,6 +38,7 @@ export const id: PrivacyContent = {
       heading: 'Fitur AI (opsional)',
       body: [
         'Jika Anda mengaktifkan pencarian cerdas atau “Tanya catatan Anda”, file model AI diunduh sekali dari Hugging Face (huggingface.co). Seperti unduhan lainnya, Hugging Face dapat melihat alamat IP Anda dan file mana yang diminta. Catatan dan pertanyaan Anda hanya diproses di perangkat Anda dan tidak pernah dikirim ke layanan AI mana pun.',
+        'Jika Anda memakai dikte, mikrofon hanya merekam selama Anda mendikte; rekaman diubah menjadi teks di perangkat Anda oleh model ucapan (Whisper, diunduh sekali dari Hugging Face) lalu dibuang: tidak pernah disimpan atau dikirim. Membaca dengan suara hanya memakai suara yang terpasang di perangkat Anda, jadi teks catatan Anda tidak dikirim ke layanan suara.',
       ],
     },
     {

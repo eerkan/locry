@@ -39,6 +39,8 @@ import {
   lucideSquareCode,
   lucideStrikethrough,
   lucideTrash2,
+  lucideVolume2,
+  lucideVolumeX,
 } from '@ng-icons/lucide';
 import { toast } from '@spartan-ng/brain/sonner';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
@@ -47,7 +49,10 @@ import { HlmSpinner } from '@spartan-ng/helm/spinner';
 import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group';
 import { HlmTooltip } from '@spartan-ng/helm/tooltip';
 import { SearchService } from '../../core/ai/search.service';
+import { markdownToText } from '../../core/ai/documents';
 import { PreferencesService } from '../../core/preferences.service';
+import { ReadAloudService } from '../../core/voice/read-aloud.service';
+import { DictateButton } from '../../shared/dictate-button';
 import { relativeTime } from '../../shared/relative-time';
 import { type EditorState, type MarkdownCommand, applyCommand, continueList } from './markdown-commands';
 import { renderMarkdown, toggleTask } from './markdown';
@@ -92,6 +97,7 @@ const TOOLBAR: ToolbarItem[][] = [
   selector: 'app-note-editor',
   imports: [
     RouterLink,
+    DictateButton,
     HlmAlertDialogImports,
     HlmButton,
     HlmSpinner,
@@ -126,6 +132,8 @@ const TOOLBAR: ToolbarItem[][] = [
       lucideSquareCode,
       lucideStrikethrough,
       lucideTrash2,
+      lucideVolume2,
+      lucideVolumeX,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -161,6 +169,19 @@ const TOOLBAR: ToolbarItem[][] = [
           }
         </span>
 
+        @if (readAloud.supported) {
+          <button
+            hlmBtn
+            variant="ghost"
+            size="icon-sm"
+            [hlmTooltip]="(reading() ? 'voice.stopReading' : 'voice.read') | transloco"
+            [attr.aria-label]="(reading() ? 'voice.stopReading' : 'voice.read') | transloco"
+            [attr.aria-pressed]="reading()"
+            (click)="toggleReading()"
+          >
+            <ng-icon [name]="reading() ? 'lucideVolumeX' : 'lucideVolume2'" />
+          </button>
+        }
         <button
           hlmBtn
           variant="ghost"
@@ -249,6 +270,7 @@ const TOOLBAR: ToolbarItem[][] = [
               <span class="bg-border mx-1 h-4 w-px"></span>
             }
           }
+          <app-dictate-button class="ms-auto" (transcript)="insertDictation($event)" />
         </div>
       }
 
@@ -317,6 +339,8 @@ export class NoteEditor {
 
   protected readonly note = computed(() => this.store.byId(this.id()));
   protected readonly title = signal('');
+  protected readonly readAloud = inject(ReadAloudService);
+  protected readonly reading = computed(() => this.readAloud.state() !== 'idle' && this.readAloud.owner() === this.id());
   protected readonly content = signal('');
   protected readonly mode = signal<Mode>(this.initialMode());
   protected readonly saveState = signal<SaveState>('idle');
@@ -341,6 +365,12 @@ export class NoteEditor {
   private saveTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
+    // Reading stops when another note opens or the editor closes.
+    effect(() => {
+      const id = this.id();
+      untracked(() => this.readAloud.owner() && this.readAloud.owner() !== id && this.readAloud.stop());
+    });
+    inject(DestroyRef).onDestroy(() => this.readAloud.owner() === this.id() && this.readAloud.stop());
     // Load the drafts whenever the route switches to another note.
     effect(() => {
       const id = this.id();
@@ -446,6 +476,29 @@ export class NoteEditor {
     await this.store.remove(id);
     toast.success(this.transloco.translate('pages.notes.deleted'));
     await this.router.navigate(['/notes'], { replaceUrl: true });
+  }
+
+  /** Inserts dictated text at the caret, with a space on each side where the words would touch. */
+  protected insertDictation(text: string): void {
+    this.updateEditor(({ value, start, end }) => {
+      const before = start > 0 && !/\s/.test(value[start - 1]) ? ' ' : '';
+      const after = end < value.length && !/\s/.test(value[end]) ? ' ' : '';
+      const insert = before + text + after;
+      const caret = start + insert.length;
+      return { value: value.slice(0, start) + insert + value.slice(end), start: caret, end: caret };
+    });
+  }
+
+  /** Reads the note aloud with an on-device voice, or stops reading. */
+  protected toggleReading(): void {
+    if (this.reading()) {
+      this.readAloud.stop();
+      return;
+    }
+    const text = [this.title().trim(), markdownToText(this.content())].filter(Boolean).join('.\n');
+    if (!this.readAloud.speak(text, this.prefs.lang(), this.id())) {
+      toast.error(this.transloco.translate('voice.noVoice'));
+    }
   }
 
   /**
