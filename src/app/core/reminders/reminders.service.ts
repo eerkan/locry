@@ -94,9 +94,22 @@ export class RemindersService {
     this.prefs.setReminders({ reminders: false });
   }
 
-  /** Shows a sample notification, so people can see it works. */
+  /**
+   * Shows a sample notification and says what happened: browsers accept notifications even
+   * when the operating system then hides them (system notification settings, Focus or Do Not
+   * Disturb), so a silent button would leave people guessing.
+   */
   async test(): Promise<void> {
-    await this.notify(this.transloco.translate('reminders.testTitle'), this.transloco.translate('reminders.testBody'), 'locry-test', null);
+    const t = (key: string) => this.transloco.translate(key);
+    this._permission.set(currentPermission());
+    if (this._permission() !== 'granted') {
+      toast.error(t('reminders.denied'));
+      return;
+    }
+    // A new tag each time: a notification with the same tag would replace the last one silently.
+    const shown = await this.notify(t('reminders.testTitle'), t('reminders.testBody'), `locry-test-${Date.now()}`, null);
+    if (shown === 'failed') toast.error(t('reminders.testFailed'));
+    else toast.success(t('reminders.testSent'), { description: t('reminders.testHint'), duration: 12_000 });
   }
 
   private check(): void {
@@ -136,10 +149,12 @@ export class RemindersService {
   }
 
   /** Through the service worker where there is one (required on Android), else directly. */
-  private async notify(title: string, body: string, tag: string, taskId: string | null): Promise<void> {
-    const options: NotificationOptions = {
+  private async notify(title: string, body: string, tag: string, taskId: string | null): Promise<'shown' | 'failed'> {
+    const options: NotificationOptions & { renotify: boolean } = {
       body,
       tag,
+      // Alert again when a task's reminder replaces an earlier one with the same tag.
+      renotify: true,
       icon: 'icons/icon-any-192.png',
       // The service worker focuses the open Locry window (navigating it would reload and lock it).
       data: { taskId, onActionClick: { default: { operation: 'focusLastFocusedOrOpen', url: 'tasks/today' } } },
@@ -148,7 +163,7 @@ export class RemindersService {
       const registration = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined;
       if (registration?.active) {
         await registration.showNotification(title, options);
-        return;
+        return 'shown';
       }
       const notification = new Notification(title, options);
       notification.onclick = () => {
@@ -156,8 +171,10 @@ export class RemindersService {
         this.open(taskId);
         notification.close();
       };
+      return 'shown';
     } catch (error) {
       console.warn('Could not show a notification', error);
+      return 'failed';
     }
   }
 
