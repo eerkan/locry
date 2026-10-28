@@ -16,6 +16,7 @@ unencrypted.
 - Tasks (smart views, lists, subtasks, priorities, due dates and times, reordering by drag or keyboard)
 - Task reminders as system notifications while Locry is open (no server)
 - **Voice:** dictate notes and tasks with Whisper running in the browser, and have notes read aloud with the device's own voices; nothing is recorded or sent
+- Accessible: checked against WCAG 2.2 AA with axe in light and dark themes; works with the keyboard alone (tasks reorder with Alt+↑/↓ or buttons) and with screen readers; animations respect reduced motion
 - Passkey sign-in, recovery key, auto-lock
 - Multiple independent vaults (e.g. Personal and Work), each with its own passkeys and recovery key
 - Compressed, encrypted `.locry` backups; backups to Google Drive
@@ -216,6 +217,10 @@ Design: Fraunces (headings), Geist (text) and Geist Mono (technical details), se
 Arabic use system fonts. The fonts of the first screen are preloaded. Search engines and AI crawlers read all of the
 content without running JavaScript; the rest of the app runs only in the browser, and no vault data ever exists on
 a server.
+
+Motion is CSS only and costs nothing in Core Web Vitals: the hero moves in with transforms (so LCP is not delayed),
+and sections rise in with scroll-driven animations that switch on the frame after hydration (attaching them up front
+delayed the first paint by ~30 ms). Without support, without JavaScript or with reduced motion the page is static.
 
 - Title, description, canonical, `hreflang` (11 languages + x-default), Open Graph and Twitter cards
   (`landing/og-*.jpg`)

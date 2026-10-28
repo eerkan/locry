@@ -64,6 +64,7 @@ export const tr: LandingContent = {
       { term: 'Veriler nerede', detail: 'Cihazında, tarayıcının şifreli deposunda' },
       { term: 'Eşitleme', detail: 'İsteğe bağlı, Google Drive üzerinden uçtan uca şifreli' },
       { term: 'Platformlar', detail: 'Modern tarayıcılar; macOS, Windows, Linux, iOS ve Android’de kurulabilir (PWA)' },
+      { term: 'Cihazda yapay zekâ', detail: 'Akıllı arama, Notlarına sor ve sesle yazma tarayıcında çalışır' },
       { term: 'Diller', detail: 'Türkçe, İngilizce, Çince, İspanyolca, Arapça, Portekizce, Endonezce, Fransızca, Japonca, Rusça ve Almanca' },
     ],
   },
@@ -80,6 +81,11 @@ export const tr: LandingContent = {
         icon: 'lucideListTodo',
         title: 'Görevler',
         text: 'Gelen kutusu, Bugün, Yaklaşan ve Tamamlananlar görünümleri; renkli listeler, alt görevler, öncelik, bitiş tarihi ve sürükle-bırak.',
+      },
+      {
+        icon: 'lucideBell',
+        title: 'Hatırlatmalar',
+        text: 'Bir görevin zamanı gelince bildirim; Locry açıkken, arka plandaki bir sekmede bile. Sunucu yok.',
       },
       {
         icon: 'lucideFingerprint',
@@ -102,6 +108,16 @@ export const tr: LandingContent = {
         text: 'Kelimeyle değil anlamla ara. Yapay zekâ modeli tarayıcında çalışır; notların hiçbir yapay zekâ servisine gönderilmez.',
       },
       {
+        icon: 'lucideMessageCircleQuestion',
+        title: 'Notlarına sor',
+        text: 'Bir soru sor, cevabı kendi notlarından ve görevlerinden, kaynaklarıyla birlikte gelsin. Küçük bir dil modeli tarayıcında çalışır.',
+      },
+      {
+        icon: 'lucideMic',
+        title: 'Ses',
+        text: 'Not ve görevleri cihazında çalışan Whisper ile söyleyerek yaz, notlarını cihazının sesleriyle dinle. Hiçbir şey kaydedilmez ya da gönderilmez.',
+      },
+      {
         icon: 'lucideArchive',
         title: 'Şifreli yedekler',
         text: 'Tek dosyalık, sıkıştırılmış ve şifreli .locry yedekleri; dosyaya ya da Google Drive’a, istersen otomatik.',
@@ -113,8 +129,8 @@ export const tr: LandingContent = {
       },
       {
         icon: 'lucideCommand',
-        title: 'Klavyeyle hızlı',
-        text: '⌘K komut paleti, “/” ile arama, N ile yeni not, T ile yeni görev ve G ile gezinme kısayolları.',
+        title: 'Klavye ve erişilebilirlik',
+        text: '⌘K komut paleti, “/” ile arama, N ile yeni not, T ile yeni görev; yalnızca klavyeyle ve ekran okuyucuyla kullanılabilir.',
       },
     ],
   },
@@ -196,8 +212,9 @@ export const tr: LandingContent = {
     text: 'Gün içinde ne yapacağını Bugün görünümünde gör, geciken işleri kaçırma, görevleri ilgili nota bağla.',
     bullets: [
       'Akıllı görünümler: Gelen kutusu, Bugün, Yaklaşan, Tamamlananlar',
-      'Renkli listeler, alt görevler, öncelik ve bitiş tarihi',
-      'Sürükle-bırak sıralama, T ile hızlı ekleme',
+      'Renkli listeler, alt görevler, öncelik, bitiş tarihi ve saati',
+      'Locry açıkken bildirimle hatırlatma',
+      'Sürükleyerek ya da klavyeyle sıralama; T ile ekle ya da söyleyerek yaz',
     ],
     alt: 'Locry görevler: Bugün görünümü, öncelikler ve bitiş tarihleri',
   },
@@ -261,6 +278,18 @@ export const tr: LandingContent = {
       {
         q: 'Yapay zekâ araması notlarımı bir yere gönderiyor mu?',
         a: 'Hayır. Çok dilli dil modeli bir kez indirilir ve bir Web Worker içinde tarayıcında çalışır. Notların hiçbir yapay zekâ servisine gönderilmez.',
+      },
+      {
+        q: 'Notlarıma soru sorabilir miyim?',
+        a: 'Evet, “Notlarına sor” ile: küçük bir dil modeli (varsayılan Qwen3 0.6B) tarayıcında WebGPU ile çalışır ve kendi notlarından ve görevlerinden, numaralı kaynaklarla cevap verir. İsteğe bağlıdır, bir kez indirilir; notların cihazından çıkmaz.',
+      },
+      {
+        q: 'Sesle yazabilir miyim, sesim bir yere gönderiliyor mu?',
+        a: 'Not ve görevleri söyleyerek yazabilirsin. Konuşman tarayıcında çalışan OpenAI Whisper ile metne çevrilir; kayıt hemen ardından atılır, hiçbir zaman saklanmaz ya da gönderilmez. Notları sesli okuma da yalnızca cihazında kurulu sesleri kullanır.',
+      },
+      {
+        q: 'Locry görevlerimi hatırlatır mı?',
+        a: 'Evet, Locry açıkken (arka plandaki bir sekmede ya da kurulu uygulamada da): bir görevin zamanı gelince bildirim alırsın. Locry’nin sunucusu olmadığı için kapalıyken hatırlatma gelemez.',
       },
       {
         q: 'İnternetsiz çalışır mı?',

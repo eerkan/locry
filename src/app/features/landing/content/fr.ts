@@ -64,6 +64,7 @@ export const fr: LandingContent = {
       { term: 'Où sont les données', detail: 'Sur votre appareil, dans le stockage chiffré du navigateur' },
       { term: 'Synchronisation', detail: 'Facultative, chiffrée de bout en bout via Google Drive' },
       { term: 'Plateformes', detail: 'Navigateurs récents ; installable sur macOS, Windows, Linux, iOS et Android (PWA)' },
+      { term: 'IA sur l’appareil', detail: 'La recherche intelligente, Interrogez vos notes et la dictée fonctionnent dans votre navigateur' },
       { term: 'Langues', detail: 'Anglais, turc, chinois, espagnol, arabe, portugais, indonésien, français, japonais, russe et allemand' },
     ],
   },
@@ -80,6 +81,11 @@ export const fr: LandingContent = {
         icon: 'lucideListTodo',
         title: 'Tâches',
         text: 'Vues Boîte de réception, Aujourd’hui, À venir et Terminées ; listes colorées, sous-tâches, priorités, échéances et glisser-déposer.',
+      },
+      {
+        icon: 'lucideBell',
+        title: 'Rappels',
+        text: 'Une notification quand l’heure d’une tâche arrive, tant que Locry est ouvert, même dans un onglet en arrière-plan. Sans serveur.',
       },
       {
         icon: 'lucideFingerprint',
@@ -102,6 +108,16 @@ export const fr: LandingContent = {
         text: 'Cherchez par le sens, pas seulement par les mots. Le modèle d’IA tourne dans votre navigateur ; vos notes ne sont jamais envoyées à un service d’IA.',
       },
       {
+        icon: 'lucideMessageCircleQuestion',
+        title: 'Interrogez vos notes',
+        text: 'Posez une question et obtenez une réponse rédigée à partir de vos propres notes et tâches, avec les sources. Un petit modèle de langage fonctionne dans votre navigateur.',
+      },
+      {
+        icon: 'lucideMic',
+        title: 'Voix',
+        text: 'Dictez notes et tâches avec Whisper qui fonctionne sur votre appareil, et écoutez vos notes avec les voix de votre appareil. Rien n’est enregistré ni envoyé.',
+      },
+      {
         icon: 'lucideArchive',
         title: 'Sauvegardes chiffrées',
         text: 'Des sauvegardes .locry en un seul fichier, compressées et chiffrées, vers un fichier ou Google Drive, automatiquement si vous le voulez.',
@@ -113,8 +129,8 @@ export const fr: LandingContent = {
       },
       {
         icon: 'lucideCommand',
-        title: 'Pensé pour le clavier',
-        text: 'Palette de commandes ⌘K, « / » pour chercher, N pour une nouvelle note, T pour une nouvelle tâche et raccourcis G pour naviguer.',
+        title: 'Clavier et accessibilité',
+        text: 'Palette de commandes ⌘K, « / » pour chercher, N pour une nouvelle note, T pour une nouvelle tâche ; utilisable au clavier seul et avec un lecteur d’écran.',
       },
     ],
   },
@@ -196,8 +212,9 @@ export const fr: LandingContent = {
     text: 'Voyez quoi faire dans la vue Aujourd’hui, ne ratez aucune tâche en retard et reliez les tâches aux notes qui les concernent.',
     bullets: [
       'Vues intelligentes : Boîte de réception, Aujourd’hui, À venir, Terminées',
-      'Listes colorées, sous-tâches, priorités et échéances',
-      'Tri par glisser-déposer, ajout rapide avec T',
+      'Listes colorées, sous-tâches, priorités, dates et heures d’échéance',
+      'Rappels par notification tant que Locry est ouvert',
+      'Réorganisez par glisser-déposer ou au clavier ; ajoutez avec T ou en dictant',
     ],
     alt: 'Les tâches dans Locry : la vue Aujourd’hui avec priorités et échéances',
   },
@@ -261,6 +278,18 @@ export const fr: LandingContent = {
       {
         q: 'La recherche IA envoie-t-elle mes notes quelque part ?',
         a: 'Non. Le modèle de langue multilingue est téléchargé une fois et tourne dans un Web Worker de votre navigateur. Vos notes ne sont jamais envoyées à un service d’IA.',
+      },
+      {
+        q: 'Puis-je poser des questions à mes notes ?',
+        a: 'Oui, avec « Interrogez vos notes » : un petit modèle de langage (Qwen3 0.6B par défaut) fonctionne dans votre navigateur avec WebGPU et répond à partir de vos propres notes et tâches, avec des sources numérotées. C’est facultatif et téléchargé une seule fois ; vos notes ne quittent jamais l’appareil.',
+      },
+      {
+        q: 'Puis-je dicter, et ma voix est-elle envoyée quelque part ?',
+        a: 'Vous pouvez dicter notes et tâches. Votre voix est convertie en texte par Whisper d’OpenAI, qui fonctionne dans votre navigateur ; l’enregistrement est supprimé aussitôt et n’est jamais conservé ni envoyé. La lecture à voix haute n’utilise que les voix installées sur votre appareil.',
+      },
+      {
+        q: 'Locry me rappelle-t-il mes tâches ?',
+        a: 'Oui, tant que Locry est ouvert (y compris dans un onglet en arrière-plan ou en application installée) : vous recevez une notification quand l’heure d’une tâche arrive. Locry n’a pas de serveur, donc aucun rappel ne peut arriver quand il est fermé.',
       },
       {
         q: 'Fonctionne-t-il hors ligne ?',

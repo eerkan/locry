@@ -64,6 +64,7 @@ export const en: LandingContent = {
       { term: 'Where data lives', detail: 'On your device, in the browser’s encrypted storage' },
       { term: 'Sync', detail: 'Optional, end-to-end encrypted through Google Drive' },
       { term: 'Platforms', detail: 'Modern browsers; installable on macOS, Windows, Linux, iOS and Android (PWA)' },
+      { term: 'On-device AI', detail: 'Smart search, Ask your notes and dictation run in your browser' },
       { term: 'Languages', detail: 'English, Turkish, Chinese, Spanish, Arabic, Portuguese, Indonesian, French, Japanese, Russian and German' },
     ],
   },
@@ -80,6 +81,11 @@ export const en: LandingContent = {
         icon: 'lucideListTodo',
         title: 'Tasks',
         text: 'Inbox, Today, Upcoming and Completed views; colored lists, subtasks, priorities, due dates and drag and drop.',
+      },
+      {
+        icon: 'lucideBell',
+        title: 'Reminders',
+        text: 'A notification when a task’s time comes, while Locry is open, even in a background tab. No server involved.',
       },
       {
         icon: 'lucideFingerprint',
@@ -102,6 +108,16 @@ export const en: LandingContent = {
         text: 'Search by meaning, not just words. The AI model runs in your browser; your notes are never sent to an AI service.',
       },
       {
+        icon: 'lucideMessageCircleQuestion',
+        title: 'Ask your notes',
+        text: 'Ask a question and get an answer written from your own notes and tasks, with sources. A small language model runs in your browser.',
+      },
+      {
+        icon: 'lucideMic',
+        title: 'Voice',
+        text: 'Dictate notes and tasks with Whisper running on your device, and have notes read aloud by your device’s voices. Nothing is recorded or sent.',
+      },
+      {
         icon: 'lucideArchive',
         title: 'Encrypted backups',
         text: 'Single-file, compressed and encrypted .locry backups, to a file or to Google Drive, automatically if you like.',
@@ -113,8 +129,8 @@ export const en: LandingContent = {
       },
       {
         icon: 'lucideCommand',
-        title: 'Keyboard friendly',
-        text: '⌘K command palette, “/” to search, N for a new note, T for a new task and G shortcuts to navigate.',
+        title: 'Keyboard and accessibility',
+        text: '⌘K command palette, “/” to search, N for a new note, T for a new task; usable with the keyboard alone and with screen readers.',
       },
     ],
   },
@@ -196,8 +212,9 @@ export const en: LandingContent = {
     text: 'See what to do in the Today view, never miss overdue work, and link tasks to the notes they belong to.',
     bullets: [
       'Smart views: Inbox, Today, Upcoming, Completed',
-      'Colored lists, subtasks, priorities and due dates',
-      'Drag-and-drop ordering, quick add with T',
+      'Colored lists, subtasks, priorities, due dates and times',
+      'Reminders as notifications while Locry is open',
+      'Reorder by dragging or with the keyboard; add with T, or dictate',
     ],
     alt: 'Tasks in Locry: the Today view with priorities and due dates',
   },
@@ -261,6 +278,18 @@ export const en: LandingContent = {
       {
         q: 'Does the AI search send my notes anywhere?',
         a: 'No. The multilingual language model is downloaded once and runs in a Web Worker in your browser. Your notes are never sent to an AI service.',
+      },
+      {
+        q: 'Can I ask questions about my notes?',
+        a: 'Yes, with “Ask your notes”: a small language model (Qwen3 0.6B by default) runs in your browser on WebGPU and answers from your own notes and tasks, with numbered sources. It is optional and downloaded once; your notes never leave the device.',
+      },
+      {
+        q: 'Can I dictate, and is my voice sent anywhere?',
+        a: 'You can dictate notes and tasks. Your speech is turned into text by OpenAI’s Whisper running in your browser; the recording is dropped right after and is never stored or sent. Reading notes aloud uses only voices installed on your device.',
+      },
+      {
+        q: 'Will Locry remind me of my tasks?',
+        a: 'Yes, while Locry is open (also in a background tab or as an installed app): you get a notification when a task’s time comes. Locry has no server, so reminders cannot arrive while it is closed.',
       },
       {
         q: 'Does it work offline?',

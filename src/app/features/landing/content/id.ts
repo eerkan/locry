@@ -64,6 +64,7 @@ export const id: LandingContent = {
       { term: 'Lokasi data', detail: 'Di perangkat Anda, di penyimpanan browser yang terenkripsi' },
       { term: 'Sinkronisasi', detail: 'Opsional, terenkripsi end-to-end melalui Google Drive' },
       { term: 'Platform', detail: 'Browser modern; dapat dipasang di macOS, Windows, Linux, iOS, dan Android (PWA)' },
+      { term: 'AI di perangkat', detail: 'Pencarian pintar, Tanya catatan Anda, dan dikte berjalan di browser Anda' },
       { term: 'Bahasa', detail: 'Inggris, Turki, Tionghoa, Spanyol, Arab, Portugis, Indonesia, Prancis, Jepang, Rusia, dan Jerman' },
     ],
   },
@@ -80,6 +81,11 @@ export const id: LandingContent = {
         icon: 'lucideListTodo',
         title: 'Tugas',
         text: 'Tampilan Kotak masuk, Hari ini, Mendatang, dan Selesai; daftar berwarna, subtugas, prioritas, tenggat, dan seret-lepas.',
+      },
+      {
+        icon: 'lucideBell',
+        title: 'Pengingat',
+        text: 'Notifikasi saat waktu tugas tiba, selama Locry terbuka, bahkan di tab latar belakang. Tanpa server.',
       },
       {
         icon: 'lucideFingerprint',
@@ -102,6 +108,16 @@ export const id: LandingContent = {
         text: 'Cari berdasarkan makna, bukan hanya kata. Model AI berjalan di browser Anda; catatan Anda tidak pernah dikirim ke layanan AI.',
       },
       {
+        icon: 'lucideMessageCircleQuestion',
+        title: 'Tanya catatan Anda',
+        text: 'Ajukan pertanyaan dan dapatkan jawaban yang ditulis dari catatan dan tugas Anda sendiri, lengkap dengan sumbernya. Model bahasa kecil berjalan di browser Anda.',
+      },
+      {
+        icon: 'lucideMic',
+        title: 'Suara',
+        text: 'Diktekan catatan dan tugas dengan Whisper yang berjalan di perangkat Anda, dan dengarkan catatan dengan suara perangkat Anda. Tidak ada yang direkam atau dikirim.',
+      },
+      {
         icon: 'lucideArchive',
         title: 'Cadangan terenkripsi',
         text: 'Cadangan .locry dalam satu file, terkompresi dan terenkripsi, ke file atau Google Drive, otomatis jika Anda mau.',
@@ -113,8 +129,8 @@ export const id: LandingContent = {
       },
       {
         icon: 'lucideCommand',
-        title: 'Ramah keyboard',
-        text: 'Palet perintah ⌘K, “/” untuk mencari, N untuk catatan baru, T untuk tugas baru, dan pintasan G untuk navigasi.',
+        title: 'Keyboard dan aksesibilitas',
+        text: 'Palet perintah ⌘K, “/” untuk mencari, N untuk catatan baru, T untuk tugas baru; bisa dipakai hanya dengan keyboard dan dengan pembaca layar.',
       },
     ],
   },
@@ -195,9 +211,10 @@ export const id: LandingContent = {
     title: 'Tugas, tepat di samping catatan Anda',
     text: 'Lihat yang harus dikerjakan di tampilan Hari ini, jangan lewatkan tugas yang terlambat, dan tautkan tugas ke catatannya.',
     bullets: [
-      'Tampilan cerdas: Kotak masuk, Hari ini, Mendatang, Selesai',
-      'Daftar berwarna, subtugas, prioritas, dan tenggat',
-      'Urutkan dengan seret-lepas, tambah cepat dengan T',
+      'Tampilan pintar: Kotak masuk, Hari ini, Mendatang, Selesai',
+      'Daftar berwarna, subtugas, prioritas, tanggal dan jam jatuh tempo',
+      'Pengingat lewat notifikasi selama Locry terbuka',
+      'Urutkan dengan menyeret atau keyboard; tambah dengan T atau dikte',
     ],
     alt: 'Tugas di Locry: tampilan Hari ini dengan prioritas dan tenggat',
   },
@@ -261,6 +278,18 @@ export const id: LandingContent = {
       {
         q: 'Apakah pencarian AI mengirim catatan saya ke suatu tempat?',
         a: 'Tidak. Model bahasa multibahasa diunduh sekali dan berjalan di Web Worker di browser Anda. Catatan Anda tidak pernah dikirim ke layanan AI.',
+      },
+      {
+        q: 'Bisakah saya bertanya pada catatan saya?',
+        a: 'Bisa, dengan “Tanya catatan Anda”: model bahasa kecil (Qwen3 0.6B secara bawaan) berjalan di browser Anda dengan WebGPU dan menjawab dari catatan dan tugas Anda sendiri, dengan sumber bernomor. Fitur ini opsional dan diunduh sekali; catatan Anda tidak pernah meninggalkan perangkat.',
+      },
+      {
+        q: 'Bisakah saya mendikte, dan apakah suara saya dikirim ke mana pun?',
+        a: 'Anda bisa mendikte catatan dan tugas. Ucapan Anda diubah menjadi teks oleh Whisper dari OpenAI yang berjalan di browser Anda; rekaman langsung dibuang dan tidak pernah disimpan atau dikirim. Membacakan catatan hanya memakai suara yang terpasang di perangkat Anda.',
+      },
+      {
+        q: 'Apakah Locry mengingatkan tugas saya?',
+        a: 'Ya, selama Locry terbuka (juga di tab latar belakang atau sebagai aplikasi terpasang): Anda mendapat notifikasi saat waktu tugas tiba. Locry tidak punya server, jadi pengingat tidak bisa datang saat Locry ditutup.',
       },
       {
         q: 'Apakah bisa dipakai offline?',

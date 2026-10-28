@@ -64,6 +64,7 @@ export const pt: LandingContent = {
       { term: 'Onde ficam os dados', detail: 'No seu dispositivo, no armazenamento criptografado do navegador' },
       { term: 'Sincronização', detail: 'Opcional, com criptografia de ponta a ponta pelo Google Drive' },
       { term: 'Plataformas', detail: 'Navegadores modernos; instalável no macOS, Windows, Linux, iOS e Android (PWA)' },
+      { term: 'IA no dispositivo', detail: 'Busca inteligente, Pergunte às suas notas e ditado rodam no seu navegador' },
       { term: 'Idiomas', detail: 'Inglês, turco, chinês, espanhol, árabe, português, indonésio, francês, japonês, russo e alemão' },
     ],
   },
@@ -80,6 +81,11 @@ export const pt: LandingContent = {
         icon: 'lucideListTodo',
         title: 'Tarefas',
         text: 'Visões Caixa de entrada, Hoje, Próximas e Concluídas; listas coloridas, subtarefas, prioridades, prazos e arrastar e soltar.',
+      },
+      {
+        icon: 'lucideBell',
+        title: 'Lembretes',
+        text: 'Uma notificação quando chega a hora de uma tarefa, enquanto o Locry está aberto, até numa aba em segundo plano. Sem servidor.',
       },
       {
         icon: 'lucideFingerprint',
@@ -102,6 +108,16 @@ export const pt: LandingContent = {
         text: 'Busque pelo sentido, não só pelas palavras. O modelo de IA roda no seu navegador; suas notas nunca são enviadas a um serviço de IA.',
       },
       {
+        icon: 'lucideMessageCircleQuestion',
+        title: 'Pergunte às suas notas',
+        text: 'Faça uma pergunta e receba uma resposta escrita a partir das suas próprias notas e tarefas, com fontes. Um pequeno modelo de linguagem roda no seu navegador.',
+      },
+      {
+        icon: 'lucideMic',
+        title: 'Voz',
+        text: 'Dite notas e tarefas com o Whisper rodando no seu dispositivo e ouça suas notas com as vozes do aparelho. Nada é gravado nem enviado.',
+      },
+      {
         icon: 'lucideArchive',
         title: 'Backups criptografados',
         text: 'Backups .locry em um único arquivo, compactados e criptografados, para um arquivo ou para o Google Drive, automaticamente se quiser.',
@@ -113,8 +129,8 @@ export const pt: LandingContent = {
       },
       {
         icon: 'lucideCommand',
-        title: 'Feito para o teclado',
-        text: 'Paleta de comandos ⌘K, “/” para buscar, N para nova nota, T para nova tarefa e atalhos G para navegar.',
+        title: 'Teclado e acessibilidade',
+        text: 'Paleta de comandos ⌘K, “/” para buscar, N para uma nova nota, T para uma nova tarefa; dá para usar só com o teclado e com leitores de tela.',
       },
     ],
   },
@@ -196,8 +212,9 @@ export const pt: LandingContent = {
     text: 'Veja o que fazer na visão Hoje, não perca nada atrasado e vincule tarefas às notas a que pertencem.',
     bullets: [
       'Visões inteligentes: Caixa de entrada, Hoje, Próximas, Concluídas',
-      'Listas coloridas, subtarefas, prioridades e prazos',
-      'Ordenação por arrastar e soltar, inclusão rápida com T',
+      'Listas coloridas, subtarefas, prioridades, datas e horários de vencimento',
+      'Lembretes por notificação enquanto o Locry está aberto',
+      'Reordene arrastando ou pelo teclado; adicione com T ou ditando',
     ],
     alt: 'Tarefas no Locry: a visão Hoje com prioridades e prazos',
   },
@@ -261,6 +278,18 @@ export const pt: LandingContent = {
       {
         q: 'A busca com IA envia minhas notas para algum lugar?',
         a: 'Não. O modelo de linguagem multilíngue é baixado uma vez e roda em um Web Worker no seu navegador. Suas notas nunca são enviadas a um serviço de IA.',
+      },
+      {
+        q: 'Posso fazer perguntas às minhas notas?',
+        a: 'Sim, com “Pergunte às suas notas”: um pequeno modelo de linguagem (Qwen3 0.6B por padrão) roda no seu navegador com WebGPU e responde a partir das suas notas e tarefas, com fontes numeradas. É opcional e baixado uma vez; suas notas nunca saem do dispositivo.',
+      },
+      {
+        q: 'Posso ditar? Minha voz é enviada para algum lugar?',
+        a: 'Você pode ditar notas e tarefas. Sua fala vira texto com o Whisper da OpenAI rodando no seu navegador; a gravação é descartada logo em seguida e nunca é guardada nem enviada. A leitura em voz alta usa apenas vozes instaladas no seu dispositivo.',
+      },
+      {
+        q: 'O Locry me lembra das tarefas?',
+        a: 'Sim, enquanto o Locry está aberto (também numa aba em segundo plano ou como app instalado): você recebe uma notificação quando chega a hora de uma tarefa. O Locry não tem servidor, então os lembretes não chegam com ele fechado.',
       },
       {
         q: 'Funciona offline?',

@@ -23,7 +23,7 @@ Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uc
 
 ## Key facts
 
-- Type: notes (Markdown) and tasks (lists, subtasks, priorities, due dates) in one app
+- Type: notes (Markdown) and tasks (lists, subtasks, priorities, due dates and times) in one app
 - Price: free; open source
 - Account: none; sign-in with a passkey (fingerprint, face or device PIN); a 256-bit recovery key as backup
 - Encryption: random 256-bit vault key, wrapped by a key derived with HKDF-SHA-256 from the passkey's WebAuthn PRF output; each record encrypted separately with AES-256-GCM and bound to its type and id
@@ -32,6 +32,10 @@ Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uc
 - Backups: single-file, gzip-compressed and encrypted `.locry` files, to a file or Google Drive (app-data folder only)
 - Sync: optional, through Google Drive; each device writes its own encrypted snapshot and merges the others; deletions sync; when a note was edited on two devices the older version is kept as a "(conflict)" copy
 - Smart search: semantic + keyword search with a multilingual embedding model running in the browser (Web Worker, WASM); default EmbeddingGemma 300M, or choose multilingual-e5-small, multilingual-e5-base, Snowflake Arctic Embed M v2.0 or BGE-M3 per vault; notes are never sent to an AI service
+- Ask your notes: optional answers to questions from the user's own notes and tasks, with numbered sources, written by a small language model (Qwen3 0.6B by default, or Apertus 0.5B / Gemma 3 1B) running in the browser on WebGPU; notes never leave the device
+- Voice: optional dictation of notes and tasks with OpenAI's Whisper (Small by default; Base or Large v3 Turbo) running in the browser; the recording is transcribed and dropped, never stored or sent; the Web Speech API is not used. Notes can be read aloud with voices installed on the device only
+- Reminders: a system notification when a task's time comes, while Locry is open (also in a background tab or as an installed app); no server, so nothing arrives while it is closed
+- Accessibility: checked against WCAG 2.2 AA with axe; usable with the keyboard alone (including reordering tasks) and with screen readers; respects reduced motion
 - Platforms: modern browsers (Chrome/Edge 118+, Safari 18+); installable PWA on macOS, Windows, Linux, iOS and Android; works offline
 - Self-hosting: static files plus a tiny Node server in Docker (`docker compose up -d --build`); optional Caddy for automatic HTTPS on a domain
 
@@ -41,4 +45,7 @@ Locry (Türkçe): tarayıcıda çalışan, ücretsiz ve açık kaynak, uçtan uc
 - Can Google read my notes? No. Drive only receives files encrypted on your device; Locry can only access its own hidden app folder.
 - What if I lose my passkey? Open the vault with the recovery key and add a new passkey. Without both, nobody can recover the data — by design.
 - Does the AI search send notes anywhere? No. The model runs in the browser.
+- Can I ask questions about my notes? Yes, with "Ask your notes"; a small language model runs in the browser and cites the notes it used.
+- Is my voice sent anywhere when dictating? No. Whisper runs in the browser; the recording is dropped after transcription.
+- Will Locry remind me of tasks? Yes, with notifications while it is open; not while it is closed (there is no server).
 - Does it work offline? Yes, after the first visit.

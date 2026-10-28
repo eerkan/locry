@@ -64,6 +64,7 @@ export const zh: LandingContent = {
       { term: '数据在哪里', detail: '在你的设备上，存于浏览器的加密存储中' },
       { term: '同步', detail: '可选，经由 Google 云端硬盘端到端加密' },
       { term: '平台', detail: '现代浏览器；可安装到 macOS、Windows、Linux、iOS 和 Android（PWA）' },
+      { term: '设备上的 AI', detail: '智能搜索、向笔记提问和语音输入都在浏览器中运行' },
       { term: '语言', detail: '英语、土耳其语、中文、西班牙语、阿拉伯语、葡萄牙语、印尼语、法语、日语、俄语和德语' },
     ],
   },
@@ -80,6 +81,11 @@ export const zh: LandingContent = {
         icon: 'lucideListTodo',
         title: '任务',
         text: '收件箱、今天、即将到期和已完成视图；彩色列表、子任务、优先级、截止日期和拖放排序。',
+      },
+      {
+        icon: 'lucideBell',
+        title: '提醒',
+        text: '任务到时间时发出通知；只要 Locry 打开着，即使在后台标签页中也可以。无需服务器。',
       },
       {
         icon: 'lucideFingerprint',
@@ -102,6 +108,16 @@ export const zh: LandingContent = {
         text: '按含义搜索，而不只是按字词。AI 模型在你的浏览器中运行；你的笔记永远不会发送给任何 AI 服务。',
       },
       {
+        icon: 'lucideMessageCircleQuestion',
+        title: '向笔记提问',
+        text: '提出问题，答案来自你自己的笔记和任务，并附上来源。一个小型语言模型在你的浏览器中运行。',
+      },
+      {
+        icon: 'lucideMic',
+        title: '语音',
+        text: '用在设备上运行的 Whisper 口述笔记和任务，并用设备自带的语音朗读笔记。不录音，也不发送任何内容。',
+      },
+      {
         icon: 'lucideArchive',
         title: '加密备份',
         text: '单文件、压缩并加密的 .locry 备份，可保存为文件或存到 Google 云端硬盘，也可以自动备份。',
@@ -113,8 +129,8 @@ export const zh: LandingContent = {
       },
       {
         icon: 'lucideCommand',
-        title: '键盘友好',
-        text: '⌘K 命令面板，“/” 搜索，N 新建笔记，T 新建任务，G 系列快捷键用于导航。',
+        title: '键盘与无障碍',
+        text: '⌘K 命令面板，“/” 搜索，N 新建笔记，T 新建任务；仅用键盘或配合屏幕阅读器即可使用。',
       },
     ],
   },
@@ -195,8 +211,9 @@ export const zh: LandingContent = {
     text: '在“今天”视图中查看待办，不错过任何逾期事项，并把任务关联到相关笔记。',
     bullets: [
       '智能视图：收件箱、今天、即将到期、已完成',
-      '彩色列表、子任务、优先级和截止日期',
-      '拖放排序，按 T 快速添加',
+      '彩色列表、子任务、优先级、截止日期和时间',
+      'Locry 打开时以通知提醒',
+      '拖动或用键盘排序；按 T 添加，或用语音输入',
     ],
     alt: 'Locry 中的任务：带优先级和截止日期的“今天”视图',
   },
@@ -259,6 +276,18 @@ export const zh: LandingContent = {
       {
         q: 'AI 搜索会把我的笔记发送到别处吗？',
         a: '不会。多语言模型只下载一次，在浏览器的 Web Worker 中运行。你的笔记永远不会发送给任何 AI 服务。',
+      },
+      {
+        q: '我可以向我的笔记提问吗？',
+        a: '可以，使用“向笔记提问”：一个小型语言模型（默认 Qwen3 0.6B）在浏览器中通过 WebGPU 运行，根据你自己的笔记和任务作答，并给出编号来源。它是可选的，只下载一次；你的笔记不会离开设备。',
+      },
+      {
+        q: '我可以语音输入吗？我的声音会被发送到别处吗？',
+        a: '你可以用语音输入笔记和任务。你的语音由在浏览器中运行的 OpenAI Whisper 转成文字；录音随即被丢弃，从不保存或发送。朗读笔记也只使用你设备上安装的语音。',
+      },
+      {
+        q: 'Locry 会提醒我的任务吗？',
+        a: '会，只要 Locry 打开着（在后台标签页或作为已安装的应用也可以）：任务到时间时你会收到通知。Locry 没有服务器，因此关闭时无法收到提醒。',
       },
       {
         q: '可以离线使用吗？',

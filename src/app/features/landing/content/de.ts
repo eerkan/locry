@@ -64,6 +64,7 @@ export const de: LandingContent = {
       { term: 'Wo die Daten liegen', detail: 'Auf deinem Gerät, im verschlüsselten Speicher des Browsers' },
       { term: 'Synchronisierung', detail: 'Optional, Ende-zu-Ende-verschlüsselt über Google Drive' },
       { term: 'Plattformen', detail: 'Moderne Browser; installierbar auf macOS, Windows, Linux, iOS und Android (PWA)' },
+      { term: 'KI auf dem Gerät', detail: 'Intelligente Suche, Frag deine Notizen und das Diktieren laufen in deinem Browser' },
       { term: 'Sprachen', detail: 'Englisch, Türkisch, Chinesisch, Spanisch, Arabisch, Portugiesisch, Indonesisch, Französisch, Japanisch, Russisch und Deutsch' },
     ],
   },
@@ -80,6 +81,11 @@ export const de: LandingContent = {
         icon: 'lucideListTodo',
         title: 'Aufgaben',
         text: 'Ansichten Eingang, Heute, Demnächst und Erledigt; farbige Listen, Unteraufgaben, Prioritäten, Fälligkeitsdaten und Drag-and-drop.',
+      },
+      {
+        icon: 'lucideBell',
+        title: 'Erinnerungen',
+        text: 'Eine Benachrichtigung, wenn es Zeit für eine Aufgabe ist, solange Locry geöffnet ist, auch in einem Hintergrund-Tab. Ohne Server.',
       },
       {
         icon: 'lucideFingerprint',
@@ -102,6 +108,16 @@ export const de: LandingContent = {
         text: 'Suche nach Bedeutung, nicht nur nach Wörtern. Das KI-Modell läuft in deinem Browser; deine Notizen werden nie an einen KI-Dienst gesendet.',
       },
       {
+        icon: 'lucideMessageCircleQuestion',
+        title: 'Frag deine Notizen',
+        text: 'Stell eine Frage und erhalte eine Antwort aus deinen eigenen Notizen und Aufgaben, mit Quellen. Ein kleines Sprachmodell läuft in deinem Browser.',
+      },
+      {
+        icon: 'lucideMic',
+        title: 'Stimme',
+        text: 'Diktiere Notizen und Aufgaben mit Whisper auf deinem Gerät und lass dir Notizen von den Stimmen deines Geräts vorlesen. Nichts wird aufgenommen oder gesendet.',
+      },
+      {
         icon: 'lucideArchive',
         title: 'Verschlüsselte Backups',
         text: 'Komprimierte und verschlüsselte .locry-Backups in einer einzigen Datei, als Datei oder in Google Drive, auf Wunsch automatisch.',
@@ -113,8 +129,8 @@ export const de: LandingContent = {
       },
       {
         icon: 'lucideCommand',
-        title: 'Tastaturfreundlich',
-        text: '⌘K-Befehlspalette, „/“ zum Suchen, N für eine neue Notiz, T für eine neue Aufgabe und G-Kürzel zur Navigation.',
+        title: 'Tastatur und Barrierefreiheit',
+        text: '⌘K-Befehlspalette, „/“ zum Suchen, N für eine neue Notiz, T für eine neue Aufgabe; allein mit der Tastatur und mit Screenreadern nutzbar.',
       },
     ],
   },
@@ -196,8 +212,9 @@ export const de: LandingContent = {
     text: 'Sieh in der Ansicht Heute, was ansteht, verpasse keine überfälligen Aufgaben und verknüpfe Aufgaben mit den passenden Notizen.',
     bullets: [
       'Intelligente Ansichten: Eingang, Heute, Demnächst, Erledigt',
-      'Farbige Listen, Unteraufgaben, Prioritäten und Fälligkeitsdaten',
-      'Sortieren per Drag-and-drop, schnelles Hinzufügen mit T',
+      'Farbige Listen, Unteraufgaben, Prioritäten, Fälligkeitsdatum und -uhrzeit',
+      'Erinnerungen als Benachrichtigung, solange Locry geöffnet ist',
+      'Sortieren per Ziehen oder Tastatur; hinzufügen mit T oder per Diktat',
     ],
     alt: 'Aufgaben in Locry: die Ansicht Heute mit Prioritäten und Fälligkeitsdaten',
   },
@@ -261,6 +278,18 @@ export const de: LandingContent = {
       {
         q: 'Sendet die KI-Suche meine Notizen irgendwohin?',
         a: 'Nein. Das mehrsprachige Sprachmodell wird einmal heruntergeladen und läuft in einem Web Worker in deinem Browser. Deine Notizen werden nie an einen KI-Dienst gesendet.',
+      },
+      {
+        q: 'Kann ich meinen Notizen Fragen stellen?',
+        a: 'Ja, mit „Frag deine Notizen“: Ein kleines Sprachmodell (standardmäßig Qwen3 0.6B) läuft per WebGPU in deinem Browser und antwortet aus deinen eigenen Notizen und Aufgaben, mit nummerierten Quellen. Es ist optional und wird einmal geladen; deine Notizen verlassen das Gerät nie.',
+      },
+      {
+        q: 'Kann ich diktieren, und wird meine Stimme irgendwohin gesendet?',
+        a: 'Du kannst Notizen und Aufgaben diktieren. Deine Sprache wird von OpenAIs Whisper in deinem Browser in Text umgewandelt; die Aufnahme wird gleich danach verworfen und nie gespeichert oder gesendet. Das Vorlesen nutzt nur auf deinem Gerät installierte Stimmen.',
+      },
+      {
+        q: 'Erinnert mich Locry an meine Aufgaben?',
+        a: 'Ja, solange Locry geöffnet ist (auch in einem Hintergrund-Tab oder als installierte App): Du bekommst eine Benachrichtigung, wenn es Zeit für eine Aufgabe ist. Locry hat keinen Server, daher können keine Erinnerungen kommen, wenn es geschlossen ist.',
       },
       {
         q: 'Funktioniert es offline?',
